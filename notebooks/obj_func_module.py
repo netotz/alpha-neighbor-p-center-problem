@@ -68,7 +68,6 @@ def eval_obj_func(alpha: int, clients: List[Point], facilities: List[Point]) -> 
                 config_plot_line(c, s, dist, 'gray', 1, ':')
                 config_plot_line(c, subset_min, min_subset_dist, 'orange', 1.3, ':')
                 config_plot_line(c_max, s_c_max, max_c_dist, 'yellowgreen', 1.6, '--')
-
                 plt.scatter(
                     c[0], c[1],
                     c='skyblue', edgecolors='black',
@@ -79,7 +78,6 @@ def eval_obj_func(alpha: int, clients: List[Point], facilities: List[Point]) -> 
                     c='red', edgecolors='black',
                     marker='X', linewidths=0.5, s=12**2
                 )
-
                 config_plot_points(set(clients) - set([c]), 'skyblue')
                 config_plot_points(set(facilities) - set(subset), 'red')
                 plt.show()
@@ -94,4 +92,9 @@ def eval_obj_func(alpha: int, clients: List[Point], facilities: List[Point]) -> 
             c_max = c
             print(f'New objective function value: {max_c_dist}')
     
+    config_plot_line(c_max, s_c_max, max_c_dist, 'yellowgreen', 1.6, '--')
+    config_plot_points(clients, 'skyblue')
+    config_plot_points(facilities, 'red')
+    plt.show()
+
     return max_c_dist
