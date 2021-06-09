@@ -16,6 +16,6 @@ class Instance:
     
     def calculate_distances(self) -> None:
         self.distances = spatial.distance_matrix(
-            ((p.x, p.y) for p in self.points),
-            ((p.x, p.y) for p in self.points),
+            [[p.x, p.y] for p in self.points],
+            [[p.x, p.y] for p in self.points],
         )
