@@ -2,11 +2,11 @@ from anpcp.models import Instance, Point
 import tsplib95
 
 
-def read_instance(filename: str, alpha: int, p: int) -> Instance:
+def read_instance(filename: str, p: int, alpha: int) -> Instance:
     problem = tsplib95.load(filename)
     nodes = problem.node_coords if problem.node_coords else problem.display_data
     points = [
-        Point(i, coords[0], coords[1])
-        for i, coords in nodes.items()
+        Point(i, int(x), int(y))
+        for i, (x, y) in nodes.items()
     ]
-    return Instance(alpha, p, points)
+    return Instance(p, alpha, points)
