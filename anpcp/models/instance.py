@@ -34,5 +34,5 @@ class Instance:
                 (randint(0, x_max), randint(0, y_max))
                 for _ in range(n - len(coords))
             )
-        points = [Point(i, x, y) for i, (x, y) in enumerate(coords)]
+        points = [Point(i + 1, x, y) for i, (x, y) in enumerate(coords)]
         return Instance(p, alpha, points)
