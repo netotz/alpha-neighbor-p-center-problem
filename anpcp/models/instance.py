@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from random import randint
 
 import numpy as np
@@ -13,17 +13,6 @@ class Instance:
     alpha: int
     points: List[Point]
     distances: Optional[np.ndarray] = None
-    
-    
-    def calculate_distances(self) -> None:
-        distances = spatial.distance_matrix(
-            [[p.x, p.y] for p in self.points],
-            [[p.x, p.y] for p in self.points],
-        )
-        self.distances = np.array([
-            [round(d) for d in row]
-            for row in distances
-        ])
 
 
     @classmethod
@@ -36,3 +25,21 @@ class Instance:
             )
         points = [Point(i + 1, x, y) for i, (x, y) in enumerate(coords)]
         return Instance(p, alpha, points)
+
+
+    def calculate_distances(self) -> None:
+        distances = spatial.distance_matrix(
+            [[p.x, p.y] for p in self.points],
+            [[p.x, p.y] for p in self.points],
+        )
+        self.distances = np.array([
+            [round(d) for d in row]
+            for row in distances
+        ])
+
+
+    def get_farthest_indexes(self) -> Tuple[int, int]:
+        return np.unravel_index(
+            self.distances.argmax(),
+            self.distances.shape
+        )
