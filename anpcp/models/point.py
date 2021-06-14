@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Tuple
 import math
 
-@dataclass()
+@dataclass
 class Point:
     index: int
     x: int
