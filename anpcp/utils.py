@@ -18,11 +18,10 @@ def read_instance(filename: str, p: int, alpha: int) -> Instance:
 
 
 def eval_obj_func(instance: Instance, solution: Set[int]) -> int:
-    vertexes = set(v.index for v in instance.vertexes)
     return max(
         min(
             max(instance.get_dist(v, s) for s in subset)
             for subset in itertools.combinations(solution, instance.alpha)
         )
-        for v in vertexes - solution
+        for v in instance.indexes - solution
     )
