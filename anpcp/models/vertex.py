@@ -3,7 +3,7 @@ from typing import Tuple
 import math
 
 @dataclass
-class Point:
+class Vertex:
     index: int
     x: int
     y: int
@@ -13,5 +13,5 @@ class Point:
         return self.x, self.y
 
 
-    def distance_to(self, point: 'Point') -> float:
+    def distance_to(self, point: 'Vertex') -> float:
         return math.dist(self.to_tuple(), point.to_tuple())
