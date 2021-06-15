@@ -5,13 +5,13 @@ from random import randint
 import numpy as np
 from scipy import spatial
 
-from .point import Point
+from .vertex import Vertex
 
 @dataclass
 class Instance:
     p: int
     alpha: int
-    points: List[Point]
+    points: List[Vertex]
     distances: Optional[np.ndarray] = None
 
 
@@ -23,7 +23,7 @@ class Instance:
                 (randint(0, x_max), randint(0, y_max))
                 for _ in range(n - len(coords))
             )
-        points = [Point(i + 1, x, y) for i, (x, y) in enumerate(coords)]
+        points = [Vertex(i + 1, x, y) for i, (x, y) in enumerate(coords)]
         return Instance(p, alpha, points)
 
 
@@ -36,6 +36,10 @@ class Instance:
             [round(d) for d in row]
             for row in distances
         ])
+
+
+    def get_dist(self, fromindex: int, toindex: int) -> int:
+        return self.distances[fromindex - 1][toindex - 1]
 
 
     def get_farthest_indexes(self) -> Tuple[int, int]:
