@@ -11,7 +11,7 @@ from .vertex import Vertex
 class Instance:
     p: int
     alpha: int
-    points: List[Vertex]
+    vertexes: List[Vertex]
     distances: Optional[np.ndarray] = None
 
 
@@ -23,15 +23,15 @@ class Instance:
                 (randint(0, x_max), randint(0, y_max))
                 for _ in range(n - len(coords))
             )
-        points = [Vertex(i + 1, x, y) for i, (x, y) in enumerate(coords)]
-        return Instance(p, alpha, points)
+        return Instance(
+            p, alpha,
+            [Vertex(i + 1, x, y) for i, (x, y) in enumerate(coords)]
+        )
 
 
     def calculate_distances(self) -> None:
-        distances = spatial.distance_matrix(
-            [[p.x, p.y] for p in self.points],
-            [[p.x, p.y] for p in self.points],
-        )
+        coords = [[v.x, v.y] for v in self.vertexes]
+        distances = spatial.distance_matrix(coords, coords)
         self.distances = np.array([
             [round(d) for d in row]
             for row in distances
