@@ -5,7 +5,7 @@ from random import randint
 import numpy as np
 from scipy import spatial
 
-from .vertex import Vertex
+from anpcp.models import Vertex
 
 @dataclass
 class Instance:
