@@ -13,5 +13,5 @@ class Vertex:
         return self.x, self.y
 
 
-    def distance_to(self, point: 'Vertex') -> float:
-        return math.dist(self.to_tuple(), point.to_tuple())
+    def distance_to(self, vertex: 'Vertex') -> float:
+        return math.dist(self.to_tuple(), vertex.to_tuple())
