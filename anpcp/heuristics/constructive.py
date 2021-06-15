@@ -3,7 +3,7 @@ from typing import Set
 
 
 def pdp_based(instance: Instance) -> Set[int]:
-    vertexes = set(p.index for p in instance.vertexes)
+    vertexes = set(v.index for v in instance.vertexes)
     solution = set(instance.get_farthest_indexes())
     while len(solution) < instance.p:
         index, _ = max((
