@@ -1,5 +1,9 @@
-from anpcp.models import Instance, Vertex
+import itertools
+from typing import Set
+
 import tsplib95
+
+from anpcp.models import Instance, Vertex
 
 
 def read_instance(filename: str, p: int, alpha: int) -> Instance:
@@ -10,4 +14,15 @@ def read_instance(filename: str, p: int, alpha: int) -> Instance:
             Vertex(i, int(x), int(y))
             for i, (x, y) in nodes.items()
         ]
+    )
+
+
+def eval_obj_func(instance: Instance, solution: Set[int]) -> int:
+    vertexes = set(p.index for p in instance.vertexes)
+    return max(
+        min(
+            max(instance.get_dist(v, s) for s in subset)
+            for subset in itertools.combinations(solution, instance.alpha)
+        )
+        for v in vertexes - solution
     )
