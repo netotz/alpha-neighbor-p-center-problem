@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import List, Set, Tuple
 from random import randint
 
@@ -7,7 +6,7 @@ from scipy import spatial
 
 from anpcp.models import Vertex
 
-@dataclass
+
 class Instance:
     def __init__(
             self,
