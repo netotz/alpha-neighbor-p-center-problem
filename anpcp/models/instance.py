@@ -4,7 +4,7 @@ from random import randint
 import numpy as np
 from scipy import spatial
 
-from anpcp.models import Vertex
+from . import Vertex
 
 
 class Instance:
@@ -17,6 +17,7 @@ class Instance:
         self.p = p
         self.alpha = alpha
         self.vertexes = vertexes
+        self.n = len(vertexes)
         self.indexes = {v.index for v in self.vertexes}
         if with_distances:
             coords = [[v.x, v.y] for v in self.vertexes]
@@ -30,7 +31,7 @@ class Instance:
 
 
     @classmethod
-    def random(cls, n: int, p: int, alpha: int, x_max: int, y_max: int) -> 'Instance':
+    def random(cls, n: int, p: int, alpha: int, x_max: int = 10000, y_max: int = 10000) -> 'Instance':
         coords = set()
         while len(coords) < n:
             coords |= {

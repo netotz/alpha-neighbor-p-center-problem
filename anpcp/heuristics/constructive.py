@@ -1,7 +1,8 @@
 from typing import Set
 
-from anpcp.utils import eval_obj_func
-from anpcp.models import Instance
+from utils import eval_obj_func
+from models import Instance
+
 
 def pdp_based(instance: Instance, use_alpha_as_p: bool = False) -> Set[int]:
     solution = set(instance.get_farthest_indexes())

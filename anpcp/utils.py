@@ -3,7 +3,7 @@ from typing import Set
 
 import tsplib95
 
-from anpcp.models import Instance, Vertex
+from models import Instance, Vertex
 
 
 def read_instance(filename: str, p: int, alpha: int) -> Instance:
