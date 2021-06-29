@@ -5,7 +5,6 @@ from typing import Iterable, List, Tuple
 
 import matplotlib.pyplot as plt
 
-
 Point = Tuple[int, int]
 
 
