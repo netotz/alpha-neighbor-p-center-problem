@@ -26,6 +26,10 @@ class Instance:
                 [round(d) for d in row]
                 for row in distances
             ])
+            self.sorted_dist = [
+                sorted(enumerate(row), key=lambda c: c[1])[1:]
+                for row in self.distances
+            ]
         else:
             self.distances = None
 
