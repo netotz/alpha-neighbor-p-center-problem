@@ -23,7 +23,8 @@ def pdp_based(instance: Instance, use_alpha_as_p: bool = False) -> Set[int]:
 def greedy(instance: Instance) -> Set[int]:
     solution = pdp_based(instance, use_alpha_as_p=True)
     while len(solution) < instance.p:
-        index, dist = min((
+        index, dist = min(
+            (
                 (v, eval_obj_func(instance, solution | {v}))
                 for v in instance.indexes - solution
             ),
