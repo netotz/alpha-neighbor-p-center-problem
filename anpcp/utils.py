@@ -1,4 +1,3 @@
-from heapq import nsmallest
 from typing import Set
 
 import tsplib95
@@ -19,9 +18,6 @@ def read_instance(filename: str, p: int, alpha: int) -> Instance:
 
 def eval_obj_func(instance: Instance, solution: Set[int]) -> int:
     return max(
-        nsmallest(
-            instance.alpha,
-            (instance.get_dist(v, s) for s in solution)
-        )[-1]
+        instance.get_alphath(v, solution)[1]
         for v in instance.indexes - solution
     )
