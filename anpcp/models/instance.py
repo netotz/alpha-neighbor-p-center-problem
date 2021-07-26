@@ -61,8 +61,8 @@ class Instance:
         for node, dist in self.sorted_dist[fromindex - 1]:
             if node + 1 in solution:
                 alphath -= 1
-            if alphath == 0:
-                return node + 1, dist
+                if alphath == 0:
+                    return node + 1, dist
 
 
     def get_farthest_indexes(self) -> Tuple[int, int]:
@@ -70,3 +70,7 @@ class Instance:
             self.distances.argmax(),
             self.distances.shape
         )
+    
+
+    def get_parameters(self) -> Tuple[int, int, int]:
+        return self.n, self.p, self.alpha
