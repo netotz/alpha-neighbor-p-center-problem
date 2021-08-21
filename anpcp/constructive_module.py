@@ -1,5 +1,5 @@
 
-from anpcp.models.instance import Instance
+from models.instance import Instance
 from typing import List
 
 
