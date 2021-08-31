@@ -25,7 +25,10 @@ def greedy(instance: Instance) -> Set[int]:
     while len(solution) < instance.p:
         index, dist = min(
             (
-                (v, eval_obj_func(instance, solution | {v}))
+                (
+                    v,
+                    eval_obj_func(instance, solution | {v})[1]
+                )
                 for v in instance.indexes - solution
             ),
             key=lambda m: m[1]
