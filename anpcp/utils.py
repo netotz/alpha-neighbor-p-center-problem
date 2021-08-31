@@ -17,7 +17,9 @@ def read_instance(filename: str, p: int, alpha: int) -> Instance:
 
 def eval_obj_func(instance: Instance, solution: Set[int]) -> Tuple[int, int]:
     return max(
-        instance.get_alphath(v, solution)
-        for v in instance.indexes - solution,
+        (
+            instance.get_alphath(v, solution)
+            for v in instance.indexes - solution
+        ),
         key=lambda a: a[1]
     )
