@@ -44,7 +44,10 @@ class Instance:
             }
         return Instance(
             p, alpha,
-            [Vertex(i + 1, x, y) for i, (x, y) in enumerate(coords)]
+            [
+                Vertex(i + 1, x, y)
+                for i, (x, y) in enumerate(coords)
+            ]
         )
 
 
