@@ -1,4 +1,4 @@
-from anpcp.utils import eval_obj_func
+from utils import eval_obj_func
 from typing import Set
 
 from models import Instance
