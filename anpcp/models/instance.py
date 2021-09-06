@@ -3,6 +3,7 @@ from random import randint
 
 import numpy as np
 from scipy import spatial
+import tsplib95
 
 from . import Vertex
 
@@ -47,6 +48,18 @@ class Instance:
             [
                 Vertex(i + 1, x, y)
                 for i, (x, y) in enumerate(coords)
+            ]
+        )
+    
+
+    @classmethod
+    def read_from(cls, filename: str, p: int, alpha: int) -> 'Instance':
+        problem = tsplib95.load(filename)
+        nodes = problem.node_coords if problem.node_coords else problem.display_data
+        return Instance(
+            p, alpha, [
+                Vertex(i, int(x), int(y))
+                for i, (x, y) in nodes.items()
             ]
         )
 
