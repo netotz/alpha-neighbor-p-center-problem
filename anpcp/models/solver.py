@@ -88,38 +88,38 @@ class Solver:
 
 
     def interchange_k(self, is_first: bool, update: bool = True) -> Set[int]:
-        max_alphath = self.max_alphath
-        obj_func = self.objective_function
-        solution = set(self.solution)
+        best_solution = set(self.solution)
+        best_max_alphath = self.max_alphath
+        best_obj_func = self.objective_function
 
         is_improved = True
         while is_improved:
-            current_best_solution = set(solution)
-            current_best_alphath = max_alphath
-            current_best_obj_func = obj_func
+            current_solution = set(best_solution)
+            current_alphath = best_max_alphath
+            current_obj_func = best_obj_func
 
-            for index in self.instance.indexes - solution:
-                new_solution = solution - {max_alphath} | {index}
+            for index in self.instance.indexes - best_solution:
+                new_solution = best_solution - {best_max_alphath} | {index}
                 new_alphath, new_obj_func = self.eval_obj_func(new_solution)
 
-                if new_obj_func < current_best_obj_func:
-                    current_best_solution = set(new_solution)
-                    current_best_alphath = new_alphath
-                    current_best_obj_func = new_obj_func
+                if new_obj_func < current_obj_func:
+                    current_solution = set(new_solution)
+                    current_alphath = new_alphath
+                    current_obj_func = new_obj_func
 
                     if is_first:
                         break
 
             is_improved = False
-            if current_best_obj_func < obj_func:
-                solution = set(current_best_solution)
-                max_alphath = current_best_alphath
-                obj_func = current_best_obj_func
+            if current_obj_func < best_obj_func:
+                best_solution = set(current_solution)
+                best_max_alphath = current_alphath
+                best_obj_func = current_obj_func
                 is_improved = True
 
         if update:
-            self.solution = solution
-            self.max_alphath = max_alphath
-            self.objective_function = obj_func
+            self.solution = best_solution
+            self.max_alphath = best_max_alphath
+            self.objective_function = best_obj_func
 
-        return solution
+        return best_solution
