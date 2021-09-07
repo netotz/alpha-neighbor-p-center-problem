@@ -115,7 +115,10 @@ class Solver:
                 best_solution = set(current_solution)
                 best_max_alphath = current_alphath
                 best_obj_func = current_obj_func
+                
                 is_improved = True
+                if is_first:
+                    break
 
         if update:
             self.solution = best_solution
