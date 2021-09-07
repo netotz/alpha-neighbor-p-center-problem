@@ -92,12 +92,12 @@ class Solver:
         best_max_alphath = self.max_alphath
         best_obj_func = self.objective_function
 
+        current_solution = set(best_solution)
+        current_alphath = best_max_alphath
+        current_obj_func = best_obj_func
+
         is_improved = True
         while is_improved:
-            current_solution = set(best_solution)
-            current_alphath = best_max_alphath
-            current_obj_func = best_obj_func
-
             for index in self.instance.indexes - best_solution:
                 new_solution = best_solution - {best_max_alphath} | {index}
                 new_alphath, new_obj_func = self.eval_obj_func(new_solution)
@@ -110,15 +110,11 @@ class Solver:
                     if is_first:
                         break
 
-            is_improved = False
-            if current_obj_func < best_obj_func:
+            is_improved = current_obj_func < best_obj_func
+            if is_improved:
                 best_solution = set(current_solution)
                 best_max_alphath = current_alphath
                 best_obj_func = current_obj_func
-                
-                is_improved = True
-                if is_first:
-                    break
 
         if update:
             self.solution = best_solution
