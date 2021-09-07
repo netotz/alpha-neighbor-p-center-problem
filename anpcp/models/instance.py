@@ -72,15 +72,6 @@ class Instance:
         return self.distances[fromindex - 1][toindex - 1]
 
 
-    def get_alphath(self, fromindex: int, solution: Set[int]) -> Tuple[int, int]:
-        alphath = self.alpha
-        for node, dist in self.sorted_dist[fromindex - 1]:
-            if node + 1 in solution:
-                alphath -= 1
-                if alphath == 0:
-                    return node + 1, dist
-
-
     def get_farthest_indexes(self) -> Tuple[int, int]:
         return np.unravel_index(
             self.distances.argmax(),
