@@ -46,7 +46,7 @@ class Instance:
         return Instance(
             p, alpha,
             [
-                Vertex(i + 1, x, y)
+                Vertex(i, x, y)
                 for i, (x, y) in enumerate(coords)
             ]
         )
@@ -58,7 +58,7 @@ class Instance:
         nodes = problem.node_coords if problem.node_coords else problem.display_data
         return Instance(
             p, alpha, [
-                Vertex(i, int(x), int(y))
+                Vertex(i - 1, int(x), int(y))
                 for i, (x, y) in nodes.items()
             ]
         )
@@ -69,7 +69,7 @@ class Instance:
 
 
     def get_dist(self, fromindex: int, toindex: int) -> int:
-        return self.distances[fromindex - 1][toindex - 1]
+        return self.distances[fromindex][toindex]
 
 
     def get_farthest_indexes(self) -> Tuple[int, int]:

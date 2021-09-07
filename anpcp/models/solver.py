@@ -22,11 +22,11 @@ class Solver:
 
     def get_alphath(self, fromindex: int) -> Tuple[int, int]:
         alphath = self.instance.alpha
-        for node, dist in self.instance.sorted_dist[fromindex - 1]:
-            if node + 1 in self.solution:
+        for node, dist in self.instance.sorted_dist[fromindex]:
+            if node in self.solution:
                 alphath -= 1
                 if alphath == 0:
-                    return node + 1, dist
+                    return node, dist
 
 
     def eval_obj_func(self, another_solution: Set[int] = None) -> Tuple[int, int]:
