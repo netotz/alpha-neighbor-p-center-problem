@@ -1,5 +1,5 @@
 import random
-from typing import Set, Tuple
+from typing import List, Set, Tuple
 
 from . import Instance
 
@@ -27,6 +27,18 @@ class Solver:
                 alphath -= 1
                 if alphath == 0:
                     return node, dist
+
+
+    def sort_solution(self, another_solution: Set[int] = None) -> List[Tuple[int, int]]:
+        solution = another_solution if another_solution else self.solution
+        return sorted(
+            (
+                self.get_alphath(v)
+                for v in self.instance.indexes - solution
+            ),
+            key=lambda a: a[1],
+            reverse=True
+        )
 
 
     def eval_obj_func(self, another_solution: Set[int] = None) -> Tuple[int, int]:
@@ -98,23 +110,26 @@ class Solver:
 
         is_improved = True
         while is_improved:
-            for index in self.instance.indexes - best_solution:
-                new_solution = best_solution - {best_max_alphath} | {index}
-                new_alphath, new_obj_func = self.eval_obj_func(new_solution)
+            for selected, _ in self.sort_solution(best_solution):
+                for index in self.instance.indexes - best_solution:
+                    new_solution = best_solution - {selected} | {index}
+                    new_alphath, new_obj_func = self.eval_obj_func(new_solution)
 
-                if new_obj_func < current_obj_func:
-                    current_solution = set(new_solution)
-                    current_alphath = new_alphath
-                    current_obj_func = new_obj_func
+                    if new_obj_func < current_obj_func:
+                        current_solution = set(new_solution)
+                        current_alphath = new_alphath
+                        current_obj_func = new_obj_func
 
-                    if is_first:
-                        break
+                        if is_first:
+                            break
 
-            is_improved = current_obj_func < best_obj_func
-            if is_improved:
-                best_solution = set(current_solution)
-                best_max_alphath = current_alphath
-                best_obj_func = current_obj_func
+                is_improved = current_obj_func < best_obj_func
+                if is_improved:
+                    best_solution = set(current_solution)
+                    best_max_alphath = current_alphath
+                    best_obj_func = current_obj_func
+                    # explore another neighborhood
+                    break
 
         if update:
             self.solution = best_solution
