@@ -1,5 +1,6 @@
 import random
-from typing import List, Set, Tuple
+from typing import Set, Tuple
+from itertools import combinations
 
 from models import Instance
 
@@ -88,10 +89,12 @@ class Solver:
         return solution
 
 
-    def interchange_k(self, is_first: bool, update: bool = True) -> Set[int]:
+    def interchange(self, is_first: bool, k: int = 1, update: bool = True) -> Set[int]:
         best_solution = set(self.solution)
         best_max_alphath = self.max_alphath
         best_obj_func = self.objective_function
+
+        unselecteds = self.instance.indexes - best_solution
 
         current_solution = set(best_solution)
         current_alphath = best_max_alphath
@@ -99,9 +102,9 @@ class Solver:
 
         is_improved = True
         while is_improved:
-            for selected in best_solution:
-                for index in self.instance.indexes - best_solution:
-                    new_solution = best_solution - {selected} | {index}
+            for selecteds in combinations(best_solution, k):
+                for indexes in combinations(unselecteds, k):
+                    new_solution = best_solution - set(selecteds) | set(indexes)
                     new_alphath, new_obj_func = self.eval_obj_func(new_solution)
 
                     if new_obj_func < current_obj_func:
@@ -117,6 +120,8 @@ class Solver:
                     best_solution = set(current_solution)
                     best_max_alphath = current_alphath
                     best_obj_func = current_obj_func
+
+                    unselecteds = self.instance.indexes - best_solution
                     # explore another neighborhood
                     break
 
