@@ -1,7 +1,7 @@
 import random
 from typing import List, Set, Tuple
 
-from . import Instance
+from models import Instance
 
 
 class Solver:
@@ -20,37 +20,26 @@ class Solver:
         self.update_obj_func()
 
 
-    def get_alphath(self, fromindex: int) -> Tuple[int, int]:
+    def get_alphath(self, fromindex: int, another_solution: Set[int] = None) -> Tuple[int, int]:
+        solution = another_solution or self.solution
         alphath = self.instance.alpha
         for node, dist in self.instance.sorted_dist[fromindex]:
-            if node in self.solution:
+            if node in solution:
                 alphath -= 1
                 if alphath == 0:
                     return node, dist
 
 
-    def sort_solution(self, another_solution: Set[int] = None) -> List[Tuple[int, int]]:
-        solution = another_solution if another_solution else self.solution
-        return sorted(
-            (
-                self.get_alphath(v)
-                for v in self.instance.indexes - solution
-            ),
-            key=lambda a: a[1],
-            reverse=True
-        )
-
-
     def eval_obj_func(self, another_solution: Set[int] = None) -> Tuple[int, int]:
-        solution = another_solution if another_solution else self.solution
+        solution = another_solution or self.solution
         return max(
             (
-                self.get_alphath(v)
+                self.get_alphath(v, solution)
                 for v in self.instance.indexes - solution
             ),
             key=lambda a: a[1]
         )
-    
+
 
     def update_obj_func(self) -> None:
         self.max_alphath, self.objective_function = self.eval_obj_func()
@@ -110,7 +99,7 @@ class Solver:
 
         is_improved = True
         while is_improved:
-            for selected, _ in self.sort_solution(best_solution):
+            for selected in best_solution:
                 for index in self.instance.indexes - best_solution:
                     new_solution = best_solution - {selected} | {index}
                     new_alphath, new_obj_func = self.eval_obj_func(new_solution)
