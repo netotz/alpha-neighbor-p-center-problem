@@ -1,5 +1,7 @@
-from typing import List, Set, Tuple
+from typing import List, Sequence, Set, Tuple
 from random import randint
+from itertools import product
+from copy import deepcopy
 
 import numpy as np
 from scipy import spatial
@@ -36,7 +38,7 @@ class Instance:
 
 
     @classmethod
-    def random(cls, n: int, p: int, alpha: int, x_max: int = 10000, y_max: int = 10000) -> 'Instance':
+    def random(cls, n: int, p: int, alpha: int, x_max: int = 1000, y_max: int = 1000) -> 'Instance':
         coords = set()
         while len(coords) < n:
             coords |= {
@@ -81,3 +83,19 @@ class Instance:
 
     def get_parameters(self) -> Tuple[int, int, int]:
         return self.n, self.p, self.alpha
+
+
+def generate_instances(
+        amount: int,
+        n: int,
+        ps: Sequence[int],
+        alphas: Sequence[int]) -> List[Instance]:
+    instances = list()
+    for _ in range(amount):
+        base = Instance.random(n, 0, 0)
+        for p, alpha in product(ps, alphas):
+            instance = deepcopy(base)
+            instance.p = p
+            instance.alpha = alpha
+            instances.append(instance)
+    return instances
