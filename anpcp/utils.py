@@ -47,9 +47,9 @@ def get_stats_df(
         data,
         columns=(
             'n', 'p', 'alpha',
-            'constructive',
+            'heuristic',
             'OF', 'seconds',
-            'local search',
+            'heuristic',
             'OF', 'seconds'
         )
     )
