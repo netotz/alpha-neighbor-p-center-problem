@@ -1,5 +1,6 @@
 import timeit
 from typing import Any, Iterable, Mapping, Callable, Set
+
 from models.solver import Solver
 
 import pandas as pd
@@ -71,5 +72,22 @@ def get_stats_df(
             ('n', 'p', 'alpha', 'heuristic', 'OF', 'seconds')
         )]
     )
+
+    stats['improvement', 'absolute'] = stats['constructive', 'OF'] - stats['local search', 'OF']
+    stats['improvement', 'relative %'] = (stats['improvement', 'absolute'] / stats['constructive', 'OF']) * 100
+    improved = [
+        '', '', '', '', '', '', '',
+        int((stats['improvement', 'absolute'] > 0).count()),
+        '', '', ''
+    ]
+    average = [
+        stats[top, sub].mean()
+        if sub in {'OF', 'seconds', 'absolute', 'relative %'}
+        else ''
+        for top, sub in stats.columns
+    ]
+
+    stats.loc['improved'] = improved
+    stats.loc['average'] = average
 
     return stats
