@@ -63,11 +63,11 @@ def get_stats_df(
     )
 
     params = df.loc[:, ('n', 'p', 'alpha')]
-    # create multiindex
+    # create column multiindex
     params = pd.concat({'instance': params}, axis=1)
 
     stats = (
-        # create multiindexes
+        # create column multiindexes
         pd.concat(
             {
                 'constructive': df.iloc[:, [3, 4, 5]],
@@ -85,6 +85,18 @@ def get_stats_df(
 
     stats['improvement', 'absolute'] = stats['constructive', 'OF'] - stats['local search', 'OF']
     stats['improvement', 'relative %'] = (stats['improvement', 'absolute'] / stats['constructive', 'OF']) * 100
+
+    return stats
+
+
+def add_improvement_stats(dataframe: pd.DataFrame) -> pd.DataFrame:
+    '''
+    Adds how many improvements were made and the average of results.
+
+    `dataframe` needs to be the return value of `get_stats_df`,
+    but filtered by instance paramaters.
+    '''
+    stats = dataframe.copy()
     improved = [
         '', '', '', '', '', '', '',
         int((stats['improvement', 'absolute'] > 0).count()),
