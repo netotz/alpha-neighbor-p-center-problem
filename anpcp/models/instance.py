@@ -88,12 +88,16 @@ class Instance:
 def generate_instances(
         amount: int,
         n: int,
-        ps: Sequence[int],
-        alphas: Sequence[int]) -> List[Instance]:
+        p_values: Sequence[int],
+        alpha_values: Sequence[int]) -> List[Instance]:
+    '''
+    Randomly generates `amount * len(p_values) * len(alpha_values`
+    instances of size `n`. 
+    '''
     instances = list()
     for _ in range(amount):
         base = Instance.random(n, 0, 0)
-        for p, alpha in product(ps, alphas):
+        for p, alpha in product(p_values, alpha_values):
             instance = deepcopy(base)
             instance.p = p
             instance.alpha = alpha
