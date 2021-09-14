@@ -10,10 +10,9 @@ class Solver:
         self.instance = instance
         self.objective_function = -1
         self.max_alphath = -1
+        self.solution = set()
         if with_random_solution:
             self.set_random_solution()
-        else:
-            self.solution = set()
 
 
     def set_random_solution(self) -> None:
