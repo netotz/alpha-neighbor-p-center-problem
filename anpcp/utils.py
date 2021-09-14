@@ -43,7 +43,7 @@ def get_stats_df(
             local_search_time
         ))
 
-    return pd.DataFrame(
+    df = pd.DataFrame(
         data,
         columns=(
             'n', 'p', 'alpha',
@@ -53,3 +53,23 @@ def get_stats_df(
             'OF', 'seconds'
         )
     )
+
+    params = df.loc[:, ('n', 'p', 'alpha')]
+    params = pd.concat({'instance': params}, axis=1)
+
+    stats = (
+        pd.concat(
+            {
+                'constructive': df.iloc[:, [3, 4, 5]],
+                'local search': df.iloc[:, [6, 7, 8]]
+            },
+            axis=1
+        )
+        .join(params)
+        .loc[:, (
+            ('instance', 'constructive', 'local search'),
+            ('n', 'p', 'alpha', 'heuristic', 'OF', 'seconds')
+        )]
+    )
+
+    return stats
