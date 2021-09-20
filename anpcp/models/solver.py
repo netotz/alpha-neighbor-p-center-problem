@@ -140,14 +140,11 @@ class Solver:
 
 
 def generate_solvers(
-        instance: Instance,
-        p_values: Sequence[int],
+        instances: Sequence[Instance],
+        p_percentages: Sequence[float],
         alpha_values: Sequence[int]) -> List[Solver]:
-    '''
-    Generates `len(p_values) * len(alpha_values)` solvers for
-    the same `instance` object.
-    '''
     return [
-        Solver(instance, p, alpha)
-        for p, alpha in product(p_values, alpha_values)
+        Solver(instance, int(instance.n * p), alpha)
+        for p, alpha in product(p_percentages, alpha_values)
+        for instance in instances
     ]
