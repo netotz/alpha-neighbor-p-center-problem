@@ -44,7 +44,7 @@ class Instance:
             Vertex(i, x, y)
             for i, (x, y) in enumerate(coords)
         ])
-    
+
 
     @classmethod
     def read(cls, filename: str) -> 'Instance':
@@ -83,7 +83,3 @@ class Instance:
             self.distances.argmax(),
             self.distances.shape
         )
-    
-
-    def get_parameters(self) -> Tuple[int, int, int]:
-        return self.n, self.p, self.alpha
