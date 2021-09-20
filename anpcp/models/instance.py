@@ -1,8 +1,6 @@
 import os
-from typing import List, Sequence, Set, Tuple
+from typing import Sequence, Set, Tuple
 from random import randint
-from itertools import product
-from copy import deepcopy
 
 import numpy as np
 from scipy import spatial
@@ -89,23 +87,3 @@ class Instance:
 
     def get_parameters(self) -> Tuple[int, int, int]:
         return self.n, self.p, self.alpha
-
-
-def generate_instances(
-        amount: int,
-        n: int,
-        p_values: Sequence[int],
-        alpha_values: Sequence[int]) -> List[Instance]:
-    '''
-    Randomly generates `amount * len(p_values) * len(alpha_values`
-    instances of size `n`. 
-    '''
-    instances = list()
-    for _ in range(amount):
-        base = Instance.random(n, 0, 0)
-        for p, alpha in product(p_values, alpha_values):
-            instance = deepcopy(base)
-            instance.p = p
-            instance.alpha = alpha
-            instances.append(instance)
-    return instances

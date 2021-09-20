@@ -1,6 +1,6 @@
 import random
-from typing import Set, Tuple
-from itertools import combinations
+from typing import List, Sequence, Set, Tuple
+from itertools import combinations, product
 
 from models import Instance
 
@@ -137,3 +137,17 @@ class Solver:
             self.objective_function = best_obj_func
 
         return best_solution
+
+
+def generate_solvers(
+        instance: Instance,
+        p_values: Sequence[int],
+        alpha_values: Sequence[int]) -> List[Solver]:
+    '''
+    Generates `len(p_values) * len(alpha_values)` solvers for
+    the same `instance` object.
+    '''
+    return [
+        Solver(instance, p, alpha)
+        for p, alpha in product(p_values, alpha_values)
+    ]
