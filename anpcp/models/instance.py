@@ -14,12 +14,8 @@ from . import Vertex
 class Instance:
     def __init__(
             self,
-            p: int,
-            alpha: int,
-            vertexes: List[Vertex],
+            vertexes: Sequence[Vertex],
             with_distances: bool = True) -> None:
-        self.p = p
-        self.alpha = alpha
         self.vertexes = vertexes
         self.n = len(vertexes)
         self.indexes = {v.index for v in self.vertexes}
@@ -39,39 +35,35 @@ class Instance:
 
 
     @classmethod
-    def random(cls, n: int, p: int, alpha: int, x_max: int = 1000, y_max: int = 1000) -> 'Instance':
+    def random(cls, n: int, x_max: int = 1000, y_max: int = 1000) -> 'Instance':
         coords = set()
         while len(coords) < n:
             coords |= {
                 (randint(0, x_max), randint(0, y_max))
                 for _ in range(n - len(coords))
             }
-        return Instance(
-            p, alpha,
-            [
-                Vertex(i, x, y)
-                for i, (x, y) in enumerate(coords)
-            ]
-        )
+        return Instance([
+            Vertex(i, x, y)
+            for i, (x, y) in enumerate(coords)
+        ])
     
 
     @classmethod
-    def read(cls, filename: str, p: int, alpha: int) -> 'Instance':
+    def read(cls, filename: str) -> 'Instance':
         problem = tsplib95.load(filename)
         nodes = problem.node_coords if problem.node_coords else problem.display_data
-        return Instance(
-            p, alpha, [
-                Vertex(i - 1, int(x), int(y))
-                for i, (x, y) in nodes.items()
-            ]
-        )
-    
+        return Instance([
+            Vertex(i - 1, int(x), int(y))
+            for i, (x, y) in nodes.items()
+        ])
+
 
     def write(self, directory: str, id: int = 1) -> None:
         filename = f'anpcp{self.n}_{id}.tsp'
         filepath = os.path.join(directory, filename)
         with open(filepath, 'w') as file:
             file.write(f'NAME: {filename}\n')
+            file.write('TYPE: ANPCP\n')
             file.write(f'DIMENSION: {self.n}\n')
             file.write('EDGE_WEIGHT_TYPE: EUC_2D\n')
             file.write('NODE_COORD_SECTION\n')

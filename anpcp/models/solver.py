@@ -6,8 +6,15 @@ from models import Instance
 
 
 class Solver:
-    def __init__(self, instance: Instance, with_random_solution: bool = False) -> None:
+    def __init__(
+            self,
+            instance: Instance,
+            p: int,
+            alpha: int,
+            with_random_solution: bool = False) -> None:
         self.instance = instance
+        self.p = p
+        self.alpha = alpha
         self.objective_function = -1
         self.max_alphath = -1
         self.solution = set()
@@ -16,13 +23,13 @@ class Solver:
 
 
     def set_random_solution(self) -> None:
-        self.solution = set(random.sample(self.instance.indexes, self.instance.p))
+        self.solution = set(random.sample(self.instance.indexes, self.p))
         self.update_obj_func()
 
 
     def get_alphath(self, fromindex: int, another_solution: Set[int] = None) -> Tuple[int, int]:
         solution = another_solution or self.solution
-        alphath = self.instance.alpha
+        alphath = self.alpha
         for node, dist in self.instance.sorted_dist[fromindex]:
             if node in solution:
                 alphath -= 1
@@ -47,7 +54,7 @@ class Solver:
 
     def pdp_based(self, use_alpha_as_p: bool = False, update: bool = True) -> Set[int]:
         solution = set(self.instance.get_farthest_indexes())
-        p = self.instance.alpha if use_alpha_as_p else self.instance.p
+        p = self.alpha if use_alpha_as_p else self.p
         while len(solution) < p:
             index, dist = max((
                     (v, min(
@@ -68,7 +75,7 @@ class Solver:
 
     def greedy(self, update: bool = True) -> Set[int]:
         solution = self.pdp_based(use_alpha_as_p=True, update=False)
-        while len(solution) < self.instance.p:
+        while len(solution) < self.p:
             index, dist = min(
                 (
                     (
