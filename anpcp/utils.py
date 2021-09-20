@@ -43,8 +43,8 @@ def get_stats_df(
 
         data.append((
             solver.instance.n,
-            solver.instance.p,
-            solver.instance.alpha,
+            solver.p,
+            solver.alpha,
             constructive_name,
             constructive_of,
             constructive_time,
