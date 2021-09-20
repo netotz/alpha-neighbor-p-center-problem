@@ -1,3 +1,4 @@
+import os
 from typing import List, Sequence, Set, Tuple
 from random import randint
 from itertools import product
@@ -55,7 +56,7 @@ class Instance:
     
 
     @classmethod
-    def read_from(cls, filename: str, p: int, alpha: int) -> 'Instance':
+    def read(cls, filename: str, p: int, alpha: int) -> 'Instance':
         problem = tsplib95.load(filename)
         nodes = problem.node_coords if problem.node_coords else problem.display_data
         return Instance(
@@ -64,6 +65,19 @@ class Instance:
                 for i, (x, y) in nodes.items()
             ]
         )
+    
+
+    def write(self, directory: str, id: int = 1) -> None:
+        filename = f'anpcp{self.n}_{id}.tsp'
+        filepath = os.path.join(directory, filename)
+        with open(filepath, 'w') as file:
+            file.write(f'NAME: {filename}\n')
+            file.write(f'DIMENSION: {self.n}\n')
+            file.write('EDGE_WEIGHT_TYPE: EUC_2D\n')
+            file.write('NODE_COORD_SECTION\n')
+            for v in self.vertexes:
+                file.write(f'{v.index + 1} {v.x} {v.y}\n')
+            file.write('EOF\n')
 
 
     def get_indexes(self) -> Set[int]:
