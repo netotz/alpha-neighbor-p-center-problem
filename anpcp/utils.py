@@ -1,5 +1,5 @@
 import timeit
-from typing import Any, Iterable, Mapping, Callable, Optional, Set
+from typing import Any, Dict, Iterable, Mapping, Callable, Optional, Set
 
 from models.solver import Solver
 
@@ -99,7 +99,7 @@ def add_improvement_stats(dataframe: pd.DataFrame) -> pd.DataFrame:
     stats = dataframe.copy()
     improved = [
         '', '', '', '', '', '', '',
-        int((stats['improvement', 'absolute'] > 0).count()),
+        stats[stats['improvement', 'absolute'] > 0].count()[0],
         '', '', ''
     ]
     average = [
@@ -113,3 +113,22 @@ def add_improvement_stats(dataframe: pd.DataFrame) -> pd.DataFrame:
     stats.loc['average'] = average
 
     return stats
+
+
+def filter_dataframe(dataframe: pd.DataFrame) -> Dict[int, Any]:
+    return {
+        n: {
+            p: {
+                alpha: add_improvement_stats(
+                    dataframe[
+                        (dataframe['instance', 'n'] == n) &
+                        (dataframe['instance', 'p'] == p) &
+                        (dataframe['instance', 'alpha'] == alpha)
+                    ]
+                )
+                for alpha in dataframe['instance', 'alpha'].unique()
+            }
+            for p in dataframe['instance', 'p'].unique()
+        }
+        for n in dataframe['instance', 'n'].unique()
+    }
