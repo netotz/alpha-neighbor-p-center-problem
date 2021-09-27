@@ -1,5 +1,6 @@
+import sys
 import random
-from typing import List, Sequence, Set, Tuple
+from typing import ByteString, List, Sequence, Set, Tuple
 from itertools import combinations, product
 
 from models import Instance
@@ -81,7 +82,8 @@ class Solver:
 
 
     def greedy(self, update: bool = True) -> Set[int]:
-        solution = self.pdp_based(use_alpha_as_p=True, update=False)
+        solution = self.pdp(use_alpha_as_p=True, update=False)
+        remaining = self.instance.indexes - solution
         while len(solution) < self.p:
             index, dist = min(
                 (
@@ -89,11 +91,12 @@ class Solver:
                         v,
                         self.eval_obj_func(solution | {v})[1]
                     )
-                    for v in self.instance.indexes - solution
+                    for v in remaining
                 ),
                 key=lambda m: m[1]
             )
-            solution |= {index}
+            solution.add(index)
+            remaining.discard(index)
 
         if update:
             self.solution = solution
@@ -102,8 +105,13 @@ class Solver:
         return solution
 
 
-    def interchange(self, is_first: bool, k: int = 1, update: bool = True) -> Set[int]:
-        best_solution = set(self.solution)
+    def interchange(
+            self,
+            is_first: bool,
+            k: int = 1,
+            another_solution: Set[int] = None,
+            update: bool = True) -> Set[int]:
+        best_solution = another_solution or set(self.solution) 
         best_max_alphath = self.max_alphath
         best_obj_func = self.objective_function
 
@@ -143,6 +151,25 @@ class Solver:
             self.max_alphath = best_max_alphath
             self.objective_function = best_obj_func
 
+        return best_solution
+
+
+    def grasp(self, max_iters: int, beta: int = 0, update: bool = True) -> Set[int]:
+        i = 0
+        best_solution = set()
+        best_obj_func = sys.maxsize
+        while i < max_iters:
+            solution = self.pdp(beta=beta, update=False)
+            solution = self.interchange(
+                is_first=True,
+                another_solution=solution,
+                update=False
+            )
+            _, obj_func = self.eval_obj_func(solution)
+            if obj_func < best_obj_func:
+                best_obj_func = obj_func
+                best_solution = set(solution)
+            i += 1
         return best_solution
 
 
