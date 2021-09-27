@@ -52,19 +52,26 @@ class Solver:
         self.max_alphath, self.objective_function = self.eval_obj_func()
 
 
-    def pdp_based(self, use_alpha_as_p: bool = False, update: bool = True) -> Set[int]:
+    def pdp(self, use_alpha_as_p: bool = False, beta: int = 0, update: bool = True) -> Set[int]:
         solution = set(self.instance.get_farthest_indexes())
         p = self.alpha if use_alpha_as_p else self.p
+        remaining = self.instance.indexes - solution
         while len(solution) < p:
-            index, dist = max((
-                    (v, min(
-                        self.instance.get_dist(v, s) for s in solution
-                    ))
-                    for v in self.instance.indexes - solution
-                ),
-                key=lambda m: m[1]
-            )
-            solution |= {index}
+            costs = [
+                (v, min(
+                    self.instance.get_dist(v, s) for s in solution
+                ))
+                for v in remaining
+            ]
+            min_cost = min(costs, key=lambda c: c[1])[1]
+            max_cost = max(costs, key=lambda c: c[1])[1]
+            candidates = [
+                v for v, c in costs
+                if c >= max_cost - beta * (max_cost - min_cost)
+            ]
+            chosen = random.choice(candidates)
+            solution.add(chosen)
+            remaining.discard(chosen)
 
         if update:
             self.solution = solution
