@@ -16,8 +16,8 @@ class Solver:
         self.instance = instance
         self.p = p
         self.alpha = alpha
-        self.objective_function = -1
-        self.max_alphath = -1
+        self.objective_function = None
+        self.max_alphath = None
         self.solution = set()
         if with_random_solution:
             self.set_random_solution()
@@ -111,25 +111,28 @@ class Solver:
             k: int = 1,
             another_solution: Set[int] = None,
             update: bool = True) -> Set[int]:
-        best_solution = another_solution or set(self.solution) 
-        best_max_alphath = self.max_alphath
-        best_obj_func = self.objective_function
+        if another_solution:
+            best_solution = another_solution
+            best_max_alphath, best_obj_func = self.eval_obj_func(another_solution)
+        else:
+            best_solution = self.solution
+            best_max_alphath = self.max_alphath
+            best_obj_func = self.objective_function
 
-        unselecteds = self.instance.indexes - best_solution
-
-        current_solution = set(best_solution)
+        current_solution = best_solution
         current_alphath = best_max_alphath
         current_obj_func = best_obj_func
 
         is_improved = True
         while is_improved:
             for selecteds in combinations(best_solution, k):
+                unselecteds = self.instance.indexes - best_solution
                 for indexes in combinations(unselecteds, k):
                     new_solution = best_solution - set(selecteds) | set(indexes)
                     new_alphath, new_obj_func = self.eval_obj_func(new_solution)
 
                     if new_obj_func < current_obj_func:
-                        current_solution = set(new_solution)
+                        current_solution = new_solution
                         current_alphath = new_alphath
                         current_obj_func = new_obj_func
 
@@ -138,11 +141,10 @@ class Solver:
 
                 is_improved = current_obj_func < best_obj_func
                 if is_improved:
-                    best_solution = set(current_solution)
+                    best_solution = current_solution
                     best_max_alphath = current_alphath
                     best_obj_func = current_obj_func
 
-                    unselecteds = self.instance.indexes - best_solution
                     # explore another neighborhood
                     break
 
@@ -155,9 +157,10 @@ class Solver:
 
 
     def grasp(self, max_iters: int, beta: int = 0, update: bool = True) -> Set[int]:
-        i = 0
         best_solution = set()
         best_obj_func = sys.maxsize
+        best_max_alphath = -1
+        i = 0
         while i < max_iters:
             solution = self.pdp(beta=beta, update=False)
             solution = self.interchange(
@@ -165,11 +168,18 @@ class Solver:
                 another_solution=solution,
                 update=False
             )
-            _, obj_func = self.eval_obj_func(solution)
+            max_alphath, obj_func = self.eval_obj_func(solution)
             if obj_func < best_obj_func:
+                best_solution = solution
                 best_obj_func = obj_func
-                best_solution = set(solution)
+                best_max_alphath = max_alphath
             i += 1
+
+        if update:
+            self.solution = best_solution
+            self.objective_function = best_obj_func
+            self.max_alphath = best_max_alphath
+
         return best_solution
 
 
