@@ -53,7 +53,7 @@ class Solver:
         self.max_alphath, self.objective_function = self.eval_obj_func()
 
 
-    def pdp(self, use_alpha_as_p: bool = False, beta: int = 0, update: bool = True) -> Set[int]:
+    def pdp(self, use_alpha_as_p: bool = False, beta: float = 0, update: bool = True) -> Set[int]:
         solution = set(self.instance.get_farthest_indexes())
         p = self.alpha if use_alpha_as_p else self.p
         remaining = self.instance.indexes - solution
@@ -156,7 +156,14 @@ class Solver:
         return best_solution
 
 
-    def grasp(self, max_iters: int, beta: int = 0, update: bool = True) -> Set[int]:
+    def grasp(self, max_iters: int, beta: float = 0, update: bool = True) -> Set[int]:
+        '''
+        Applies the GRASP metaheuristic to the current solver.
+
+        `max_iters`: Maximum number of iterations until returning the best found solution.
+
+        `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
+        '''
         best_solution = set()
         best_obj_func = sys.maxsize
         best_max_alphath = -1
