@@ -1,12 +1,52 @@
+from dataclasses import dataclass, field
 import sys
 import random
-from typing import ByteString, List, Sequence, Set, Tuple
+from typing import List, Sequence, Set, Tuple
 from itertools import combinations, product
 
 from models import Instance
 
 
 class Solver:
+    @dataclass
+    class Solution:
+        _solver: 'Solver'
+        indexes: Set[int] = field(default_factory=set)
+        objective_function: int = sys.maxsize
+        max_alphath: int = -1
+
+
+        def set_random(self) -> None:
+            self.indexes = set(
+                random.sample(
+                    self._solver.instance.indexes,
+                    self._solver.p
+                )
+            )
+            self.update_obj_func()
+
+        def eval_obj_func(self) -> Tuple[int, int]:
+            def get_alphath(fromindex: int) -> Tuple[int, int]:
+                alphath = self._solver.alpha
+                for node, dist in self._solver.instance.sorted_dist[fromindex]:
+                    if node in self.indexes:
+                        alphath -= 1
+                        if alphath == 0:
+                            return node, dist
+
+            return max(
+                (
+                    get_alphath(v)
+                    for v in self._solver.instance.indexes - self.indexes
+                ),
+                key=lambda a: a[1]
+            )
+
+
+        def update_obj_func(self) -> None:
+            self.max_alphath, self.objective_function = self.eval_obj_func()
+
+
     def __init__(
             self,
             instance: Instance,
@@ -16,91 +56,65 @@ class Solver:
         self.instance = instance
         self.p = p
         self.alpha = alpha
-        self.objective_function = None
-        self.max_alphath = None
-        self.solution = set()
+        self.solution = Solver.Solution(self)
         if with_random_solution:
-            self.set_random_solution()
+            self.solution.set_random()
 
 
-    def set_random_solution(self) -> None:
-        self.solution = set(random.sample(self.instance.indexes, self.p))
-        self.update_obj_func()
+    def pdp(self, use_alpha_as_p: bool = False, beta: float = 0, update: bool = True) -> Solution:
+        solution = Solver.Solution(self)
+        solution.indexes = set(self.instance.get_farthest_indexes())
 
-
-    def get_alphath(self, fromindex: int, another_solution: Set[int] = None) -> Tuple[int, int]:
-        solution = another_solution or self.solution
-        alphath = self.alpha
-        for node, dist in self.instance.sorted_dist[fromindex]:
-            if node in solution:
-                alphath -= 1
-                if alphath == 0:
-                    return node, dist
-
-
-    def eval_obj_func(self, another_solution: Set[int] = None) -> Tuple[int, int]:
-        solution = another_solution or self.solution
-        return max(
-            (
-                self.get_alphath(v, solution)
-                for v in self.instance.indexes - solution
-            ),
-            key=lambda a: a[1]
-        )
-
-
-    def update_obj_func(self) -> None:
-        self.max_alphath, self.objective_function = self.eval_obj_func()
-
-
-    def pdp(self, use_alpha_as_p: bool = False, beta: float = 0, update: bool = True) -> Set[int]:
-        solution = set(self.instance.get_farthest_indexes())
         p = self.alpha if use_alpha_as_p else self.p
-        remaining = self.instance.indexes - solution
-        while len(solution) < p:
+        remaining = self.instance.indexes - solution.indexes
+
+        while len(solution.indexes) < p:
             costs = [
                 (v, min(
-                    self.instance.get_dist(v, s) for s in solution
+                    self.instance.get_dist(v, s) for s in solution.indexes
                 ))
                 for v in remaining
             ]
             min_cost = min(costs, key=lambda c: c[1])[1]
             max_cost = max(costs, key=lambda c: c[1])[1]
+
             candidates = [
                 v for v, c in costs
                 if c >= max_cost - beta * (max_cost - min_cost)
             ]
             chosen = random.choice(candidates)
-            solution.add(chosen)
+            solution.indexes.add(chosen)
             remaining.discard(chosen)
 
+        solution.update_obj_func()
         if update:
             self.solution = solution
-            self.update_obj_func()
 
         return solution
 
 
-    def greedy(self, update: bool = True) -> Set[int]:
+    def greedy(self, update: bool = True) -> Solution:
+        solution = Solver.Solution(self)
         solution = self.pdp(use_alpha_as_p=True, update=False)
-        remaining = self.instance.indexes - solution
-        while len(solution) < self.p:
+        remaining = self.instance.indexes - solution.indexes
+        while len(solution.indexes) < self.p:
             index, dist = min(
                 (
                     (
                         v,
-                        self.eval_obj_func(solution | {v})[1]
+                        # TODO: Refactor method
+                        solution.eval_obj_func(solution | {v})[1]
                     )
                     for v in remaining
                 ),
                 key=lambda m: m[1]
             )
-            solution.add(index)
+            solution.indexes.add(index)
             remaining.discard(index)
 
+        solution.update_obj_func()
         if update:
             self.solution = solution
-            self.update_obj_func()
 
         return solution
 
@@ -109,49 +123,40 @@ class Solver:
             self,
             is_first: bool,
             k: int = 1,
-            another_solution: Set[int] = None,
-            update: bool = True) -> Set[int]:
+            another_solution: Solution = None,
+            update: bool = True) -> Solution:
         if another_solution:
             best_solution = another_solution
-            best_max_alphath, best_obj_func = self.eval_obj_func(another_solution)
+            update = False
         else:
             best_solution = self.solution
-            best_max_alphath = self.max_alphath
-            best_obj_func = self.objective_function
 
         current_solution = best_solution
-        current_alphath = best_max_alphath
-        current_obj_func = best_obj_func
 
         is_improved = True
         while is_improved:
-            for selecteds in combinations(best_solution, k):
-                unselecteds = self.instance.indexes - best_solution
+            for selecteds in combinations(best_solution.indexes, k):
+                unselecteds = self.instance.indexes - best_solution.indexes
                 for indexes in combinations(unselecteds, k):
-                    new_solution = best_solution - set(selecteds) | set(indexes)
-                    new_alphath, new_obj_func = self.eval_obj_func(new_solution)
+                    new_solution = Solver.Solution(self)
+                    new_solution.indexes = best_solution.indexes - set(selecteds) | set(indexes)
+                    new_solution.update_obj_func()
 
-                    if new_obj_func < current_obj_func:
+                    if new_solution.objective_function < current_solution.objective_function:
                         current_solution = new_solution
-                        current_alphath = new_alphath
-                        current_obj_func = new_obj_func
 
                         if is_first:
                             break
 
-                is_improved = current_obj_func < best_obj_func
+                is_improved = current_solution.objective_function < best_solution.objective_function
                 if is_improved:
                     best_solution = current_solution
-                    best_max_alphath = current_alphath
-                    best_obj_func = current_obj_func
 
                     # explore another neighborhood
                     break
 
         if update:
             self.solution = best_solution
-            self.max_alphath = best_max_alphath
-            self.objective_function = best_obj_func
 
         return best_solution
 
@@ -164,28 +169,23 @@ class Solver:
 
         `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
         '''
-        best_solution = set()
-        best_obj_func = sys.maxsize
-        best_max_alphath = -1
+        best_solution = Solver.Solution(self)
         i = 0
         while i < max_iters:
-            solution = self.pdp(beta=beta, update=False)
-            solution = self.interchange(
+            current_solution = Solver.Solution(self)
+            current_solution = self.pdp(beta=beta, update=False)
+            current_solution = self.interchange(
                 is_first=True,
-                another_solution=solution,
-                update=False
+                another_solution=current_solution
             )
-            max_alphath, obj_func = self.eval_obj_func(solution)
-            if obj_func < best_obj_func:
-                best_solution = solution
-                best_obj_func = obj_func
-                best_max_alphath = max_alphath
+            current_solution.update_obj_func()
+
+            if current_solution.objective_function < best_solution.objective_function:
+                best_solution = current_solution
             i += 1
 
         if update:
             self.solution = best_solution
-            self.objective_function = best_obj_func
-            self.max_alphath = best_max_alphath
 
         return best_solution
 
