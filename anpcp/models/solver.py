@@ -10,10 +10,15 @@ from models import Instance
 class Solver:
     @dataclass
     class Solution:
-        _solver: 'Solver'
+        _solver: 'Solver' = field(repr=False)
         indexes: Set[int] = field(default_factory=set)
-        objective_function: int = sys.maxsize
-        max_alphath: int = -1
+        objective_function: int = field(init=False, default=sys.maxsize)
+        max_alphath: int = field(init=False, default=-1)
+
+
+        def __post_init__(self):
+            if self.indexes:
+                self.update_obj_func()
 
 
         def set_random(self) -> None:
@@ -53,6 +58,7 @@ class Solver:
             p: int,
             alpha: int,
             with_random_solution: bool = False) -> None:
+
         self.instance = instance
         self.p = p
         self.alpha = alpha
@@ -62,8 +68,10 @@ class Solver:
 
 
     def pdp(self, use_alpha_as_p: bool = False, beta: float = 0, update: bool = True) -> Solution:
-        solution = Solver.Solution(self)
-        solution.indexes = set(self.instance.get_farthest_indexes())
+        solution = Solver.Solution(
+            self,
+            set(self.instance.get_farthest_indexes())
+        )
 
         p = self.alpha if use_alpha_as_p else self.p
         remaining = self.instance.indexes - solution.indexes
@@ -94,9 +102,9 @@ class Solver:
 
 
     def greedy(self, update: bool = True) -> Solution:
-        solution = Solver.Solution(self)
         solution = self.pdp(use_alpha_as_p=True, update=False)
         remaining = self.instance.indexes - solution.indexes
+
         while len(solution.indexes) < self.p:
             index, dist = min(
                 (
@@ -125,6 +133,7 @@ class Solver:
             k: int = 1,
             another_solution: Solution = None,
             update: bool = True) -> Solution:
+
         if another_solution:
             best_solution = another_solution
             update = False
@@ -138,20 +147,19 @@ class Solver:
             for selecteds in combinations(best_solution.indexes, k):
                 unselecteds = self.instance.indexes - best_solution.indexes
                 for indexes in combinations(unselecteds, k):
-                    new_solution = Solver.Solution(self)
-                    new_solution.indexes = best_solution.indexes - set(selecteds) | set(indexes)
-                    new_solution.update_obj_func()
+                    new_solution = Solver.Solution(
+                        self,
+                        best_solution.indexes - set(selecteds) | set(indexes)
+                    )
 
                     if new_solution.objective_function < current_solution.objective_function:
                         current_solution = new_solution
-
                         if is_first:
                             break
 
                 is_improved = current_solution.objective_function < best_solution.objective_function
                 if is_improved:
                     best_solution = current_solution
-
                     # explore another neighborhood
                     break
 
@@ -172,13 +180,11 @@ class Solver:
         best_solution = Solver.Solution(self)
         i = 0
         while i < max_iters:
-            current_solution = Solver.Solution(self)
             current_solution = self.pdp(beta=beta, update=False)
             current_solution = self.interchange(
                 is_first=True,
                 another_solution=current_solution
             )
-            current_solution.update_obj_func()
 
             if current_solution.objective_function < best_solution.objective_function:
                 best_solution = current_solution
