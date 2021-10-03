@@ -58,6 +58,7 @@ class Solver:
     alpha: int
     with_random_solution: bool = field(repr=False, default=False)
     solution: Solution = field(init=False)
+    history: List[Solution] = field(init=False, default_factory=list)
 
 
     def __post_init__(self):
@@ -177,6 +178,7 @@ class Solver:
         `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
         '''
         best_solution = Solver.Solution(self)
+
         i = 0
         while i < max_iters:
             current_solution = self.pdp(beta=beta, update=False)
@@ -184,6 +186,7 @@ class Solver:
                 is_first=True,
                 another_solution=current_solution
             )
+            self.history.append(current_solution)
 
             if current_solution.objective_function < best_solution.objective_function:
                 best_solution = current_solution
