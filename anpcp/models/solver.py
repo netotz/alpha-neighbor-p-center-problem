@@ -3,6 +3,7 @@ import sys
 import random
 from typing import List, Sequence, Set, Tuple
 from itertools import combinations, product
+import timeit
 
 from models import Instance
 
@@ -15,6 +16,7 @@ class Solver:
         indexes: Set[int] = field(default_factory=set)
         objective_function: int = field(init=False, default=sys.maxsize)
         max_alphath: int = field(init=False, default=-1)
+        time: float = field(init=False, repr=False, default=-1)
 
 
         def __post_init__(self):
@@ -58,7 +60,7 @@ class Solver:
     alpha: int
     with_random_solution: bool = field(repr=False, default=False)
     solution: Solution = field(init=False)
-    history: List[Solution] = field(init=False, default_factory=list)
+    history: List[Solution] = field(init=False, repr=False, default_factory=list)
 
 
     def __post_init__(self):
@@ -181,15 +183,20 @@ class Solver:
 
         i = 0
         while i < max_iters:
+            start = timeit.default_timer()
+
             current_solution = self.pdp(beta=beta, update=False)
             current_solution = self.interchange(
                 is_first=True,
                 another_solution=current_solution
             )
+
+            current_solution.time = timeit.default_timer() - start
             self.history.append(current_solution)
 
             if current_solution.objective_function < best_solution.objective_function:
                 best_solution = current_solution
+
             i += 1
 
         if update:
