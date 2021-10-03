@@ -7,6 +7,7 @@ from itertools import combinations, product
 from models import Instance
 
 
+@dataclass
 class Solver:
     @dataclass
     class Solution:
@@ -52,18 +53,16 @@ class Solver:
             self.max_alphath, self.objective_function = self.eval_obj_func()
 
 
-    def __init__(
-            self,
-            instance: Instance,
-            p: int,
-            alpha: int,
-            with_random_solution: bool = False) -> None:
+    instance: Instance
+    p: int
+    alpha: int
+    with_random_solution: bool = field(repr=False, default=False)
+    solution: Solution = field(init=False)
 
-        self.instance = instance
-        self.p = p
-        self.alpha = alpha
+
+    def __post_init__(self):
         self.solution = Solver.Solution(self)
-        if with_random_solution:
+        if self.with_random_solution:
             self.solution.set_random()
 
 
