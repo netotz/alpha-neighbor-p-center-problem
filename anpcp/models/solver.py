@@ -20,7 +20,7 @@ class Solver:
 
 
         def __post_init__(self):
-            if self.indexes:
+            if self.indexes and len(self.indexes) >= self._solver.alpha:
                 self.update_obj_func()
 
 
@@ -33,6 +33,7 @@ class Solver:
             )
             self.update_obj_func()
 
+
         def eval_obj_func(self) -> Tuple[int, int]:
             def get_alphath(fromindex: int) -> Tuple[int, int]:
                 alphath = self._solver.alpha
@@ -41,7 +42,6 @@ class Solver:
                         alphath -= 1
                         if alphath == 0:
                             return node, dist
-
             return max(
                 (
                     get_alphath(v)
@@ -81,7 +81,8 @@ class Solver:
         while len(solution.indexes) < p:
             costs = [
                 (v, min(
-                    self.instance.get_dist(v, s) for s in solution.indexes
+                    self.instance.get_dist(v, s)
+                    for s in solution.indexes
                 ))
                 for v in remaining
             ]
