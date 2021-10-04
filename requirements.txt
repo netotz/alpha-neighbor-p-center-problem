@@ -3,3 +3,4 @@ matplotlib===3.4.1
 scipy===1.6.3
 numpy===1.20.2
 tsplib95===0.7.1
+ipykernel===5.5.3
