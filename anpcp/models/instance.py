@@ -1,5 +1,6 @@
+from dataclasses import dataclass, field
 import os
-from typing import Sequence, Set, Tuple
+from typing import List, Set, Tuple
 from random import randint
 
 import numpy as np
@@ -9,27 +10,29 @@ import tsplib95
 from . import Vertex
 
 
+@dataclass
 class Instance:
-    def __init__(
-            self,
-            vertexes: Sequence[Vertex],
-            with_distances: bool = True) -> None:
-        self.vertexes = vertexes
-        self.n = len(vertexes)
+    vertexes: List[Vertex] = field(repr=False)
+    n: int = field(init=False)
+    indexes: Set[int] = field(init=False, default=None, repr=False)
+    distances: np.ndarray = field(init=False, default=None, repr=False)
+    sorted_dist: np.ndarray = field(init=False, default=None, repr=False)
+
+
+    def __post_init__(self) -> None:
+        self.n = len(self.vertexes)
         self.indexes = {v.index for v in self.vertexes}
-        if with_distances:
-            coords = [[v.x, v.y] for v in self.vertexes]
-            distances = spatial.distance_matrix(coords, coords)
-            self.distances = np.array([
-                [round(d) for d in row]
-                for row in distances
-            ])
-            self.sorted_dist = [
-                sorted(enumerate(row), key=lambda c: c[1])[1:]
-                for row in self.distances
-            ]
-        else:
-            self.distances = None
+
+        coords = [[v.x, v.y] for v in self.vertexes]
+        distances = spatial.distance_matrix(coords, coords)
+        self.distances = np.matrix([
+            [round(d) for d in row]
+            for row in distances
+        ])
+        self.sorted_dist = [
+            sorted(enumerate(row), key=lambda c: c[1])[1:]
+            for row in self.distances
+        ]
 
 
     @classmethod
@@ -68,10 +71,6 @@ class Instance:
             for v in self.vertexes:
                 file.write(f'{v.index + 1} {v.x} {v.y}\n')
             file.write('EOF\n')
-
-
-    def get_indexes(self) -> Set[int]:
-        return {v.index for v in self.vertexes}
 
 
     def get_dist(self, fromindex: int, toindex: int) -> int:
