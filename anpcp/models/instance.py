@@ -24,10 +24,9 @@ class Instance:
         self.indexes = {v.index for v in self.vertexes}
 
         coords = [[v.x, v.y] for v in self.vertexes]
-        distances = spatial.distance_matrix(coords, coords)
-        self.distances = np.matrix([
+        self.distances = np.array([
             [round(d) for d in row]
-            for row in distances
+            for row in spatial.distance_matrix(coords, coords)
         ])
         self.sorted_dist = [
             sorted(enumerate(row), key=lambda c: c[1])[1:]
