@@ -1,6 +1,7 @@
 pytest===6.2.3
-matplotlib===3.4.1
-scipy===1.6.3
-numpy===1.20.2
+matplotlib===3.4.3
+scipy===1.7.1
+# https://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy when using PyPy
+numpy===1.21.2
 tsplib95===0.7.1
-ipykernel===5.5.3
+ipykernel===6.4.1
