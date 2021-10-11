@@ -226,6 +226,7 @@ class Solver:
             color='tab:blue',
             label='Clients',
             linewidths=0.3,
+            alpha=0.8,
             edgecolors='black'
         )
         ax.scatter(
@@ -234,7 +235,7 @@ class Solver:
             color='red',
             label='Facilities',
             linewidths=0.3,
-            alpha=0.9,
+            alpha=0.8,
             edgecolors='black'
         )
 
@@ -254,6 +255,7 @@ class Solver:
             )
 
         ax.legend(loc=(1.01, 0))
+        fig.set_dpi(500)
         plt.show()
 
 
