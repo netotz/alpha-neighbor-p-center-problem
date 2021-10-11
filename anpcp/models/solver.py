@@ -35,17 +35,19 @@ class Solver:
             self.update_obj_func()
 
 
+        def get_alphath(self, fromindex: int) -> Tuple[int, int]:
+            alphath = self._solver.alpha
+            for node, dist in self._solver.instance.sorted_dist[fromindex]:
+                if node in self.indexes:
+                    alphath -= 1
+                    if alphath == 0:
+                        return node, dist
+
+
         def eval_obj_func(self) -> Tuple[int, int]:
-            def get_alphath(fromindex: int) -> Tuple[int, int]:
-                alphath = self._solver.alpha
-                for node, dist in self._solver.instance.sorted_dist[fromindex]:
-                    if node in self.indexes:
-                        alphath -= 1
-                        if alphath == 0:
-                            return node, dist
             return max(
                 (
-                    get_alphath(v)
+                    self.get_alphath(v)
                     for v in self._solver.instance.indexes - self.indexes
                 ),
                 key=lambda a: a[1]
@@ -208,6 +210,8 @@ class Solver:
 
 
     def plot(self) -> None:
+        fig, ax = plt.subplots()
+
         clients = list()
         facilities = list()
         for v in self.instance.vertexes:
@@ -216,11 +220,10 @@ class Solver:
             else:
                 clients.append(v)
 
-        fig, ax = plt.subplots()
         ax.scatter(
             [c.x for c in clients],
             [c.y for c in clients],
-            color='cyan',
+            color='tab:blue',
             label='Clients',
             linewidths=0.3,
             edgecolors='black'
@@ -231,10 +234,26 @@ class Solver:
             color='red',
             label='Facilities',
             linewidths=0.3,
+            alpha=0.9,
             edgecolors='black'
         )
 
-        ax.legend()
+        for c in clients:
+            fi, dist = self.solution.get_alphath(c.index)
+            facility = next(f for f in facilities if f.index == fi)
+            color = ('orange'
+                if fi == self.solution.max_alphath and
+                    dist == self.solution.objective_function
+                else 'gray')
+            ax.plot(
+                (c.x, facility.x),
+                (c.y, facility.y),
+                color=color,
+                linestyle=':',
+                alpha=0.5
+            )
+
+        ax.legend(loc=(1.01, 0))
         plt.show()
 
 
