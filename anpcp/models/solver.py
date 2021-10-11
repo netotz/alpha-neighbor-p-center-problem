@@ -5,6 +5,8 @@ from typing import List, Sequence, Set, Tuple
 from itertools import combinations, product
 import timeit
 
+import matplotlib.pyplot as plt
+
 from models import Instance
 
 
@@ -17,7 +19,6 @@ class Solver:
         objective_function: int = field(init=False, default=sys.maxsize)
         max_alphath: int = field(init=False, default=-1)
         time: float = field(init=False, repr=False, default=-1)
-
 
         def __post_init__(self):
             if self.indexes and len(self.indexes) >= self._solver.alpha:
@@ -204,6 +205,37 @@ class Solver:
             self.solution = best_solution
 
         return best_solution
+
+
+    def plot(self) -> None:
+        clients = list()
+        facilities = list()
+        for v in self.instance.vertexes:
+            if v.index in self.solution.indexes:
+                facilities.append(v)
+            else:
+                clients.append(v)
+
+        fig, ax = plt.subplots()
+        ax.scatter(
+            [c.x for c in clients],
+            [c.y for c in clients],
+            color='cyan',
+            label='Clients',
+            linewidths=0.3,
+            edgecolors='black'
+        )
+        ax.scatter(
+            [f.x for f in facilities],
+            [f.y for f in facilities],
+            color='red',
+            label='Facilities',
+            linewidths=0.3,
+            edgecolors='black'
+        )
+
+        ax.legend()
+        plt.show()
 
 
 def generate_solvers(
