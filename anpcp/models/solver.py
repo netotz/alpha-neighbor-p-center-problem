@@ -209,7 +209,7 @@ class Solver:
         return best_solution
 
 
-    def plot(self) -> None:
+    def plot(self, axis: bool = True) -> None:
         fig, ax = plt.subplots()
 
         clients = list()
@@ -256,6 +256,9 @@ class Solver:
 
         ax.legend(loc=(1.01, 0))
         fig.set_dpi(500)
+
+        if not axis:
+            ax.set_axis_off()
         plt.show()
 
 
