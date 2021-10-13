@@ -224,7 +224,7 @@ class Solver:
             [c.x for c in clients],
             [c.y for c in clients],
             color='tab:blue',
-            label='Clients',
+            label='Demand points',
             linewidths=0.3,
             alpha=0.8,
             edgecolors='black'
@@ -233,7 +233,7 @@ class Solver:
             [f.x for f in facilities],
             [f.y for f in facilities],
             color='red',
-            label='Facilities',
+            label='Centers',
             linewidths=0.3,
             alpha=0.8,
             edgecolors='black'
@@ -255,7 +255,7 @@ class Solver:
             )
 
         ax.legend(loc=(1.01, 0))
-        fig.set_dpi(500)
+        fig.set_dpi(250)
 
         if not axis:
             ax.set_axis_off()
@@ -268,6 +268,5 @@ def generate_solvers(
         alpha_values: Sequence[int]) -> List[Solver]:
     return [
         Solver(instance, int(instance.n * p), alpha)
-        for p, alpha in product(p_percentages, alpha_values)
-        for instance in instances
+        for instance, p, alpha in product(instances, p_percentages, alpha_values)
     ]
