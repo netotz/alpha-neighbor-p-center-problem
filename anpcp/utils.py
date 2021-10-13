@@ -13,6 +13,8 @@ def get_stats_df(
             args: Mapping[str, Any]
         ) -> pd.DataFrame:
     '''
+    TODO: Refactor to include Solution class.
+
     Formats the statistics of each solver as a DataFrame.
 
     Both `constructive` and `local_search` need to be a method of `Solver` class,
