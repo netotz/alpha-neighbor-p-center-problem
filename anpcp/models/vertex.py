@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Tuple
 import math
 
+
 @dataclass
 class Vertex:
     index: int
