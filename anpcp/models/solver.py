@@ -6,6 +6,7 @@ from itertools import combinations, product
 import timeit
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from models import Instance
 
@@ -17,12 +18,19 @@ class Solver:
         _solver: 'Solver' = field(repr=False)
         indexes: Set[int] = field(default_factory=set)
         objective_function: int = field(init=False, default=sys.maxsize)
+        allocations: np.ndarray = field(init=False, default=None)
         max_alphath: int = field(init=False, default=-1)
         time: float = field(init=False, repr=False, default=-1)
 
+
         def __post_init__(self):
-            if self.indexes and len(self.indexes) >= self._solver.alpha:
-                self.update_obj_func()
+            n = self._solver.instance.n
+            self.allocations = np.zeros((n, n), dtype=int)
+
+            if self.indexes:
+                self.allocate()
+                if len(self.indexes) >= self._solver.alpha:
+                    self.update_obj_func()
 
 
         def set_random(self) -> None:
@@ -35,22 +43,34 @@ class Solver:
             self.update_obj_func()
 
 
-        def get_alphath(self, fromindex: int) -> Tuple[int, int]:
-            alphath = self._solver.alpha
+        def allocate(self):
+            alpha = self._solver.alpha
+            for index in self._solver.instance.indexes:
+                for nth in (alpha, alpha + 1):
+                    closest, dist = self.get_n_closest(nth, index)
+                    self.allocations[index, closest] = nth
+
+
+        def get_n_closest(self, n: int, fromindex: int) -> Tuple[int, int]:
+            nth = n
             for node, dist in self._solver.instance.sorted_dist[fromindex]:
                 if node in self.indexes:
-                    alphath -= 1
-                    if alphath == 0:
+                    nth -= 1
+                    if nth == 0:
                         return node, dist
 
 
+        def get_alphath(self, fromindex: int) -> Tuple[int, int]:
+            return self.get_n_closest(self._solver.alpha, fromindex)
+
+
         def eval_obj_func(self) -> Tuple[int, int]:
+            n = self.allocations.shape[0]
             return max(
-                (
-                    self.get_alphath(v)
-                    for v in self._solver.instance.indexes - self.indexes
-                ),
-                key=lambda a: a[1]
+                self._solver.instance.distances[i, j]
+                if self.allocations[i, j] == self._solver.alpha else 0
+                for i in range(n)
+                for j in range(n)
             )
 
 
