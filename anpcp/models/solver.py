@@ -76,6 +76,17 @@ class Solver:
 
         def update_obj_func(self) -> None:
             self.max_alphath, self.objective_function = self.eval_obj_func()
+        
+
+        def insert(self, facility: int) -> None:
+            self.indexes.add(facility)
+
+
+        def remove(self, facility: int) -> None:
+            self.indexes.discard(facility)
+            for i in self._solver.instance.indexes:
+                self.allocations[facility, i] = 0
+                self.allocations[i, facility] = 0
 
 
     instance: Instance
