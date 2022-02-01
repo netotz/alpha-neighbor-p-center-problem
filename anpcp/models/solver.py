@@ -16,7 +16,7 @@ class Solver:
     @dataclass
     class Solution:
         _solver: 'Solver' = field(repr=False)
-        indexes: Set[int] = field(default_factory=set)
+        open_facilities: Set[int] = field(default_factory=set)
         objective_function: int = field(init=False, default=sys.maxsize)
         allocations: np.ndarray = field(init=False, default=None)
         max_alphath: int = field(init=False, default=-1)
@@ -25,18 +25,19 @@ class Solver:
 
         def __post_init__(self):
             n = self._solver.instance.n
-            self.allocations = np.zeros((n, n), dtype=int)
+            m = self._solver.instance.m
+            self.allocations = np.zeros((n, m), dtype=int)
 
-            if self.indexes:
+            if self.open_facilities:
                 self.allocate()
-                if len(self.indexes) >= self._solver.alpha:
+                if len(self.open_facilities) >= self._solver.alpha:
                     self.update_obj_func()
 
 
         def set_random(self) -> None:
-            self.indexes = set(
+            self.open_facilities = set(
                 random.sample(
-                    self._solver.instance.indexes,
+                    self._solver.instance.facilities_indexes,
                     self._solver.p
                 )
             )
@@ -45,32 +46,32 @@ class Solver:
 
         def allocate(self):
             alpha = self._solver.alpha
-            for index in self._solver.instance.indexes:
+            for customer in self._solver.instance.customers_indexes:
                 for nth in (alpha, alpha + 1):
-                    closest, dist = self.get_n_closest(nth, index)
-                    self.allocations[index, closest] = nth
+                    closest, dist = self.get_nth_closest(customer, nth)
+                    self.allocations[customer, closest] = nth
 
 
-        def get_n_closest(self, n: int, fromindex: int) -> Tuple[int, int]:
-            nth = n
-            for node, dist in self._solver.instance.sorted_distances[fromindex]:
-                if node in self.indexes:
-                    nth -= 1
-                    if nth == 0:
-                        return node, dist
+        def get_nth_closest(self, fromindex: int, nth: int) -> Tuple[int, int]:
+            n = nth
+            for facility, distance in self._solver.instance.sorted_distances[fromindex]:
+                if facility in self.open_facilities:
+                    n -= 1
+                    if n == 0:
+                        return facility, distance
 
 
         def get_alphath(self, fromindex: int) -> Tuple[int, int]:
-            return self.get_n_closest(self._solver.alpha, fromindex)
+            return self.get_nth_closest(fromindex, self._solver.alpha)
 
 
         def eval_obj_func(self) -> Tuple[int, int]:
-            n = self.allocations.shape[0]
+            n, m = self.allocations.shape
             return max(
-                self._solver.instance.distances[i, j]
-                if self.allocations[i, j] == self._solver.alpha else 0
-                for i in range(n)
-                for j in range(n)
+                self._solver.instance.distances[c, f]
+                if self.allocations[c, f] == self._solver.alpha else 0
+                for c in range(n)
+                for f in range(m)
             )
 
 
@@ -79,14 +80,13 @@ class Solver:
 
 
         def insert(self, facility: int) -> None:
-            self.indexes.add(facility)
+            self.open_facilities.add(facility)
 
 
         def remove(self, facility: int) -> None:
-            self.indexes.discard(facility)
-            for i in self._solver.instance.indexes:
-                self.allocations[facility, i] = 0
-                self.allocations[i, facility] = 0
+            self.open_facilities.discard(facility)
+            for customer in self._solver.instance.customers_indexes:
+                self.allocations[customer, facility] = 0
 
 
     instance: Instance
@@ -110,13 +110,13 @@ class Solver:
         )
 
         p = self.alpha if use_alpha_as_p else self.p
-        remaining = self.instance.indexes - solution.indexes
+        remaining = self.instance.indexes - solution.open_facilities
 
-        while len(solution.indexes) < p:
+        while len(solution.open_facilities) < p:
             costs = [
                 (v, min(
                     self.instance.get_distance(v, s)
-                    for s in solution.indexes
+                    for s in solution.open_facilities
                 ))
                 for v in remaining
             ]
@@ -128,7 +128,7 @@ class Solver:
                 if c >= max_cost - beta * (max_cost - min_cost)
             ]
             chosen = random.choice(candidates)
-            solution.indexes.add(chosen)
+            solution.open_facilities.add(chosen)
             remaining.discard(chosen)
 
         solution.update_obj_func()
@@ -140,9 +140,9 @@ class Solver:
 
     def greedy(self, update: bool = True) -> Solution:
         solution = self.pdp(use_alpha_as_p=True, update=False)
-        remaining = self.instance.indexes - solution.indexes
+        remaining = self.instance.indexes - solution.open_facilities
 
-        while len(solution.indexes) < self.p:
+        while len(solution.open_facilities) < self.p:
             index, dist = min(
                 (
                     (
@@ -154,7 +154,7 @@ class Solver:
                 ),
                 key=lambda m: m[1]
             )
-            solution.indexes.add(index)
+            solution.open_facilities.add(index)
             remaining.discard(index)
 
         solution.update_obj_func()
@@ -181,12 +181,12 @@ class Solver:
 
         is_improved = True
         while is_improved:
-            for selecteds in combinations(best_solution.indexes, k):
-                unselecteds = self.instance.indexes - best_solution.indexes
+            for selecteds in combinations(best_solution.open_facilities, k):
+                unselecteds = self.instance.indexes - best_solution.open_facilities
                 for indexes in combinations(unselecteds, k):
                     new_solution = Solver.Solution(
                         self,
-                        best_solution.indexes - set(selecteds) | set(indexes)
+                        best_solution.open_facilities - set(selecteds) | set(indexes)
                     )
 
                     if new_solution.objective_function < current_solution.objective_function:
@@ -246,7 +246,7 @@ class Solver:
         clients = list()
         facilities = list()
         for v in self.instance.vertexes:
-            if v.index in self.solution.indexes:
+            if v.index in self.solution.open_facilities:
                 facilities.append(v)
             else:
                 clients.append(v)
