@@ -40,12 +40,15 @@ class Instance:
     @classmethod
     def random(cls, n: int, m: int, x_max: int = 1000, y_max: int = 1000) -> 'Instance':
         distinct_coords = set()
+        total = n + m
 
-        while len(distinct_coords) < n + m:
+        while len(distinct_coords) < total:
             distinct_coords |= {
                 (randint(0, x_max), randint(0, y_max))
-                for _ in range(n - len(distinct_coords))
+                for _ in range(total - len(distinct_coords))
             }
+
+        distinct_coords = list(distinct_coords)
 
         # each list has its own enumeration
         customers = [
