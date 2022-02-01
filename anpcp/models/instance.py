@@ -14,6 +14,8 @@ from . import Vertex
 class Instance:
     customers: List[Vertex] = field(repr=False)
     facilities: List[Vertex] = field(repr=False)
+    n: int = field(init=False)
+    m: int = field(init=False)
     customers_indexes: Set[int] = field(init=False, default=None, repr=False)
     facilities_indexes: Set[int] = field(init=False, default=None, repr=False)
     distances: np.ndarray = field(init=False, default=None, repr=False)
