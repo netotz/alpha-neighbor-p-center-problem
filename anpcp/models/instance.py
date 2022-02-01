@@ -12,44 +12,59 @@ from . import Vertex
 
 @dataclass
 class Instance:
-    vertexes: List[Vertex] = field(repr=False)
-    n: int = field(init=False)
-    indexes: Set[int] = field(init=False, default=None, repr=False)
+    customers: List[Vertex] = field(repr=False)
+    facilities: List[Vertex] = field(repr=False)
+    customers_indexes: Set[int] = field(init=False, default=None, repr=False)
+    facilities_indexes: Set[int] = field(init=False, default=None, repr=False)
     distances: np.ndarray = field(init=False, default=None, repr=False)
-    sorted_dist: np.ndarray = field(init=False, default=None, repr=False)
+    sorted_distances: np.ndarray = field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
-        self.n = len(self.vertexes)
-        self.indexes = {v.index for v in self.vertexes}
+        self.customers_indexes = {c.index for c in self.customers}
+        self.facilities_indexes = {f.index for f in self.facilities}
 
-        coords = [[v.x, v.y] for v in self.vertexes]
+        customers_coords = [[c.x, c.y] for c in self.customers]
+        facilities_coords = [[f.x, f.y] for f in self.facilities]
+
         self.distances = np.array([
             [round(d) for d in row]
-            for row in spatial.distance_matrix(coords, coords)
+            for row in spatial.distance_matrix(customers_coords, facilities_coords)
         ])
-        self.sorted_dist = [
+        self.sorted_distances = [
             sorted(enumerate(row), key=lambda c: c[1])[1:]
             for row in self.distances
         ]
 
 
     @classmethod
-    def random(cls, n: int, x_max: int = 1000, y_max: int = 1000) -> 'Instance':
-        coords = set()
-        while len(coords) < n:
-            coords |= {
+    def random(cls, n: int, m: int, x_max: int = 1000, y_max: int = 1000) -> 'Instance':
+        distinct_coords = set()
+
+        while len(distinct_coords) < n + m:
+            distinct_coords |= {
                 (randint(0, x_max), randint(0, y_max))
-                for _ in range(n - len(coords))
+                for _ in range(n - len(distinct_coords))
             }
-        return Instance([
+
+        # each list has its own enumeration
+        customers = [
             Vertex(i, x, y)
-            for i, (x, y) in enumerate(coords)
-        ])
+            for i, (x, y) in enumerate(distinct_coords[:n])
+        ]
+        facilities = [
+            Vertex(i, x, y)
+            for i, (x, y) in enumerate(distinct_coords[n:])
+        ]
+
+        return Instance(customers, facilities)
 
 
     @classmethod
     def read(cls, filename: str) -> 'Instance':
+        '''
+        ! Deprecated
+        '''
         problem = tsplib95.load(filename)
         nodes = problem.node_coords if problem.node_coords else problem.display_data
         return Instance([
@@ -59,6 +74,9 @@ class Instance:
 
 
     def write(self, directory: str, id: int = 1) -> None:
+        '''
+        ! Deprecated
+        '''
         filename = f'anpcp{self.n}_{id}.tsp'
         filepath = os.path.join(directory, filename)
         with open(filepath, 'w') as file:
@@ -72,8 +90,8 @@ class Instance:
             file.write('EOF\n')
 
 
-    def get_dist(self, fromindex: int, toindex: int) -> int:
-        return self.distances[fromindex][toindex]
+    def get_distance(self, from_index: int, to_index: int) -> int:
+        return self.distances[from_index][to_index]
 
 
     def get_farthest_indexes(self) -> Tuple[int, int]:

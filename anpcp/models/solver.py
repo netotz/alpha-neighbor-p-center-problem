@@ -53,7 +53,7 @@ class Solver:
 
         def get_n_closest(self, n: int, fromindex: int) -> Tuple[int, int]:
             nth = n
-            for node, dist in self._solver.instance.sorted_dist[fromindex]:
+            for node, dist in self._solver.instance.sorted_distances[fromindex]:
                 if node in self.indexes:
                     nth -= 1
                     if nth == 0:
@@ -76,7 +76,7 @@ class Solver:
 
         def update_obj_func(self) -> None:
             self.max_alphath, self.objective_function = self.eval_obj_func()
-        
+
 
         def insert(self, facility: int) -> None:
             self.indexes.add(facility)
@@ -115,7 +115,7 @@ class Solver:
         while len(solution.indexes) < p:
             costs = [
                 (v, min(
-                    self.instance.get_dist(v, s)
+                    self.instance.get_distance(v, s)
                     for s in solution.indexes
                 ))
                 for v in remaining
