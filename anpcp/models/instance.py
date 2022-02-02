@@ -7,7 +7,7 @@ import numpy as np
 from scipy import spatial
 import tsplib95
 
-from . import Vertex
+from models import Vertex
 
 
 @dataclass
