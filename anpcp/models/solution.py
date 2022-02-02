@@ -73,12 +73,14 @@ class Solution:
 
 
     def eval_obj_func(self) -> Tuple[int, int]:
-        n, m = self.allocations.shape
         return max(
-            self._solver.instance.distances[c, f]
-            if self.allocations[c, f] == self._solver.alpha else 0
-            for c in range(n)
-            for f in range(m)
+            (
+                (f, self._solver.instance.distances[c][f])
+                if self.allocations[c][f] == self._solver.alpha else 0
+                for c in self._solver.instance.customers_indexes
+                for f in self._solver.instance.facilities_indexes
+            ),
+            key=lambda ad: ad[1],
         )
 
 
