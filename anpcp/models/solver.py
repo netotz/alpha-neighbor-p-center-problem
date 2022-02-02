@@ -16,20 +16,20 @@ class Solver:
     @dataclass
     class Solution:
         _solver: 'Solver' = field(repr=False)
-        open_facilities: Set[int] = field(default_factory=set)
+        open_facilities: Set[int] = field(init=False, default_factory=set)
         objective_function: int = field(init=False, default=sys.maxsize)
         allocations: np.ndarray = field(init=False, default=None)
         max_alphath: int = field(init=False, default=-1)
         time: float = field(init=False, repr=False, default=-1)
 
 
-        def __post_init__(self):
+        def __post_init__(self) -> None:
             n = self._solver.instance.n
             m = self._solver.instance.m
             self.allocations = np.zeros((n, m), dtype=int)
 
             if self.open_facilities:
-                self.allocate()
+                self.__allocate_all()
                 if len(self.open_facilities) >= self._solver.alpha:
                     self.update_obj_func()
 
@@ -44,12 +44,16 @@ class Solver:
             self.update_obj_func()
 
 
-        def allocate(self):
+        def __allocate_all(self) -> None:
             alpha = self._solver.alpha
             for customer in self._solver.instance.customers_indexes:
                 for nth in (alpha, alpha + 1):
                     closest, dist = self.get_nth_closest(customer, nth)
                     self.allocations[customer, closest] = nth
+        
+
+        def allocate(self, customer: int, facility: int, nth: int) -> None:
+            self.allocations[customer][facility] = nth
 
 
         def get_nth_closest(self, fromindex: int, nth: int) -> Tuple[int, int]:
