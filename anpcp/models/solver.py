@@ -62,6 +62,10 @@ class Solver:
             self.allocations[customer][facility] = kth
 
 
+        def deallocate(self, customer: int, facility: int) -> None:
+            self.allocate(customer, facility, 0)
+
+
         def get_kth_closest(self, customer: int, kth: int) -> Tuple[int, int]:
             facility = self.allocations[customer].index(kth)
             distance = self._solver.instance.get_distance(customer, facility)
@@ -93,7 +97,7 @@ class Solver:
         def remove(self, facility: int) -> None:
             self.open_facilities.discard(facility)
             for customer in self._solver.instance.customers_indexes:
-                self.allocations[customer, facility] = 0
+                self.deallocate(customer, facility)
 
 
     instance: Instance
@@ -111,6 +115,9 @@ class Solver:
 
 
     def pdp(self, use_alpha_as_p: bool = False, beta: float = 0, update: bool = True) -> Solution:
+        '''
+        TODO: Refactor method to use updated fields.
+        '''
         solution = Solver.Solution(
             self,
             set(self.instance.get_farthest_indexes())
@@ -146,6 +153,9 @@ class Solver:
 
 
     def greedy(self, update: bool = True) -> Solution:
+        '''
+        TODO: Refactor method to use updated fields.
+        '''
         solution = self.pdp(use_alpha_as_p=True, update=False)
         remaining = self.instance.indexes - solution.open_facilities
 
@@ -177,6 +187,9 @@ class Solver:
             k: int = 1,
             another_solution: Solution = None,
             update: bool = True) -> Solution:
+        '''
+        TODO: Refactor method to use updated fields.
+        '''
 
         if another_solution:
             best_solution = another_solution
