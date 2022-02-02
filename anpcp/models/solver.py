@@ -6,7 +6,6 @@ from itertools import combinations, product
 import timeit
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 from models import Instance
 
@@ -18,16 +17,13 @@ class Solver:
         _solver: 'Solver' = field(repr=False)
         open_facilities: Set[int] = field(init=False, default_factory=set)
         objective_function: int = field(init=False, default=sys.maxsize)
-        allocations: np.ndarray = field(init=False, default=None)
+        allocations: List[List[int]] = field(init=False, default_factory=list)
         max_alphath: int = field(init=False, default=-1)
         time: float = field(init=False, repr=False, default=-1)
 
 
         def __post_init__(self) -> None:
-            n = self._solver.instance.n
-            m = self._solver.instance.m
-            self.allocations = np.zeros((n, m), dtype=int)
-
+            self.__init_allocations()
             if self.open_facilities:
                 self.__allocate_all()
                 if len(self.open_facilities) >= self._solver.alpha:
@@ -41,32 +37,39 @@ class Solver:
                     self._solver.p
                 )
             )
+            self.__allocate_all()
             self.update_obj_func()
+
+
+        def __init_allocations(self) -> None:
+            n = self._solver.instance.n
+            m = self._solver.instance.m
+            self.allocations = [
+                [0 for _ in range(m)]
+                for _ in range(n)
+            ]
 
 
         def __allocate_all(self) -> None:
             alpha = self._solver.alpha
             for customer in self._solver.instance.customers_indexes:
-                for nth in (alpha, alpha + 1):
-                    closest, dist = self.get_nth_closest(customer, nth)
-                    self.allocations[customer, closest] = nth
-        
-
-        def allocate(self, customer: int, facility: int, nth: int) -> None:
-            self.allocations[customer][facility] = nth
+                for kth in (alpha, alpha + 1):
+                    closest, dist = self.get_kth_closest(customer, kth)
+                    self.allocate(customer, closest, kth)
 
 
-        def get_nth_closest(self, fromindex: int, nth: int) -> Tuple[int, int]:
-            n = nth
-            for facility, distance in self._solver.instance.sorted_distances[fromindex]:
-                if facility in self.open_facilities:
-                    n -= 1
-                    if n == 0:
-                        return facility, distance
+        def allocate(self, customer: int, facility: int, kth: int) -> None:
+            self.allocations[customer][facility] = kth
+
+
+        def get_kth_closest(self, customer: int, kth: int) -> Tuple[int, int]:
+            facility = self.allocations[customer].index(kth)
+            distance = self._solver.instance.get_distance(customer, facility)
+            return facility, distance
 
 
         def get_alphath(self, fromindex: int) -> Tuple[int, int]:
-            return self.get_nth_closest(fromindex, self._solver.alpha)
+            return self.get_kth_closest(fromindex, self._solver.alpha)
 
 
         def eval_obj_func(self) -> Tuple[int, int]:
@@ -277,10 +280,11 @@ class Solver:
         for c in clients:
             fi, dist = self.solution.get_alphath(c.index)
             facility = next(f for f in facilities if f.index == fi)
-            color = ('orange'
-                if fi == self.solution.max_alphath and
-                    dist == self.solution.objective_function
-                else 'gray')
+            color = (
+                'orange' if fi == self.solution.max_alphath
+                            and dist == self.solution.objective_function
+                else 'gray'
+            )
             ax.plot(
                 (c.x, facility.x),
                 (c.y, facility.y),
