@@ -7,7 +7,7 @@ import numpy as np
 from scipy import spatial
 import tsplib95
 
-from models import Vertex
+from models.vertex import Vertex
 
 
 @dataclass
@@ -22,9 +22,13 @@ class Instance:
     m: int = field(init=False)
 
     distances: List[List[int]] = field(init=False, default_factory=list, repr=False)
+    sorted_distances: List[List[int]] = field(init=False, default_factory=list, repr=False)
 
 
     def __post_init__(self) -> None:
+        self.n = len(self.customers)
+        self.m = len(self.facilities)
+        
         self.customers_indexes = {c.index for c in self.customers}
         self.facilities_indexes = {f.index for f in self.facilities}
 
@@ -34,6 +38,10 @@ class Instance:
         self.distances = [
             [round(d) for d in row]
             for row in spatial.distance_matrix(customers_coords, facilities_coords)
+        ]
+        self.sorted_distances = [
+            sorted(enumerate(row), key=lambda c: c[1])
+            for row in self.distances
         ]
 
 
