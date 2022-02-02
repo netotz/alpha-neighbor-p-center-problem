@@ -14,12 +14,14 @@ from models import Vertex
 class Instance:
     customers: List[Vertex] = field(repr=False)
     facilities: List[Vertex] = field(repr=False)
+
+    customers_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
+    facilities_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
+
     n: int = field(init=False)
     m: int = field(init=False)
-    customers_indexes: Set[int] = field(init=False, default=None, repr=False)
-    facilities_indexes: Set[int] = field(init=False, default=None, repr=False)
-    distances: np.ndarray = field(init=False, default=None, repr=False)
-    sorted_distances: np.ndarray = field(init=False, default=None, repr=False)
+
+    distances: List[List[int]] = field(init=False, default_factory=list, repr=False)
 
 
     def __post_init__(self) -> None:
@@ -29,13 +31,9 @@ class Instance:
         customers_coords = [[c.x, c.y] for c in self.customers]
         facilities_coords = [[f.x, f.y] for f in self.facilities]
 
-        self.distances = np.array([
+        self.distances = [
             [round(d) for d in row]
             for row in spatial.distance_matrix(customers_coords, facilities_coords)
-        ])
-        self.sorted_distances = [
-            sorted(enumerate(row), key=lambda c: c[1])[1:]
-            for row in self.distances
         ]
 
 
