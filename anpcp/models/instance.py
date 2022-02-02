@@ -95,8 +95,8 @@ class Instance:
             file.write('EOF\n')
 
 
-    def get_distance(self, from_index: int, to_index: int) -> int:
-        return self.distances[from_index][to_index]
+    def get_distance(self, from_customer: int, to_facility: int) -> int:
+        return self.distances[from_customer][to_facility]
 
 
     def get_farthest_indexes(self) -> Tuple[int, int]:
