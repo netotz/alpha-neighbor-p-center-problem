@@ -1,36 +1,124 @@
 from dataclasses import dataclass, field
 import random
-from typing import Any, List, Sequence, Set
+from typing import List, Sequence, Set, Tuple
 from itertools import combinations, product, repeat
 import timeit
 
 import matplotlib.pyplot as plt
 
-from models import Instance, Solution
+from models.instance import Instance
+from models.solution import Solution
 
 
 @dataclass
 class Solver:
-
     instance: Instance
     p: int
     alpha: int
+
     with_random_solution: bool = field(repr=False, default=False)
-    solution: Solution = field(init=False)
+    solution: Solution = field(init=False, default=None)
     history: List[Solution] = field(init=False, repr=False, default_factory=list)
 
 
     def __post_init__(self):
-        self.solution = Solver.Solution(self)
+        self.solution = Solution()
+        self.__init_allocations()
+
         if self.with_random_solution:
-            self.solution.set_random()
+            self.__randomize_solution()
+
+        if self.solution.open_facilities:
+            self.__allocate_all()
+            if len(self.solution.open_facilities) >= self.alpha:
+                self.update_obj_func()
+
+
+    def __randomize_solution(self) -> None:
+        self.solution.open_facilities = set(
+            random.sample(
+                self.instance.facilities_indexes,
+                self.p
+            )
+        )
+
+
+    def __init_allocations(self) -> None:
+        self.solution.allocations = list(repeat(
+            list(repeat(0, self.instance.m)),
+            self.instance.n
+        ))
+
+
+    def __allocate_all(self) -> None:
+        '''
+        Allocates all customers to their alpha-th and beta-th closest facilities.
+
+        Time complexity: O(np)
+        '''
+        alpha = self.alpha
+        for customer in self.instance.customers_indexes:
+            for kth in (alpha, alpha + 1):
+                
+                
+                closest, dist = self.get_kth_closest(customer, kth)
+                self.allocate(customer, closest, kth)
+
+
+    def allocate(self, customer: int, facility: int, kth: int) -> None:
+        self.solution.allocations[customer][facility] = kth
+
+
+    def deallocate(self, customer: int, facility: int) -> None:
+        self.allocate(customer, facility, 0)
+
+
+    def get_kth_closest(self, customer: int, kth: int) -> Tuple[int, int]:
+        '''
+        Gets the k-th closest facility from customer and their distance.
+
+        Time complexity: O(m)
+        '''
+        facility = self.solution.allocations[customer].index(kth)
+        distance = self.instance.get_distance(customer, facility)
+        return facility, distance
+
+
+    def get_alphath(self, customer: int) -> Tuple[int, int]:
+        return self.get_kth_closest(customer, self.alpha)
+
+
+    def eval_obj_func(self) -> Tuple[int, int]:
+        return max(
+            (
+                (f, self.instance.distances[c][f])
+                if self.solution.allocations[c][f] == self.alpha else 0
+                for c in self.instance.customers_indexes
+                for f in self.instance.facilities_indexes
+            ),
+            key=lambda ad: ad[1],
+        )
+
+
+    def update_obj_func(self) -> None:
+        self.max_alphath, self.objective_function = self.eval_obj_func()
+
+
+    def insert(self, facility: int) -> None:
+        self.solution.open_facilities.add(facility)
+
+
+    def remove(self, facility: int) -> None:
+        self.solution.open_facilities.discard(facility)
+        for customer in self.instance.customers_indexes:
+            self.deallocate(customer, facility)
 
 
     def pdp(self, use_alpha_as_p: bool = False, beta: float = 0, update: bool = True) -> Solution:
         '''
         TODO: Refactor method to use updated fields.
         '''
-        solution = Solver.Solution(
+        solution = Solution(
             self,
             set(self.instance.get_farthest_indexes())
         )
@@ -102,7 +190,6 @@ class Solver:
         '''
         TODO: Refactor method to use updated fields.
         '''
-
         if another_solution:
             best_solution = another_solution
             update = False
@@ -136,7 +223,7 @@ class Solver:
             self.solution = best_solution
 
         return best_solution
-            
+
 
     def grasp(self, max_iters: int, beta: float = 0, update: bool = True) -> Set[int]:
         '''
@@ -146,7 +233,7 @@ class Solver:
 
         `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
         '''
-        best_solution = Solver.Solution(self)
+        best_solution = Solution(self)
 
         i = 0
         while i < max_iters:
