@@ -99,7 +99,7 @@ class Solver:
         return max(
             (
                 (f, self.instance.distances[c][f])
-                if self.solution.allocations[c][f] == self.alpha else 0
+                if self.solution.allocations[c][f] == self.alpha else (f, 0)
                 for c in self.instance.customers_indexes
                 for f in self.instance.facilities_indexes
             ),
@@ -313,17 +313,9 @@ class Solver:
     def plot(self, axis: bool = True) -> None:
         fig, ax = plt.subplots()
 
-        clients = list()
-        facilities = list()
-        for v in self.instance.vertexes:
-            if v.index in self.solution.open_facilities:
-                facilities.append(v)
-            else:
-                clients.append(v)
-
         ax.scatter(
-            [c.x for c in clients],
-            [c.y for c in clients],
+            [customer.x for customer in self.instance.customers],
+            [customer.y for customer in self.instance.customers],
             color='tab:blue',
             label='Demand points',
             linewidths=0.3,
@@ -331,8 +323,8 @@ class Solver:
             edgecolors='black'
         )
         ax.scatter(
-            [f.x for f in facilities],
-            [f.y for f in facilities],
+            [facility.x for facility in self.instance.facilities],
+            [facility.y for facility in self.instance.facilities],
             color='red',
             label='Centers',
             linewidths=0.3,
@@ -340,17 +332,17 @@ class Solver:
             edgecolors='black'
         )
 
-        for c in clients:
-            fi, dist = self.solution.get_alphath(c.index)
-            facility = next(f for f in facilities if f.index == fi)
+        for customers in self.instance.customers:
+            fi, dist = self.get_alphath(customers.index)
+            facility = next(f for f in self.instance.facilities if f.index == fi)
             color = (
                 'orange' if fi == self.solution.max_alphath
                             and dist == self.solution.objective_function
                 else 'gray'
             )
             ax.plot(
-                (c.x, facility.x),
-                (c.y, facility.y),
+                (customers.x, facility.x),
+                (customers.y, facility.y),
                 color=color,
                 linestyle=':',
                 alpha=0.5
