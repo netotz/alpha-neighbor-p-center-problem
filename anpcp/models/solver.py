@@ -232,6 +232,50 @@ class Solver:
         return best_solution
 
 
+    def fast_swap(self) -> Solution:
+        '''
+        ! Unfinished method.
+        '''
+        # initialize auxiliary data structures
+        gains = list(repeat(0, self.instance.m))
+        losses = list(gains)
+        extras = list(repeat(list(gains), self.instance.m))
+
+        def update_structures(customer: int, is_undo: bool = False) -> None:
+            raise NotImplementedError
+        
+        def find_best_neighbor() -> Tuple[int, int, int]:
+            raise NotImplementedError
+
+        affecteds = set(self.instance.customers_indexes)
+
+        while True:
+            for customer in affecteds:
+                update_structures(customer)
+
+            facility_out, facility_in, profit = find_best_neighbor()
+
+            if profit <= 0:
+                break
+
+            affecteds.clear()
+
+            for customer in self.instance.customers_indexes:
+                alphath, alphath_distance = self.get_alphath(customer)
+                betath, betath_distance = self.get_kth_closest(customer, self.alpha + 1)
+
+                fi_distance = self.instance.get_distance(customer, facility_in)
+
+                if (alphath == facility_out
+                        or betath == facility_out
+                        or fi_distance < betath_distance):
+                    affecteds.add(customer)
+                    update_structures(customer, is_undo=True)
+            
+            self.insert(facility_in)
+            self.remove(facility_out)
+
+
     def grasp(self, max_iters: int, beta: float = 0, update: bool = True) -> Set[int]:
         '''
         Applies the GRASP metaheuristic to the current solver.
