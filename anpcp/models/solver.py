@@ -101,14 +101,14 @@ class Solver:
         and returns the maximum alpha-th facility
         and the distance to its allocated customer.
 
-        Time complexity: O(mn)
+        Time complexity: O(pn)
         '''
         return max(
             (
                 (f, self.instance.distances[c][f])
                 if self.solution.allocations[c][f] == self.alpha else (f, 0)
                 for c in self.instance.customers_indexes
-                for f in self.instance.facilities_indexes
+                for f in self.solution.open_facilities
             ),
             key=lambda ad: ad[1],
         )
@@ -252,8 +252,11 @@ class Solver:
         ]
 
         def update_structures(customer: int, is_undo: bool = False) -> None:
-            raise NotImplementedError
-        
+            '''
+            * Temporary inner function.
+            '''
+            sign = -1 if is_undo else 1
+
         def find_best_neighbor() -> Tuple[int, int, int]:
             raise NotImplementedError
 
