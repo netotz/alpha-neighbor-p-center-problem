@@ -96,6 +96,13 @@ class Solver:
 
 
     def eval_obj_func(self) -> Tuple[int, int]:
+        '''
+        Evaluates the objective function
+        and returns the maximum alpha-th facility
+        and the distance to its allocated customer.
+
+        Time complexity: O(mn)
+        '''
         return max(
             (
                 (f, self.instance.distances[c][f])
@@ -108,7 +115,7 @@ class Solver:
 
 
     def update_obj_func(self) -> None:
-        self.max_alphath, self.objective_function = self.eval_obj_func()
+        self.solution.max_alphath, self.solution.objective_function = self.eval_obj_func()
 
 
     def insert(self, facility: int) -> None:
@@ -335,8 +342,8 @@ class Solver:
             edgecolors='black'
         )
 
-        for customers in self.instance.customers:
-            fi, dist = self.get_alphath(customers.index)
+        for customer in self.instance.customers:
+            fi, dist = self.get_alphath(customer.index)
             facility = next(f for f in self.instance.facilities if f.index == fi)
             color = (
                 'orange' if fi == self.solution.max_alphath
@@ -344,8 +351,8 @@ class Solver:
                 else 'gray'
             )
             ax.plot(
-                (customers.x, facility.x),
-                (customers.y, facility.y),
+                (customer.x, facility.x),
+                (customer.y, facility.y),
                 color=color,
                 linestyle=':',
                 alpha=0.5
