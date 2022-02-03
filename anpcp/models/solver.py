@@ -43,6 +43,7 @@ class Solver:
                 self.p
             )
         )
+        self.solution.closed_facilities = self.instance.facilities_indexes - self.solution.open_facilities
 
 
     def __init_allocations(self) -> None:
@@ -128,11 +129,14 @@ class Solver:
 
 
     def insert(self, facility: int) -> None:
+        self.solution.closed_facilities.discard(facility)
         self.solution.open_facilities.add(facility)
 
 
     def remove(self, facility: int) -> None:
         self.solution.open_facilities.discard(facility)
+        self.solution.closed_facilities.add(facility)
+        
         for customer in self.instance.customers_indexes:
             self.deallocate(customer, facility)
 
@@ -260,39 +264,56 @@ class Solver:
             for _ in range(self.instance.m)
         ]
 
-        def update_structures(customer: int, is_undo: bool = False) -> None:
+
+        def update_structures(
+                customer: int,
+                alphath: AllocatedFacility,
+                betath: AllocatedFacility,
+                is_undo: bool = False) -> None:
             '''
             * Temporary inner function.
             '''
             sign = -1 if is_undo else 1
 
+            potential_remove = alphath.index
+            losses[potential_remove] += sign * (betath.distance - alphath.distance)
+
+            for potential_insert in self.solution.closed_facilities:
+                pi_distance = self.instance.get_distance(customer, potential_insert)
+                if pi_distance < betath.distance:
+                    gains[potential_insert] += sign * (max(0, alphath.distance - pi_distance))
+                    extras[potential_insert, potential_remove] += sign * (betath.distance - max(pi_distance, alphath.distance))
+
+
         def find_best_neighbor() -> Tuple[int, int, int]:
             raise NotImplementedError
+
 
         affecteds = set(self.instance.customers_indexes)
 
         while True:
             for customer in affecteds:
-                update_structures(customer)
+                alphath = self.get_alphath(customer)
+                betath = self.get_kth_closest(customer, self.alpha + 1)
+                update_structures(customer, alphath, betath)
 
             facility_out, facility_in, profit = find_best_neighbor()
-
             if profit <= 0:
                 break
 
             affecteds.clear()
 
             for customer in self.instance.customers_indexes:
-                alphath, alphath_distance = self.get_alphath(customer)
-                betath, betath_distance = self.get_kth_closest(customer, self.alpha + 1)
+                alphath = self.get_alphath(customer)
+                betath = self.get_kth_closest(customer, self.alpha + 1)
 
                 fi_distance = self.instance.get_distance(customer, facility_in)
 
-                if (alphath == facility_out
-                        or betath == facility_out
-                        or fi_distance < betath_distance):
+                if (alphath.index == facility_out
+                        or betath.index == facility_out
+                        or fi_distance < betath.distance):
                     affecteds.add(customer)
-                    update_structures(customer, is_undo=True)
+                    update_structures(customer, alphath, betath, is_undo=True)
             
             self.insert(facility_in)
             self.remove(facility_out)
