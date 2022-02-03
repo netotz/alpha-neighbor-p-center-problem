@@ -97,8 +97,8 @@ class Solver:
 
     def eval_obj_func(self) -> Tuple[int, int]:
         '''
-        Evaluates the objective function
-        and returns the maximum alpha-th facility
+        Evaluates the objective function,
+        returning the maximum alpha-th facility
         and the distance to its allocated customer.
 
         Time complexity: O(pn)
