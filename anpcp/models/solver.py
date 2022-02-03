@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import heapq
 import random
 from typing import List, Sequence, Set, Tuple
 from itertools import combinations, product, repeat
@@ -54,15 +55,21 @@ class Solver:
         '''
         Allocates all customers to their alpha-th and beta-th closest facilities.
 
-        Time complexity: O(np)
+        Time complexity: 
         '''
-        alpha = self.alpha
         for customer in self.instance.customers_indexes:
-            for kth in (alpha, alpha + 1):
-                
-                
-                closest, dist = self.get_kth_closest(customer, kth)
-                self.allocate(customer, closest, kth)
+            sorted_facilities = heapq.nsmallest(
+                self.alpha + 1,
+                (
+                    (f, self.instance.get_distance(customer, f))
+                    for f in self.solution.open_facilities
+                ),
+                key=lambda fd: fd[1]
+            )
+
+            for i, (k_facility, distance) in enumerate(sorted_facilities[-2:]):
+                k = i + self.alpha
+                self.allocate(customer, k_facility, k)
 
 
     def allocate(self, customer: int, facility: int, kth: int) -> None:
