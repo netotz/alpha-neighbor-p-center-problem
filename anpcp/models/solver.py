@@ -7,6 +7,7 @@ import timeit
 
 import matplotlib.pyplot as plt
 
+from models.allocated_facility import AllocatedFacility
 from models.instance import Instance
 from models.solution import Solution
 
@@ -80,7 +81,7 @@ class Solver:
         self.allocate(customer, facility, 0)
 
 
-    def get_kth_closest(self, customer: int, kth: int) -> Tuple[int, int]:
+    def get_kth_closest(self, customer: int, kth: int) -> AllocatedFacility:
         '''
         Gets the k-th closest facility from customer and their distance.
 
@@ -91,14 +92,14 @@ class Solver:
                 break
 
         distance = self.instance.get_distance(customer, facility)
-        return facility, distance
+        return AllocatedFacility(facility, distance)
 
 
-    def get_alphath(self, customer: int) -> Tuple[int, int]:
+    def get_alphath(self, customer: int) -> AllocatedFacility:
         return self.get_kth_closest(customer, self.alpha)
 
 
-    def eval_obj_func(self) -> Tuple[int, int]:
+    def eval_obj_func(self) -> AllocatedFacility:
         '''
         Evaluates the objective function,
         returning the maximum alpha-th facility
@@ -108,17 +109,22 @@ class Solver:
         '''
         return max(
             (
-                (f, self.instance.distances[c][f])
-                if self.solution.allocations[c][f] == self.alpha else (f, 0)
+                AllocatedFacility(f, self.instance.distances[c][f])
+                if self.solution.allocations[c][f] == self.alpha
+                else AllocatedFacility(f, -1)
                 for c in self.instance.customers_indexes
                 for f in self.solution.open_facilities
             ),
-            key=lambda ad: ad[1],
+            key=lambda af: af.distance,
         )
+
+        # return AllocatedFacility(max_alphath, distance)
 
 
     def update_obj_func(self) -> None:
-        self.solution.max_alphath, self.solution.objective_function = self.eval_obj_func()
+        allocated_facility = self.eval_obj_func()
+        self.solution.max_alphath = allocated_facility.index
+        self.solution.objective_function = allocated_facility.distance
 
 
     def insert(self, facility: int) -> None:
