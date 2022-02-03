@@ -55,7 +55,7 @@ class Solver:
         '''
         Allocates all customers to their alpha-th and beta-th closest facilities.
 
-        Time complexity: 
+        Time complexity: O(n (p log p)) ?
         '''
         for customer in self.instance.customers_indexes:
             sorted_facilities = heapq.nsmallest(
@@ -290,6 +290,7 @@ class Solver:
             
             self.insert(facility_in)
             self.remove(facility_out)
+            # update allocations
 
 
     def grasp(self, max_iters: int, beta: float = 0, update: bool = True) -> Set[int]:
