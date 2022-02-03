@@ -89,6 +89,7 @@ class Solver:
         for facility in self.solution.open_facilities:
             if self.solution.allocations[customer][facility] == kth:
                 break
+
         distance = self.instance.get_distance(customer, facility)
         return facility, distance
 
