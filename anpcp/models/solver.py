@@ -45,10 +45,10 @@ class Solver:
 
 
     def __init_allocations(self) -> None:
-        self.solution.allocations = list(repeat(
-            list(repeat(0, self.instance.m)),
-            self.instance.n
-        ))
+        self.solution.allocations = [
+            [0 for _ in range(self.instance.m)]
+            for _ in range(self.instance.n)
+        ]
 
 
     def __allocate_all(self) -> None:
@@ -239,7 +239,10 @@ class Solver:
         # initialize auxiliary data structures
         gains = list(repeat(0, self.instance.m))
         losses = list(gains)
-        extras = list(repeat(list(gains), self.instance.m))
+        extras = [
+            [0 for _ in range(self.instance.m)]
+            for _ in range(self.instance.m)
+        ]
 
         def update_structures(customer: int, is_undo: bool = False) -> None:
             raise NotImplementedError
