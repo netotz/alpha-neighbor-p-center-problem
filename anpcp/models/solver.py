@@ -329,6 +329,8 @@ class Solver:
             self.insert(swap.facility_in)
             self.remove(swap.facility_out)
             # update allocations
+        
+        self.update_obj_func()
 
 
     def grasp(self, max_iters: int, beta: float = 0, update: bool = True) -> Set[int]:
