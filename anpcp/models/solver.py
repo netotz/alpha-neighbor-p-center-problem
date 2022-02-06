@@ -1,12 +1,13 @@
 from dataclasses import dataclass, field
 import heapq
 import random
-from typing import List, Sequence, Set, Tuple
+from typing import List, Sequence, Set
 from itertools import combinations, product, repeat
 import timeit
 
 import matplotlib.pyplot as plt
 
+from models.profitable_swap import ProfitableSwap
 from models.allocated_facility import AllocatedFacility
 from models.instance import Instance
 from models.solution import Solution
@@ -285,8 +286,18 @@ class Solver:
                     extras[potential_insert, potential_remove] += sign * (betath.distance - max(pi_distance, alphath.distance))
 
 
-        def find_best_neighbor() -> Tuple[int, int, int]:
-            raise NotImplementedError
+        def find_best_swap() -> ProfitableSwap:
+            '''
+            Time complexity: O(pm)
+            '''
+            return max(
+                (
+                    ProfitableSwap(fi, fr, gains[fi] - losses[fr] + extras[fi][fr])
+                    for fi in self.solution.closed_facilities
+                    for fr in self.solution.open_facilities
+                ),
+                key=lambda ps: ps.profit
+            )
 
 
         affecteds = set(self.instance.customers_indexes)
@@ -297,8 +308,8 @@ class Solver:
                 betath = self.get_kth_closest(customer, self.alpha + 1)
                 update_structures(customer, alphath, betath)
 
-            facility_out, facility_in, profit = find_best_neighbor()
-            if profit <= 0:
+            swap = find_best_swap()
+            if swap.profit <= 0:
                 break
 
             affecteds.clear()
@@ -307,16 +318,16 @@ class Solver:
                 alphath = self.get_alphath(customer)
                 betath = self.get_kth_closest(customer, self.alpha + 1)
 
-                fi_distance = self.instance.get_distance(customer, facility_in)
+                fi_distance = self.instance.get_distance(customer, swap.facility_in)
 
-                if (alphath.index == facility_out
-                        or betath.index == facility_out
+                if (alphath.index == swap.facility_out
+                        or betath.index == swap.facility_out
                         or fi_distance < betath.distance):
                     affecteds.add(customer)
                     update_structures(customer, alphath, betath, is_undo=True)
             
-            self.insert(facility_in)
-            self.remove(facility_out)
+            self.insert(swap.facility_in)
+            self.remove(swap.facility_out)
             # update allocations
 
 
