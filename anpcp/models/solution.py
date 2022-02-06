@@ -6,7 +6,7 @@ from typing import List, Set
 @dataclass
 class Solution:
     open_facilities: Set[int] = field(init=False, default_factory=set)
-    closed_facilities: Set[int] = field(init=False, default_factory=set)
+    closed_facilities: Set[int] = field(init=False, repr=False, default_factory=set)
     allocations: List[List[int]] = field(init=False, repr=False, default_factory=list)
 
     objective_function: int = field(init=False, default=sys.maxsize)
