@@ -283,7 +283,7 @@ class Solver:
                 pi_distance = self.instance.get_distance(customer, potential_insert)
                 if pi_distance < betath.distance:
                     gains[potential_insert] += sign * (max(0, alphath.distance - pi_distance))
-                    extras[potential_insert, potential_remove] += sign * (betath.distance - max(pi_distance, alphath.distance))
+                    extras[potential_insert][potential_remove] += sign * (betath.distance - max(pi_distance, alphath.distance))
 
 
         def find_best_swap() -> ProfitableSwap:
