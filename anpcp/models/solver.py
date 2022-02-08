@@ -58,29 +58,46 @@ class Solver:
         '''
         Allocates all customers to their alpha-th and beta-th closest facilities.
 
-        Time complexity: O(n (p log p)) ?
+        Time complexity: O(mn)
         '''
         for customer in self.instance.customers_indexes:
-            sorted_facilities = heapq.nsmallest(
-                self.alpha + 1,
-                (
-                    (f, self.instance.get_distance(customer, f))
-                    for f in self.solution.open_facilities
-                ),
-                key=lambda fd: fd[1]
-            )
-
-            for i, (k_facility, distance) in enumerate(sorted_facilities[-2:]):
-                k = i + self.alpha
-                self.allocate(customer, k_facility, k)
+            self.reallocate_customer(customer)
 
 
     def allocate(self, customer: int, facility: int, kth: int) -> None:
         self.solution.allocations[customer][facility] = kth
 
 
+    def reallocate_customer(self, customer: int) -> None:
+        '''
+        Completely reallocates a customer to its alpha-th and beta-th closest facilities.
+
+        Time complexity: O(m)
+        '''
+        self.deallocate_customer(customer)
+
+        k = 0
+        for facility, distance in self.instance.sorted_distances[customer]:
+            if facility in self.solution.open_facilities:
+                k += 1
+                if k == self.alpha or k == self.alpha + 1:
+                    self.allocate(customer, facility, k)
+                elif k > self.alpha + 1:
+                    break
+
+
     def deallocate(self, customer: int, facility: int) -> None:
         self.allocate(customer, facility, 0)
+
+
+    def deallocate_facility(self, facility: int) -> None:
+        for customer in self.instance.customers_indexes:
+            self.deallocate(customer, facility)
+
+
+    def deallocate_customer(self, customer: int) -> None:
+        for facility in self.instance.facilities_indexes:
+            self.deallocate(customer, facility)
 
 
     def get_kth_closest(self, customer: int, kth: int) -> AllocatedFacility:
@@ -120,8 +137,6 @@ class Solver:
             key=lambda af: af.distance,
         )
 
-        # return AllocatedFacility(max_alphath, distance)
-
 
     def update_obj_func(self) -> None:
         allocated_facility = self.eval_obj_func()
@@ -137,9 +152,7 @@ class Solver:
     def remove(self, facility: int) -> None:
         self.solution.open_facilities.discard(facility)
         self.solution.closed_facilities.add(facility)
-        
-        for customer in self.instance.customers_indexes:
-            self.deallocate(customer, facility)
+        self.deallocate_facility(facility)
 
 
     def pdp(self, use_alpha_as_p: bool = False, beta: float = 0, update: bool = True) -> Solution:
@@ -255,7 +268,8 @@ class Solver:
 
     def fast_swap(self) -> Solution:
         '''
-        ! Unfinished method.
+        A fast swap-based local search procedure.
+
         '''
         # initialize auxiliary data structures
         gains = list(repeat(0, self.instance.m))
@@ -273,6 +287,8 @@ class Solver:
                 is_undo: bool = False) -> None:
             '''
             * Temporary inner function.
+
+            Time complexity: O(m)
             '''
             sign = -1 if is_undo else 1
 
@@ -303,32 +319,38 @@ class Solver:
         affecteds = set(self.instance.customers_indexes)
 
         while True:
-            for customer in affecteds:
-                alphath = self.get_alphath(customer)
-                betath = self.get_kth_closest(customer, self.alpha + 1)
-                update_structures(customer, alphath, betath)
+            # O(mn)
+            for affected in affecteds:
+                alphath = self.get_alphath(affected)
+                betath = self.get_kth_closest(affected, self.alpha + 1)
+                update_structures(affected, alphath, betath)
 
-            swap = find_best_swap()
-            if swap.profit <= 0:
+            best_swap = find_best_swap()
+            print(repr(best_swap))
+            if best_swap.profit <= 0:
                 break
 
-            affecteds.clear()
+            affecteds: Set[int] = set()
 
+            # O(mn)
             for customer in self.instance.customers_indexes:
                 alphath = self.get_alphath(customer)
                 betath = self.get_kth_closest(customer, self.alpha + 1)
 
-                fi_distance = self.instance.get_distance(customer, swap.facility_in)
+                fi_distance = self.instance.get_distance(customer, best_swap.facility_in)
 
-                if (alphath.index == swap.facility_out
-                        or betath.index == swap.facility_out
+                if (alphath.index == best_swap.facility_out
+                        or betath.index == best_swap.facility_out
                         or fi_distance < betath.distance):
                     affecteds.add(customer)
                     update_structures(customer, alphath, betath, is_undo=True)
             
-            self.insert(swap.facility_in)
-            self.remove(swap.facility_out)
-            # update allocations
+            self.insert(best_swap.facility_in)
+            self.remove(best_swap.facility_out)
+
+            # O(mn)
+            for affected in affecteds:
+                self.reallocate_customer(affected)
         
         self.update_obj_func()
 
