@@ -326,7 +326,6 @@ class Solver:
                 update_structures(affected, alphath, betath)
 
             best_swap = find_best_swap()
-            print(repr(best_swap))
             if best_swap.profit <= 0:
                 break
 
