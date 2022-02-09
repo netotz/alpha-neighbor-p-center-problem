@@ -82,7 +82,7 @@ class Solver:
                 k += 1
                 if k == self.alpha or k == self.alpha + 1:
                     self.allocate(customer, facility, k)
-                elif k > self.alpha + 1:
+                if k >= self.alpha + 1:
                     break
 
 
@@ -298,7 +298,7 @@ class Solver:
             for potential_insert in self.solution.closed_facilities:
                 pi_distance = self.instance.get_distance(customer, potential_insert)
                 if pi_distance < betath.distance:
-                    gains[potential_insert] += sign * (max(0, alphath.distance - pi_distance))
+                    gains[potential_insert] += sign * max(0, alphath.distance - pi_distance)
                     extras[potential_insert][potential_remove] += sign * (betath.distance - max(pi_distance, alphath.distance))
 
 
@@ -317,7 +317,7 @@ class Solver:
 
 
         affecteds = set(self.instance.customers_indexes)
-
+        
         while True:
             # O(mn)
             for affected in affecteds:
@@ -392,30 +392,51 @@ class Solver:
         fig, ax = plt.subplots()
 
         ax.scatter(
-            [customer.x for customer in self.instance.customers],
-            [customer.y for customer in self.instance.customers],
+            [c.x for c in self.instance.customers],
+            [c.y for c in self.instance.customers],
             color='tab:blue',
-            label='Demand points',
+            label='Customers',
             linewidths=0.3,
             alpha=0.8,
             edgecolors='black'
         )
         ax.scatter(
-            [facility.x for facility in self.instance.facilities],
-            [facility.y for facility in self.instance.facilities],
+            [
+                f.x for f in self.instance.facilities
+                if f.index in self.solution.open_facilities
+            ],
+            [
+                f.y for f in self.instance.facilities
+                if f.index in self.solution.open_facilities
+            ],
             color='red',
             label='Centers',
             linewidths=0.3,
             alpha=0.8,
             edgecolors='black'
         )
+        ax.scatter(
+            [
+                f.x for f in self.instance.facilities
+                if f.index in self.solution.closed_facilities
+            ],
+            [
+                f.y for f in self.instance.facilities
+                if f.index in self.solution.closed_facilities
+            ],
+            color='gray',
+            label='Closed facilities',
+            linewidths=0.2,
+            alpha=0.5,
+            edgecolors='black'
+        )
 
         for customer in self.instance.customers:
-            fi, dist = self.get_alphath(customer.index)
-            facility = next(f for f in self.instance.facilities if f.index == fi)
+            alphath = self.get_alphath(customer.index)
+            facility = self.instance.facilities[alphath.index]
             color = (
-                'orange' if fi == self.solution.max_alphath
-                            and dist == self.solution.objective_function
+                'orange' if alphath.index == self.solution.max_alphath
+                            and alphath.distance == self.solution.objective_function
                 else 'gray'
             )
             ax.plot(
