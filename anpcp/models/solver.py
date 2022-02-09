@@ -18,18 +18,26 @@ class Solver:
     p: int
     alpha: int
 
+    alpha_range: Set[int] = field(init=False, repr=False, default_factory=set)
+
     with_random_solution: bool = field(repr=False, default=False)
     solution: Solution = field(init=False, default=None)
     history: List[Solution] = field(init=False, repr=False, default_factory=list)
 
 
     def __post_init__(self):
+        # edge case where alpha = 1 it's classic PCP,
+        # so alpha-1 = 0
+        self.alpha_range = {self.alpha, self.alpha + 1}
+        # if alpha > 1, add alpha-1 to range
+        if self.alpha > 1:
+            self.alpha_range.add(self.alpha - 1)
+        
         self.solution = Solution()
-        self.__init_allocations()
-
         if self.with_random_solution:
             self.__randomize_solution()
 
+        self.__init_allocations()
         if self.solution.open_facilities:
             self.__allocate_all()
             if len(self.solution.open_facilities) >= self.alpha:
@@ -69,7 +77,7 @@ class Solver:
 
     def reallocate_customer(self, customer: int) -> None:
         '''
-        Completely reallocates a customer to its alpha-th and beta-th closest facilities.
+        Completely reallocates a customer to its `alphas_range` closest facilities.
 
         Time complexity: O(m)
         '''
@@ -79,7 +87,7 @@ class Solver:
         for facility, distance in self.instance.sorted_distances[customer]:
             if facility in self.solution.open_facilities:
                 k += 1
-                if k == self.alpha or k == self.alpha + 1:
+                if k in self.alpha_range:
                     self.allocate(customer, facility, k)
                 if k >= self.alpha + 1:
                     break
@@ -116,9 +124,9 @@ class Solver:
         return AllocatedFacility(facility, distance)
     
 
-    def get_kths_closests(self, customer: int, kths: Set[int]) -> Dict[int, AllocatedFacility]:
+    def get_alpha_range_closests(self, customer: int) -> Dict[int, AllocatedFacility]:
         '''
-        Gets the `kths` closest facilities from `customer` with their distances
+        Gets the `alpha_range`-ths closest facilities from `customer` with their distances
         by checking all (customer, facility) pairs from allocations matrix.
 
         Returns a dictionary with the k-th position as key and an `AllocatedFacility` object as value.
@@ -127,18 +135,21 @@ class Solver:
 
         Time complexity: O(p)
         '''
-        k_facilities = dict()
+        alpha_closests = dict()
+        alpha_range = set(self.alpha_range)
+        
         for facility in self.solution.open_facilities:
-            current_k = self.solution.allocations[customer][facility]
-            if current_k in kths:
+            k = self.solution.allocations[customer][facility]
+            if k in alpha_range:
                 distance = self.instance.get_distance(customer, facility)
-                k_facilities[current_k] = AllocatedFacility(facility, distance)
+                alpha_closests[k] = AllocatedFacility(facility, distance)
 
-                kths.discard(current_k)
-                if not kths:
+                alpha_range.discard(k)
+                # when all kth positions are found
+                if not alpha_range:
                     break
 
-        return k_facilities
+        return alpha_closests
 
 
     def eval_obj_func(self) -> AllocatedFacility:
@@ -302,7 +313,7 @@ class Solver:
 
         def update_structures(
                 customer: int,
-                facilities: Mapping[int, AllocatedFacility],
+                closests: Mapping[int, AllocatedFacility],
                 is_undo: bool = False) -> None:
             '''
             * Temporary inner function.
@@ -311,23 +322,25 @@ class Solver:
             '''
             sign = -1 if is_undo else 1
 
-            potential_remove = facilities[self.alpha].index
-            losses[potential_remove] += sign * (facilities[self.alpha + 1].distance - facilities[self.alpha].distance)
+            fr = closests[self.alpha].index
+            losses[fr] += sign * (closests[self.alpha + 1].distance - closests[self.alpha].distance)
 
-            for potential_insert in self.solution.closed_facilities:
-                pi_distance = self.instance.get_distance(customer, potential_insert)
-                if pi_distance < facilities[self.alpha + 1].distance:
-                    gains[potential_insert] += sign * max(
+            for fi in self.solution.closed_facilities:
+                fi_distance = self.instance.get_distance(customer, fi)
+                if fi_distance < closests[self.alpha + 1].distance:
+                    gains[fi] += sign * max(
                         0,
                         min(
                             # if d(c, fi) < d(c, a-1) < d(c, a)
-                            facilities[self.alpha].distance - facilities[self.alpha - 1].distance,
+                            closests[self.alpha].distance - closests[self.alpha - 1].distance,
                             # if d(c, a-1) < d(c, fi) < d(c, a)
-                            facilities[self.alpha].distance - pi_distance
-                        )
+                            closests[self.alpha].distance - fi_distance
+                        ) if self.alpha > 1
+                        # if it's classic PCP
+                        else closests[self.alpha].distance - fi_distance
                     )
-                    extras[potential_insert][potential_remove] += sign * (
-                        facilities[self.alpha + 1].distance - max(pi_distance, facilities[self.alpha].distance)
+                    extras[fi][fr] += sign * (
+                        closests[self.alpha + 1].distance - max(fi_distance, closests[self.alpha].distance)
                     )
 
 
@@ -346,12 +359,11 @@ class Solver:
 
 
         affecteds = set(self.instance.customers_indexes)
-        k_positions = {self.alpha - 1, self.alpha, self.alpha + 1}
         
         while True:
             # O(mn + pn) = O(mn)
             for affected in affecteds:
-                closests = self.get_kths_closests(affected, k_positions)
+                closests = self.get_alpha_range_closests(affected)
                 update_structures(affected, closests)
 
             best_swap = find_best_swap()
@@ -362,7 +374,7 @@ class Solver:
 
             # O(mn + pn) = O(mn)
             for customer in self.instance.customers_indexes:
-                closests = self.get_kths_closests(affected, k_positions)
+                closests = self.get_alpha_range_closests(customer)
 
                 fi_distance = self.instance.get_distance(customer, best_swap.facility_in)
 
@@ -375,6 +387,7 @@ class Solver:
             self.insert(best_swap.facility_in)
             self.remove(best_swap.facility_out)
 
+            # reallocate affected customers
             # O(mn)
             for affected in affecteds:
                 self.reallocate_customer(affected)
