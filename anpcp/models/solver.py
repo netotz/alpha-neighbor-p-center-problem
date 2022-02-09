@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
-import heapq
 import random
-from typing import List, Sequence, Set
+from typing import Dict, List, Mapping, Sequence, Set
 from itertools import combinations, product, repeat
 import timeit
 
@@ -102,7 +101,10 @@ class Solver:
 
     def get_kth_closest(self, customer: int, kth: int) -> AllocatedFacility:
         '''
-        Gets the k-th closest facility from customer and their distance.
+        Gets the `kth` closest facility from `customer` with its distance
+        by checking each (customer, facility) pair from allocations matrix.
+
+        To get more than facility at the same time, see `get_kths_closests`.
 
         Time complexity: O(p)
         '''
@@ -112,29 +114,47 @@ class Solver:
 
         distance = self.instance.get_distance(customer, facility)
         return AllocatedFacility(facility, distance)
+    
 
+    def get_kths_closests(self, customer: int, kths: Set[int]) -> Dict[int, AllocatedFacility]:
+        '''
+        Gets the `kths` closest facilities from `customer` with their distances
+        by checking all (customer, facility) pairs from allocations matrix.
 
-    def get_alphath(self, customer: int) -> AllocatedFacility:
-        return self.get_kth_closest(customer, self.alpha)
+        Returns a dictionary with the k-th position as key and an `AllocatedFacility` object as value.
+
+        To get only one facility, see `get_kth_closest`.
+
+        Time complexity: O(p)
+        '''
+        k_facilities = dict()
+        for facility in self.solution.open_facilities:
+            current_k = self.solution.allocations[customer][facility]
+            if current_k in kths:
+                distance = self.instance.get_distance(customer, facility)
+                k_facilities[current_k] = AllocatedFacility(facility, distance)
+
+                kths.discard(current_k)
+                if not kths:
+                    break
+
+        return k_facilities
 
 
     def eval_obj_func(self) -> AllocatedFacility:
         '''
-        Evaluates the objective function,
-        returning the maximum alpha-th facility
-        and the distance to its allocated customer.
+        Evaluates the objective function of field `solution`.
+        
+        Returns the maximum alpha-th facility and the distance to its allocated customer.
 
         Time complexity: O(pn)
         '''
         return max(
             (
-                AllocatedFacility(f, self.instance.distances[c][f])
-                if self.solution.allocations[c][f] == self.alpha
-                else AllocatedFacility(f, -1)
+                self.get_kth_closest(c, self.alpha)
                 for c in self.instance.customers_indexes
-                for f in self.solution.open_facilities
             ),
-            key=lambda af: af.distance,
+            key=lambda af: af.distance
         )
 
 
@@ -271,7 +291,7 @@ class Solver:
         A fast swap-based local search procedure.
 
         '''
-        # initialize auxiliary data structures
+        # initialize auxiliary data structures, each entry to 0
         gains = list(repeat(0, self.instance.m))
         losses = list(gains)
         extras = [
@@ -282,8 +302,7 @@ class Solver:
 
         def update_structures(
                 customer: int,
-                alphath: AllocatedFacility,
-                betath: AllocatedFacility,
+                facilities: Mapping[int, AllocatedFacility],
                 is_undo: bool = False) -> None:
             '''
             * Temporary inner function.
@@ -292,14 +311,24 @@ class Solver:
             '''
             sign = -1 if is_undo else 1
 
-            potential_remove = alphath.index
-            losses[potential_remove] += sign * (betath.distance - alphath.distance)
+            potential_remove = facilities[self.alpha].index
+            losses[potential_remove] += sign * (facilities[self.alpha + 1].distance - facilities[self.alpha].distance)
 
             for potential_insert in self.solution.closed_facilities:
                 pi_distance = self.instance.get_distance(customer, potential_insert)
-                if pi_distance < betath.distance:
-                    gains[potential_insert] += sign * max(0, alphath.distance - pi_distance)
-                    extras[potential_insert][potential_remove] += sign * (betath.distance - max(pi_distance, alphath.distance))
+                if pi_distance < facilities[self.alpha + 1].distance:
+                    gains[potential_insert] += sign * max(
+                        0,
+                        min(
+                            # if d(c, fi) < d(c, a-1) < d(c, a)
+                            facilities[self.alpha].distance - facilities[self.alpha - 1].distance,
+                            # if d(c, a-1) < d(c, fi) < d(c, a)
+                            facilities[self.alpha].distance - pi_distance
+                        )
+                    )
+                    extras[potential_insert][potential_remove] += sign * (
+                        facilities[self.alpha + 1].distance - max(pi_distance, facilities[self.alpha].distance)
+                    )
 
 
         def find_best_swap() -> ProfitableSwap:
@@ -317,13 +346,13 @@ class Solver:
 
 
         affecteds = set(self.instance.customers_indexes)
+        k_positions = {self.alpha - 1, self.alpha, self.alpha + 1}
         
         while True:
-            # O(mn)
+            # O(mn + pn) = O(mn)
             for affected in affecteds:
-                alphath = self.get_alphath(affected)
-                betath = self.get_kth_closest(affected, self.alpha + 1)
-                update_structures(affected, alphath, betath)
+                closests = self.get_kths_closests(affected, k_positions)
+                update_structures(affected, closests)
 
             best_swap = find_best_swap()
             if best_swap.profit <= 0:
@@ -331,18 +360,17 @@ class Solver:
 
             affecteds: Set[int] = set()
 
-            # O(mn)
+            # O(mn + pn) = O(mn)
             for customer in self.instance.customers_indexes:
-                alphath = self.get_alphath(customer)
-                betath = self.get_kth_closest(customer, self.alpha + 1)
+                closests = self.get_kths_closests(affected, k_positions)
 
                 fi_distance = self.instance.get_distance(customer, best_swap.facility_in)
 
-                if (alphath.index == best_swap.facility_out
-                        or betath.index == best_swap.facility_out
-                        or fi_distance < betath.distance):
+                if (closests[self.alpha].index == best_swap.facility_out
+                        or closests[self.alpha + 1].index == best_swap.facility_out
+                        or fi_distance < closests[self.alpha + 1].distance):
                     affecteds.add(customer)
-                    update_structures(customer, alphath, betath, is_undo=True)
+                    update_structures(customer, closests, is_undo=True)
             
             self.insert(best_swap.facility_in)
             self.remove(best_swap.facility_out)
