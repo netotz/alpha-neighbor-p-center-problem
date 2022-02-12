@@ -26,10 +26,9 @@ class Solver:
 
 
     def __post_init__(self):
-        # edge case where alpha = 1 it's classic PCP,
-        # so alpha-1 = 0
+        # edge case where alpha=1, it's PCP, so there's no alpha-1
         self.alpha_range = {self.alpha, self.alpha + 1}
-        # if alpha > 1, add alpha-1 to range
+        # if it's ANPCP, add alpha-1 to range
         if self.alpha > 1:
             self.alpha_range.add(self.alpha - 1)
         
@@ -318,7 +317,7 @@ class Solver:
             '''
             * Temporary inner function.
 
-            Time complexity: O(m)
+            Time complexity: O(m - p) = O(m)
             '''
             sign = -1 if is_undo else 1
 
@@ -327,16 +326,19 @@ class Solver:
 
             for fi in self.solution.closed_facilities:
                 fi_distance = self.instance.get_distance(customer, fi)
+
                 if fi_distance < closests[self.alpha + 1].distance:
                     gains[fi] += sign * max(
                         0,
                         min(
-                            # if d(c, fi) < d(c, a-1) < d(c, a)
+                            # if d(c, fi) < d(c, a-1) < d(c, a),
+                            # the alpha-th is now the previous closest
                             closests[self.alpha].distance - closests[self.alpha - 1].distance,
-                            # if d(c, a-1) < d(c, fi) < d(c, a)
+                            # if d(c, a-1) < d(c, fi) < d(c, a),
+                            # the alpha-th is now the inserted facility
                             closests[self.alpha].distance - fi_distance
                         ) if self.alpha > 1
-                        # if it's classic PCP
+                        # if it's PCP
                         else closests[self.alpha].distance - fi_distance
                     )
                     extras[fi][fr] += sign * (
@@ -374,12 +376,12 @@ class Solver:
 
             # O(mn + pn) = O(mn)
             for customer in self.instance.customers_indexes:
-                closests = self.get_alpha_range_closests(customer)
-
                 fi_distance = self.instance.get_distance(customer, best_swap.facility_in)
 
-                if (closests[self.alpha].index == best_swap.facility_out
-                        or closests[self.alpha + 1].index == best_swap.facility_out
+                closests = self.get_alpha_range_closests(customer)
+                closests_indexes = {c.index for c in closests.values()}
+
+                if (best_swap.facility_out in closests_indexes
                         or fi_distance < closests[self.alpha + 1].distance):
                     affecteds.add(customer)
                     update_structures(customer, closests, is_undo=True)
@@ -473,7 +475,7 @@ class Solver:
         )
 
         for customer in self.instance.customers:
-            alphath = self.get_alphath(customer.index)
+            alphath = self.get_kth_closest(customer.index, self.alpha)
             facility = self.instance.facilities[alphath.index]
             color = (
                 'orange' if alphath.index == self.solution.max_alphath
