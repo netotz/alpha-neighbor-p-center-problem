@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import random
-from typing import Dict, List, Mapping, Sequence, Set
+from typing import Dict, List, Mapping, NoReturn, Sequence, Set
 from itertools import combinations, product, repeat
 import timeit
 
@@ -185,121 +185,16 @@ class Solver:
         self.deallocate_facility(facility)
 
 
-    def pdp(self, use_alpha_as_p: bool = False, beta: float = 0, update: bool = True) -> Solution:
+    def construct(self) -> NoReturn:
         '''
-        TODO: Refactor method to use updated fields.
+        TODO: Implement an algorithm to construct a solution from scratch.
         '''
-        solution = Solution(
-            self,
-            set(self.instance.get_farthest_indexes())
-        )
-
-        p = self.alpha if use_alpha_as_p else self.p
-        remaining = self.instance.indexes - solution.open_facilities
-
-        while len(solution.open_facilities) < p:
-            costs = [
-                (v, min(
-                    self.instance.get_distance(v, s)
-                    for s in solution.open_facilities
-                ))
-                for v in remaining
-            ]
-            min_cost = min(costs, key=lambda c: c[1])[1]
-            max_cost = max(costs, key=lambda c: c[1])[1]
-
-            candidates = [
-                v for v, c in costs
-                if c >= max_cost - beta * (max_cost - min_cost)
-            ]
-            chosen = random.choice(candidates)
-            solution.open_facilities.add(chosen)
-            remaining.discard(chosen)
-
-        solution.update_obj_func()
-        if update:
-            self.solution = solution
-
-        return solution
-
-
-    def greedy(self, update: bool = True) -> Solution:
-        '''
-        TODO: Refactor method to use updated fields.
-        '''
-        solution = self.pdp(use_alpha_as_p=True, update=False)
-        remaining = self.instance.indexes - solution.open_facilities
-
-        while len(solution.open_facilities) < self.p:
-            index, dist = min(
-                (
-                    (
-                        v,
-                        # TODO: Refactor method
-                        solution.eval_obj_func(solution | {v})[1]
-                    )
-                    for v in remaining
-                ),
-                key=lambda m: m[1]
-            )
-            solution.open_facilities.add(index)
-            remaining.discard(index)
-
-        solution.update_obj_func()
-        if update:
-            self.solution = solution
-
-        return solution
-
-
-    def interchange(
-            self,
-            is_first: bool,
-            k: int = 1,
-            another_solution: Solution = None,
-            update: bool = True) -> Solution:
-        '''
-        TODO: Refactor method to use updated fields.
-        '''
-        if another_solution:
-            best_solution = another_solution
-            update = False
-        else:
-            best_solution = self.solution
-
-        current_solution = best_solution
-
-        is_improved = True
-        while is_improved:
-            for selecteds in combinations(best_solution.open_facilities, k):
-                unselecteds = self.instance.indexes - best_solution.open_facilities
-                for indexes in combinations(unselecteds, k):
-                    new_solution = Solver.Solution(
-                        self,
-                        best_solution.open_facilities - set(selecteds) | set(indexes)
-                    )
-
-                    if new_solution.objective_function < current_solution.objective_function:
-                        current_solution = new_solution
-                        if is_first:
-                            break
-
-                is_improved = current_solution.objective_function < best_solution.objective_function
-                if is_improved:
-                    best_solution = current_solution
-                    # explore another neighborhood
-                    break
-
-        if update:
-            self.solution = best_solution
-
-        return best_solution
+        raise NotImplementedError
 
 
     def fast_swap(self) -> Solution:
         '''
         A fast swap-based local search procedure.
-
         '''
         # initialize auxiliary data structures, each entry to 0
         gains = list(repeat(0, self.instance.m))
@@ -368,6 +263,7 @@ class Solver:
                 closests = self.get_alpha_range_closests(affected)
                 update_structures(affected, closests)
 
+            # O(pm)
             best_swap = find_best_swap()
             if best_swap.profit <= 0:
                 break
