@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-import sys
 from typing import List, Set
+
+from models.allocated_facility import AllocatedFacility
 
 
 @dataclass
@@ -9,6 +10,13 @@ class Solution:
     closed_facilities: Set[int] = field(init=False, repr=False, default_factory=set)
     allocations: List[List[int]] = field(init=False, repr=False, default_factory=list)
 
-    objective_function: int = field(init=False, default=sys.maxsize)
-    max_alphath: int = field(init=False, default=-1)
+    critical_allocation: AllocatedFacility = field(init=False, default=None)
     time: float = field(init=False, repr=False, default=-1)
+
+
+    def get_objective_function(self) -> int:
+        '''
+        Gets the ANPCP objective function of this solution
+        by accessing the critical allocation (not by calculating it).
+        '''
+        return self.critical_allocation.distance
