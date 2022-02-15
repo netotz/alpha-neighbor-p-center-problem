@@ -17,6 +17,7 @@ class Solution:
     def get_objective_function(self) -> int:
         '''
         Gets the ANPCP objective function of this solution
-        by accessing the critical allocation (not by calculating it).
+        by accessing the `critical_allocation` field
+        (not by calculating it).
         '''
         return self.critical_allocation.distance
