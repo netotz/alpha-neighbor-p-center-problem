@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 import random
+import sys
 from typing import Dict, List, Mapping, NoReturn, Sequence, Set
 from itertools import product, repeat
 import timeit
@@ -360,6 +361,10 @@ class Solver:
 
             return out
 
+
+        best_of = sys.maxsize
+        best_in = -1
+        best_out = -1
         
         for fi in self.solution.closed_facilities:
             fi_distance = self.instance.get_distance(
@@ -368,7 +373,14 @@ class Solver:
             )
 
             if fi_distance < self.solution.get_objective_function():
-                pass
+                moved_facility = move(fi)
+                if moved_facility.radius < best_of:
+                    best_of = moved_facility.radius
+                    best_in = fi
+                    best_out = moved_facility.index
+        
+        if best_of >= self.solution.get_objective_function():
+            return
 
 
 
