@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 import random
 from typing import Dict, List, Mapping, NoReturn, Sequence, Set
-from itertools import combinations, product, repeat
+from itertools import product, repeat
 import timeit
 
 import matplotlib.pyplot as plt
 
+from models.moved_facility import MovedFacility
 from models.profitable_swap import ProfitableSwap
 from models.allocated_facility import AllocatedFacility
 from models.instance import Instance
@@ -299,7 +300,7 @@ class Solver:
         Fast vertex substitution,
         based from its application for the PCP.
         '''
-        def move(facility_in: int) -> AllocatedFacility:
+        def move(facility_in: int) -> MovedFacility:
             # current objective function
             current_of = 0
             unchanged_radii = {fr: 0 for fr in self.solution.open_facilities}
@@ -327,35 +328,34 @@ class Solver:
             
             g1 = max(
                 (
-                    AllocatedFacility(f, -1, rad)
-                    for f, rad in unchanged_radii.items()
+                    MovedFacility(fr, r)
+                    for fr, r in unchanged_radii.items()
                 ),
-                key=lambda af: af.distance
+                key=lambda af: af.radius
             )
             g2 = max(
                 (
-                    AllocatedFacility(f, -1, rad)
-                    for f, rad in unchanged_radii.items()
-                    if f != g1.index
+                    MovedFacility(fr, r)
+                    for fr, r in unchanged_radii.items()
+                    if fr != g1.index
                 ),
-                key=lambda af: af.distance
+                key=lambda af: af.radius
             )
 
             out = min(
                 (
-                    AllocatedFacility(
-                        f,
-                        -1,
+                    MovedFacility(
+                        fr,
                         max(
                             current_of,
-                            changed_radii[f],
-                            g2.distance if f == g1.index
-                            else g1.distance
+                            changed_radii[fr],
+                            g2.radius if fr == g1.index
+                            else g1.radius
                         )
                     )
-                    for f in self.solution.open_facilities
+                    for fr in self.solution.open_facilities
                 ),
-                key=lambda af: af.distance
+                key=lambda af: af.radius
             )
 
             return out
