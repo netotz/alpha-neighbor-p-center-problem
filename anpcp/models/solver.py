@@ -120,7 +120,7 @@ class Solver:
                 break
 
         distance = self.instance.get_distance(customer, facility)
-        return AllocatedFacility(facility, distance)
+        return AllocatedFacility(facility, customer, distance)
     
 
     def get_alpha_range_closests(self, customer: int) -> Dict[int, AllocatedFacility]:
@@ -141,7 +141,7 @@ class Solver:
             k = self.solution.allocations[customer][facility]
             if k in alpha_range:
                 distance = self.instance.get_distance(customer, facility)
-                alpha_closests[k] = AllocatedFacility(facility, distance)
+                alpha_closests[k] = AllocatedFacility(facility, customer, distance)
 
                 alpha_range.discard(k)
                 # when all kth positions are found
@@ -155,7 +155,9 @@ class Solver:
         '''
         Evaluates the objective function of field `solution`.
         
-        Returns the maximum alpha-th facility and the distance to its allocated customer.
+        Returns the "critical pair", i.e.
+        the maximum alpha-th facility and the distance to its allocated customer,
+        as an `AllocatedFacility` object.
 
         Time complexity: O(pn)
         '''
@@ -169,9 +171,7 @@ class Solver:
 
 
     def update_obj_func(self) -> None:
-        allocated_facility = self.eval_obj_func()
-        self.solution.max_alphath = allocated_facility.index
-        self.solution.objective_function = allocated_facility.distance
+        self.solution.critical_allocation = self.eval_obj_func()
 
 
     def insert(self, facility: int) -> None:
@@ -192,9 +192,10 @@ class Solver:
         raise NotImplementedError
 
 
-    def fast_swap(self) -> Solution:
+    def pmp_fast_swap(self) -> Solution:
         '''
-        A fast swap-based local search procedure.
+        A fast swap-based local search procedure,
+        based from its application for the PMP.
         '''
         # initialize auxiliary data structures, each entry to 0
         gains = list(repeat(0, self.instance.m))
@@ -291,6 +292,84 @@ class Solver:
                 self.reallocate_customer(affected)
         
         self.update_obj_func()
+
+
+    def fast_swap(self) -> Solution:
+        '''
+        Fast vertex substitution,
+        based from its application for the PCP.
+        '''
+        def move(facility_in: int) -> AllocatedFacility:
+            # current objective function
+            current_of = 0
+            unchanged_radii = {fr: 0 for fr in self.solution.open_facilities}
+            changed_radii = dict(unchanged_radii)
+
+            for customer in self.instance.customers_indexes:
+                fi_distance = self.instance.get_distance(customer, facility_in)
+                closests = self.get_alpha_range_closests(customer)
+
+                if fi_distance < closests[self.alpha].distance:
+                    current_of = max(current_of, fi_distance)
+                else:
+                    unchanged_radii[closests[self.alpha].index] = max(
+                        unchanged_radii[closests[self.alpha].index],
+                        closests[self.alpha].distance
+                    )
+
+                    changed_radii[closests[self.alpha].index] = max(
+                        changed_radii[closests[self.alpha].index],
+                        min(
+                            fi_distance,
+                            closests[self.alpha + 1].distance
+                        )
+                    )
+            
+            g1 = max(
+                (
+                    AllocatedFacility(f, -1, rad)
+                    for f, rad in unchanged_radii.items()
+                ),
+                key=lambda af: af.distance
+            )
+            g2 = max(
+                (
+                    AllocatedFacility(f, -1, rad)
+                    for f, rad in unchanged_radii.items()
+                    if f != g1.index
+                ),
+                key=lambda af: af.distance
+            )
+
+            out = min(
+                (
+                    AllocatedFacility(
+                        f,
+                        -1,
+                        max(
+                            current_of,
+                            changed_radii[f],
+                            g2.distance if f == g1.index
+                            else g1.distance
+                        )
+                    )
+                    for f in self.solution.open_facilities
+                ),
+                key=lambda af: af.distance
+            )
+
+            return out
+
+        
+        for fi in self.solution.closed_facilities:
+            fi_distance = self.instance.get_distance(
+                self.solution.critical_allocation.customer,
+                fi
+            )
+
+            if fi_distance < self.solution.get_objective_function():
+                pass
+
 
 
     def grasp(self, max_iters: int, beta: float = 0, update: bool = True) -> Set[int]:
