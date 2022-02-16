@@ -333,24 +333,14 @@ class Solver:
                             closests[self.alpha + 1].distance
                         )
                     )
-            
+
+            g1 = MovedFacility(-1, -sys.maxsize)
+            g2 = MovedFacility(-1, -sys.maxsize)
             # O(p)
-            g1 = max(
-                (
-                    MovedFacility(fr, r)
-                    for fr, r in unchanged_radii.items()
-                ),
-                key=lambda af: af.radius
-            )
-            # O(p)
-            g2 = max(
-                (
-                    MovedFacility(fr, r)
-                    for fr, r in unchanged_radii.items()
-                    if fr != g1.index
-                ),
-                key=lambda af: af.radius
-            )
+            for fr, radius in unchanged_radii.items():
+                if radius > g1.radius:
+                    g2 = MovedFacility(g1.index, g1.radius)
+                    g1 = MovedFacility(fr, radius)
 
             # O(p)
             out = min(
