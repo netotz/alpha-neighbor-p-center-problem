@@ -311,7 +311,7 @@ class Solver:
             # current objective function
             current_of = 0
             unchanged_radii = {fr: 0 for fr in self.solution.open_facilities}
-            changed_radii = dict(unchanged_radii)
+            changed_radii = {fr: 0 for fr in self.solution.open_facilities}
 
             # O(pn)
             for customer in self.instance.customers_indexes:
@@ -334,24 +334,24 @@ class Solver:
                         )
                     )
 
-            g1 = MovedFacility(-1, -sys.maxsize)
-            g2 = MovedFacility(-1, -sys.maxsize)
+            largest = MovedFacility(-1, -sys.maxsize)
+            second_largest = MovedFacility(-1, -sys.maxsize)
             # O(p)
             for fr, radius in unchanged_radii.items():
-                if radius > g1.radius:
-                    g2 = MovedFacility(g1.index, g1.radius)
-                    g1 = MovedFacility(fr, radius)
+                if radius > largest.radius:
+                    second_largest = MovedFacility(largest.index, largest.radius)
+                    largest = MovedFacility(fr, radius)
 
             # O(p)
-            out = min(
+            best_out = min(
                 (
                     MovedFacility(
                         fr,
                         max(
                             current_of,
                             changed_radii[fr],
-                            g2.radius if fr == g1.index
-                            else g1.radius
+                            second_largest.radius if fr == largest.index
+                            else largest.radius
                         )
                     )
                     for fr in self.solution.open_facilities
@@ -359,11 +359,11 @@ class Solver:
                 key=lambda af: af.radius
             )
 
-            return out
+            return best_out
 
 
         while True:
-            best_of = sys.maxsize
+            best_obj_func = sys.maxsize
             best_in = -1
             best_out = -1
             
@@ -375,13 +375,14 @@ class Solver:
                 )
 
                 if fi_distance < self.solution.get_objective_function():
-                    moved_facility = move(fi)
-                    if moved_facility.radius < best_of:
-                        best_of = moved_facility.radius
+                    best_move = move(fi)
+
+                    if best_move.radius < best_obj_func:
+                        best_obj_func = best_move.radius
                         best_in = fi
-                        best_out = moved_facility.index
+                        best_out = best_move.index
             
-            if best_of >= self.solution.get_objective_function():
+            if best_obj_func >= self.solution.get_objective_function():
                 break
 
             self.insert(best_in)
