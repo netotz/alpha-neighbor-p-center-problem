@@ -460,6 +460,7 @@ class Solver:
                 f.y for f in self.instance.facilities
                 if f.index in self.solution.open_facilities
             ],
+            marker='s',
             color='red',
             label='Centers',
             linewidths=0.3,
@@ -475,6 +476,7 @@ class Solver:
                 f.y for f in self.instance.facilities
                 if f.index in self.solution.closed_facilities
             ],
+            marker='s',
             color='gray',
             label='Closed facilities',
             linewidths=0.2,
