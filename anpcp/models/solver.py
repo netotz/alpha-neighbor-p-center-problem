@@ -64,7 +64,7 @@ class Solver:
 
     def __allocate_all(self) -> None:
         '''
-        Allocates all customers to their alpha-th and beta-th closest facilities.
+        Allocates all customers to their 'alphas_range` closest facilities.
 
         Time complexity: O(mn)
         '''
@@ -309,35 +309,46 @@ class Solver:
             Time complexity: O(pn + 3p) = O(pn)
             '''
             # current objective function
-            current_of = 0
-            unchanged_radii = {fr: 0 for fr in self.solution.open_facilities}
-            changed_radii = {fr: 0 for fr in self.solution.open_facilities}
+            current_obj_func = 0
+            same_centers = {fr: 0 for fr in self.solution.open_facilities}
+            lost_centers = {fr: 0 for fr in self.solution.open_facilities}
 
             # O(pn)
             for customer in self.instance.customers_indexes:
                 fi_distance = self.instance.get_distance(customer, facility_in)
-                closests = self.get_alpha_range_closests(customer)
 
-                if fi_distance < closests[self.alpha].distance:
-                    current_of = max(current_of, fi_distance)
+                closests = self.get_alpha_range_closests(customer)
+                alphath = closests[self.alpha]
+
+                if fi_distance < alphath.distance:
+                    current_obj_func = max(
+                        current_obj_func,
+                        max(
+                            fi_distance,
+                            closests[self.alpha - 1].distance
+                                if self.alpha > 1
+                                # if it's PCP
+                                else 0
+                        )
+                    )
                 else:
-                    unchanged_radii[closests[self.alpha].index] = max(
-                        unchanged_radii[closests[self.alpha].index],
-                        closests[self.alpha].distance
+                    same_centers[alphath.index] = max(
+                        same_centers[alphath.index],
+                        alphath.distance
                     )
 
-                    changed_radii[closests[self.alpha].index] = max(
-                        changed_radii[closests[self.alpha].index],
+                    lost_centers[alphath.index] = max(
+                        lost_centers[alphath.index],
                         min(
                             fi_distance,
                             closests[self.alpha + 1].distance
                         )
                     )
 
-            largest = MovedFacility(-1, -sys.maxsize)
-            second_largest = MovedFacility(-1, -sys.maxsize)
+            largest = MovedFacility(-1, 0)
+            second_largest = MovedFacility(-1, 0)
             # O(p)
-            for fr, radius in unchanged_radii.items():
+            for fr, radius in same_centers.items():
                 if radius > largest.radius:
                     second_largest = MovedFacility(largest.index, largest.radius)
                     largest = MovedFacility(fr, radius)
@@ -348,10 +359,11 @@ class Solver:
                     MovedFacility(
                         fr,
                         max(
-                            current_of,
-                            changed_radii[fr],
-                            second_largest.radius if fr == largest.index
-                            else largest.radius
+                            current_obj_func,
+                            lost_centers[fr],
+                            second_largest.radius
+                                if fr == largest.index
+                                else largest.radius
                         )
                     )
                     for fr in self.solution.open_facilities
@@ -375,12 +387,12 @@ class Solver:
                 )
 
                 if fi_distance < self.solution.get_objective_function():
-                    best_move = move(fi)
+                    swap = move(fi)
 
-                    if best_move.radius < best_obj_func:
-                        best_obj_func = best_move.radius
+                    if swap.radius < best_obj_func:
+                        best_obj_func = swap.radius
                         best_in = fi
-                        best_out = best_move.index
+                        best_out = swap.index
             
             if best_obj_func >= self.solution.get_objective_function():
                 break
