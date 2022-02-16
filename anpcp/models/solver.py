@@ -302,11 +302,18 @@ class Solver:
         based from its application for the PCP.
         '''
         def move(facility_in: int) -> MovedFacility:
+            '''
+            Determines the best facility to remove if `facility_in` is inserted,
+            and the objective function resulting from the swap.
+
+            Time complexity: O(pn + 3p) = O(pn)
+            '''
             # current objective function
             current_of = 0
             unchanged_radii = {fr: 0 for fr in self.solution.open_facilities}
             changed_radii = dict(unchanged_radii)
 
+            # O(pn)
             for customer in self.instance.customers_indexes:
                 fi_distance = self.instance.get_distance(customer, facility_in)
                 closests = self.get_alpha_range_closests(customer)
@@ -327,6 +334,7 @@ class Solver:
                         )
                     )
             
+            # O(p)
             g1 = max(
                 (
                     MovedFacility(fr, r)
@@ -334,6 +342,7 @@ class Solver:
                 ),
                 key=lambda af: af.radius
             )
+            # O(p)
             g2 = max(
                 (
                     MovedFacility(fr, r)
@@ -343,6 +352,7 @@ class Solver:
                 key=lambda af: af.radius
             )
 
+            # O(p)
             out = min(
                 (
                     MovedFacility(
@@ -362,26 +372,34 @@ class Solver:
             return out
 
 
-        best_of = sys.maxsize
-        best_in = -1
-        best_out = -1
-        
-        for fi in self.solution.closed_facilities:
-            fi_distance = self.instance.get_distance(
-                self.solution.critical_allocation.customer,
-                fi
-            )
+        while True:
+            best_of = sys.maxsize
+            best_in = -1
+            best_out = -1
+            
+            # O(mpn)
+            for fi in self.solution.closed_facilities:
+                fi_distance = self.instance.get_distance(
+                    self.solution.critical_allocation.customer,
+                    fi
+                )
 
-            if fi_distance < self.solution.get_objective_function():
-                moved_facility = move(fi)
-                if moved_facility.radius < best_of:
-                    best_of = moved_facility.radius
-                    best_in = fi
-                    best_out = moved_facility.index
-        
-        if best_of >= self.solution.get_objective_function():
-            return
+                if fi_distance < self.solution.get_objective_function():
+                    moved_facility = move(fi)
+                    if moved_facility.radius < best_of:
+                        best_of = moved_facility.radius
+                        best_in = fi
+                        best_out = moved_facility.index
+            
+            if best_of >= self.solution.get_objective_function():
+                break
 
+            self.insert(best_in)
+            self.remove(best_out)
+            self.__allocate_all()
+            self.update_obj_func()
+        
+        return self.solution
 
 
     def grasp(self, max_iters: int, beta: float = 0, update: bool = True) -> Set[int]:
@@ -465,8 +483,8 @@ class Solver:
             alphath = self.get_kth_closest(customer.index, self.alpha)
             facility = self.instance.facilities[alphath.index]
             color = (
-                'orange' if alphath.index == self.solution.max_alphath
-                            and alphath.distance == self.solution.objective_function
+                'orange' if alphath.index == self.solution.critical_allocation.index
+                            and alphath.distance == self.solution.get_objective_function()
                 else 'gray'
             )
             ax.plot(
