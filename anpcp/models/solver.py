@@ -405,7 +405,7 @@ class Solver:
 
             self.insert(best_in)
             self.remove(best_out)
-            self.__allocate_all()
+            self.allocate_all()
             self.update_obj_func()
         
         return self.solution
