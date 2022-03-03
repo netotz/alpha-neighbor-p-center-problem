@@ -44,7 +44,7 @@ class Solver:
 
         self.__init_allocations()
         if self.solution.open_facilities:
-            self.__allocate_all()
+            self.allocate_all()
             if len(self.solution.open_facilities) >= self.alpha:
                 self.update_obj_func()
 
@@ -66,7 +66,7 @@ class Solver:
         ]
 
 
-    def __allocate_all(self) -> None:
+    def allocate_all(self) -> None:
         '''
         Allocates all customers to their 'alphas_range` closest facilities.
 
