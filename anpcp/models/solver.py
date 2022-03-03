@@ -191,6 +191,19 @@ class Solver:
         self.solution.open_facilities.discard(facility)
         self.solution.closed_facilities.add(facility)
         self.deallocate_facility(facility)
+    
+
+    def swap(self, facility_in: int, facility_out: int) -> None:
+        '''
+        Applies a swap to the solution by inserting `facility_in` to it
+        and removing `facility_out` from it,
+        then allocates all users by calling `allocate_all()`
+        and finally updates the objective function by calling `update_obj_func()`.
+        '''
+        self.insert(facility_in)
+        self.remove(facility_out)
+        self.allocate_all()
+        self.update_obj_func()
 
 
     def construct(self) -> NoReturn:
@@ -393,20 +406,17 @@ class Solver:
                 )
 
                 if fi_distance < self.solution.get_objective_function():
-                    swap = move(fi)
+                    best_move_out = move(fi)
 
-                    if swap.radius < best_obj_func:
-                        best_obj_func = swap.radius
+                    if best_move_out.radius < best_obj_func:
+                        best_obj_func = best_move_out.radius
                         best_in = fi
-                        best_out = swap.index
+                        best_out = best_move_out.index
             
             if best_obj_func >= self.solution.get_objective_function():
                 break
 
-            self.insert(best_in)
-            self.remove(best_out)
-            self.allocate_all()
-            self.update_obj_func()
+            self.swap(best_in, best_out)
         
         return self.solution
 
