@@ -12,10 +12,10 @@ from models.vertex import Vertex
 
 @dataclass
 class Instance:
-    customers: List[Vertex] = field(repr=False)
+    users: List[Vertex] = field(repr=False)
     facilities: List[Vertex] = field(repr=False)
 
-    customers_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
+    users_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
     facilities_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
 
     n: int = field(init=False)
@@ -26,18 +26,18 @@ class Instance:
 
 
     def __post_init__(self) -> None:
-        self.n = len(self.customers)
+        self.n = len(self.users)
         self.m = len(self.facilities)
         
-        self.customers_indexes = {c.index for c in self.customers}
+        self.users_indexes = {u.index for u in self.users}
         self.facilities_indexes = {f.index for f in self.facilities}
 
-        customers_coords = [[c.x, c.y] for c in self.customers]
+        users_coords = [[u.x, u.y] for u in self.users]
         facilities_coords = [[f.x, f.y] for f in self.facilities]
 
         self.distances = [
             [round(d) for d in row]
-            for row in spatial.distance_matrix(customers_coords, facilities_coords)
+            for row in spatial.distance_matrix(users_coords, facilities_coords)
         ]
         self.sorted_distances = [
             sorted(enumerate(row), key=lambda c: c[1])
@@ -59,7 +59,7 @@ class Instance:
         distinct_coords = list(distinct_coords)
 
         # each list has its own enumeration
-        customers = [
+        users = [
             Vertex(i, x, y)
             for i, (x, y) in enumerate(distinct_coords[:n])
         ]
@@ -68,7 +68,7 @@ class Instance:
             for i, (x, y) in enumerate(distinct_coords[n:])
         ]
 
-        return Instance(customers, facilities)
+        return Instance(users, facilities)
 
 
     @classmethod
@@ -101,8 +101,8 @@ class Instance:
             file.write('EOF\n')
 
 
-    def get_distance(self, from_customer: int, to_facility: int) -> int:
-        return self.distances[from_customer][to_facility]
+    def get_distance(self, from_user: int, to_facility: int) -> int:
+        return self.distances[from_user][to_facility]
 
 
     def get_farthest_indexes(self) -> Tuple[int, int]:

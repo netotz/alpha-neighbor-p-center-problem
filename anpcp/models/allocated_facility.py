@@ -10,5 +10,5 @@ class AllocatedFacility:
     This object only replaces the need to use a tuple[int, int].
     '''
     index: int
-    customer: int
+    user: int
     distance: int

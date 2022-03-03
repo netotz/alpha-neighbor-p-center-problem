@@ -68,54 +68,54 @@ class Solver:
 
     def allocate_all(self) -> None:
         '''
-        Allocates all customers to their 'alphas_range` closest facilities.
+        Allocates all users to their 'alphas_range` closest facilities.
 
         Time complexity: O(mn)
         '''
-        for customer in self.instance.customers_indexes:
-            self.reallocate_customer(customer)
+        for user in self.instance.users_indexes:
+            self.reallocate_user(user)
 
 
-    def allocate(self, customer: int, facility: int, kth: int) -> None:
-        self.solution.allocations[customer][facility] = kth
+    def allocate(self, user: int, facility: int, kth: int) -> None:
+        self.solution.allocations[user][facility] = kth
 
 
-    def reallocate_customer(self, customer: int) -> None:
+    def reallocate_user(self, user: int) -> None:
         '''
-        Completely reallocates a customer to its `alphas_range` closest facilities.
+        Completely reallocates a user to its `alphas_range` closest facilities.
 
         Time complexity: O(m)
         '''
-        self.deallocate_customer(customer)
+        self.deallocate_user(user)
 
         k = 0
-        for facility, distance in self.instance.sorted_distances[customer]:
+        for facility, distance in self.instance.sorted_distances[user]:
             if facility in self.solution.open_facilities:
                 k += 1
                 if k in self.alpha_range:
-                    self.allocate(customer, facility, k)
+                    self.allocate(user, facility, k)
                 if k >= self.alpha + 1:
                     break
 
 
-    def deallocate(self, customer: int, facility: int) -> None:
-        self.allocate(customer, facility, 0)
+    def deallocate(self, user: int, facility: int) -> None:
+        self.allocate(user, facility, 0)
 
 
     def deallocate_facility(self, facility: int) -> None:
-        for customer in self.instance.customers_indexes:
-            self.deallocate(customer, facility)
+        for user in self.instance.users_indexes:
+            self.deallocate(user, facility)
 
 
-    def deallocate_customer(self, customer: int) -> None:
+    def deallocate_user(self, user: int) -> None:
         for facility in self.instance.facilities_indexes:
-            self.deallocate(customer, facility)
+            self.deallocate(user, facility)
 
 
-    def get_kth_closest(self, customer: int, kth: int) -> AllocatedFacility:
+    def get_kth_closest(self, user: int, kth: int) -> AllocatedFacility:
         '''
-        Gets the `kth` closest facility from `customer` with its distance
-        by checking each (customer, facility) pair from allocations matrix.
+        Gets the `kth` closest facility from `user` with its distance
+        by checking each (user, facility) pair from allocations matrix.
 
         To get more than facility at the same time, see `get_kths_closests`.
 
@@ -124,17 +124,17 @@ class Solver:
         Time complexity: O(p)
         '''
         for facility in self.solution.open_facilities:
-            if self.solution.allocations[customer][facility] == kth:
-                distance = self.instance.get_distance(customer, facility)
-                return AllocatedFacility(facility, customer, distance)
+            if self.solution.allocations[user][facility] == kth:
+                distance = self.instance.get_distance(user, facility)
+                return AllocatedFacility(facility, user, distance)
         
         raise NotAllocatedError
     
 
-    def get_alpha_range_closests(self, customer: int) -> Dict[int, AllocatedFacility]:
+    def get_alpha_range_closests(self, user: int) -> Dict[int, AllocatedFacility]:
         '''
-        Gets the `alpha_range`-ths closest facilities from `customer` with their distances
-        by checking all (customer, facility) pairs from allocations matrix.
+        Gets the `alpha_range`-ths closest facilities from `user` with their distances
+        by checking all (user, facility) pairs from allocations matrix.
 
         Returns a dictionary with the k-th position as key and an `AllocatedFacility` object as value.
 
@@ -146,10 +146,10 @@ class Solver:
         alpha_range = set(self.alpha_range)
         
         for facility in self.solution.open_facilities:
-            k = self.solution.allocations[customer][facility]
+            k = self.solution.allocations[user][facility]
             if k in alpha_range:
-                distance = self.instance.get_distance(customer, facility)
-                alpha_closests[k] = AllocatedFacility(facility, customer, distance)
+                distance = self.instance.get_distance(user, facility)
+                alpha_closests[k] = AllocatedFacility(facility, user, distance)
 
                 alpha_range.discard(k)
                 # when all kth positions are found
@@ -164,7 +164,7 @@ class Solver:
         Evaluates the objective function of field `solution`.
         
         Returns the "critical pair", i.e.
-        the maximum alpha-th facility and the distance to its allocated customer,
+        the maximum alpha-th facility and the distance to its allocated user,
         as an `AllocatedFacility` object.
 
         Time complexity: O(pn)
@@ -172,7 +172,7 @@ class Solver:
         return max(
             (
                 self.get_kth_closest(c, self.alpha)
-                for c in self.instance.customers_indexes
+                for c in self.instance.users_indexes
             ),
             key=lambda af: af.distance
         )
@@ -215,7 +215,7 @@ class Solver:
 
 
         def update_structures(
-                customer: int,
+                user: int,
                 closests: Mapping[int, AllocatedFacility],
                 is_undo: bool = False) -> None:
             '''
@@ -229,7 +229,7 @@ class Solver:
             losses[fr] += sign * (closests[self.alpha + 1].distance - closests[self.alpha].distance)
 
             for fi in self.solution.closed_facilities:
-                fi_distance = self.instance.get_distance(customer, fi)
+                fi_distance = self.instance.get_distance(user, fi)
 
                 if fi_distance < closests[self.alpha + 1].distance:
                     gains[fi] += sign * max(
@@ -264,7 +264,7 @@ class Solver:
             )
 
 
-        affecteds = set(self.instance.customers_indexes)
+        affecteds = set(self.instance.users_indexes)
         
         while True:
             # O(mn + pn) = O(mn)
@@ -280,24 +280,24 @@ class Solver:
             affecteds: Set[int] = set()
 
             # O(mn + pn) = O(mn)
-            for customer in self.instance.customers_indexes:
-                fi_distance = self.instance.get_distance(customer, best_swap.facility_in)
+            for user in self.instance.users_indexes:
+                fi_distance = self.instance.get_distance(user, best_swap.facility_in)
 
-                closests = self.get_alpha_range_closests(customer)
+                closests = self.get_alpha_range_closests(user)
                 closests_indexes = {c.index for c in closests.values()}
 
                 if (best_swap.facility_out in closests_indexes
                         or fi_distance < closests[self.alpha + 1].distance):
-                    affecteds.add(customer)
-                    update_structures(customer, closests, is_undo=True)
+                    affecteds.add(user)
+                    update_structures(user, closests, is_undo=True)
             
             self.insert(best_swap.facility_in)
             self.remove(best_swap.facility_out)
 
-            # reallocate affected customers
+            # reallocate affected users
             # O(mn)
             for affected in affecteds:
-                self.reallocate_customer(affected)
+                self.reallocate_user(affected)
         
         self.update_obj_func()
 
@@ -320,10 +320,10 @@ class Solver:
             lost_centers = {fr: 0 for fr in self.solution.open_facilities}
 
             # O(pn)
-            for customer in self.instance.customers_indexes:
-                fi_distance = self.instance.get_distance(customer, facility_in)
+            for user in self.instance.users_indexes:
+                fi_distance = self.instance.get_distance(user, facility_in)
 
-                closests = self.get_alpha_range_closests(customer)
+                closests = self.get_alpha_range_closests(user)
                 alphath = closests[self.alpha]
 
                 if fi_distance < alphath.distance:
@@ -388,7 +388,7 @@ class Solver:
             # O(mpn)
             for fi in self.solution.closed_facilities:
                 fi_distance = self.instance.get_distance(
-                    self.solution.critical_allocation.customer,
+                    self.solution.critical_allocation.user,
                     fi
                 )
 
@@ -449,16 +449,16 @@ class Solver:
         fig, ax = plt.subplots()
 
         ax.scatter(
-            [c.x for c in self.instance.customers],
-            [c.y for c in self.instance.customers],
+            [u.x for u in self.instance.users],
+            [u.y for u in self.instance.users],
             color='tab:blue',
-            label='Customers',
+            label='Users',
             linewidths=0.3,
             alpha=0.8,
             edgecolors='black'
         )
-        for c in self.instance.customers:
-            ax.annotate(c.index, (c.x, c.y))
+        for u in self.instance.users:
+            ax.annotate(u.index, (u.x, u.y))
         
         ax.scatter(
             [
@@ -471,7 +471,7 @@ class Solver:
             ],
             marker='s',
             color='red',
-            label='Centers',
+            label='Centers ($S$)',
             linewidths=0.3,
             alpha=0.8,
             edgecolors='black'
@@ -496,9 +496,9 @@ class Solver:
         for f in self.instance.facilities:
             ax.annotate(f.index, (f.x, f.y))
 
-        for customer in self.instance.customers:
+        for user in self.instance.users:
             try:
-                alphath = self.get_kth_closest(customer.index, self.alpha)
+                alphath = self.get_kth_closest(user.index, self.alpha)
             except NotAllocatedError:
                 continue
             
@@ -509,8 +509,8 @@ class Solver:
                 else 'gray'
             )
             ax.plot(
-                (customer.x, facility.x),
-                (customer.y, facility.y),
+                (user.x, facility.x),
+                (user.y, facility.y),
                 color=color,
                 linestyle=':',
                 alpha=0.5
