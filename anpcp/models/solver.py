@@ -14,6 +14,10 @@ from models.instance import Instance
 from models.solution import Solution
 
 
+class NotAllocatedError(Exception):
+    pass
+
+
 @dataclass
 class Solver:
     instance: Instance
@@ -115,14 +119,16 @@ class Solver:
 
         To get more than facility at the same time, see `get_kths_closests`.
 
+        If the there's no `kth` in allocations matrix, `NotAllocatedError` is raised.
+
         Time complexity: O(p)
         '''
         for facility in self.solution.open_facilities:
             if self.solution.allocations[customer][facility] == kth:
-                break
-
-        distance = self.instance.get_distance(customer, facility)
-        return AllocatedFacility(facility, customer, distance)
+                distance = self.instance.get_distance(customer, facility)
+                return AllocatedFacility(facility, customer, distance)
+        
+        raise NotAllocatedError
     
 
     def get_alpha_range_closests(self, customer: int) -> Dict[int, AllocatedFacility]:
@@ -451,6 +457,9 @@ class Solver:
             alpha=0.8,
             edgecolors='black'
         )
+        for c in self.instance.customers:
+            ax.annotate(c.index, (c.x, c.y))
+        
         ax.scatter(
             [
                 f.x for f in self.instance.facilities
@@ -467,6 +476,7 @@ class Solver:
             alpha=0.8,
             edgecolors='black'
         )
+
         ax.scatter(
             [
                 f.x for f in self.instance.facilities
@@ -483,9 +493,15 @@ class Solver:
             alpha=0.5,
             edgecolors='black'
         )
+        for f in self.instance.facilities:
+            ax.annotate(f.index, (f.x, f.y))
 
         for customer in self.instance.customers:
-            alphath = self.get_kth_closest(customer.index, self.alpha)
+            try:
+                alphath = self.get_kth_closest(customer.index, self.alpha)
+            except NotAllocatedError:
+                continue
+            
             facility = self.instance.facilities[alphath.index]
             color = (
                 'orange' if alphath.index == self.solution.critical_allocation.index
