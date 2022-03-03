@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 import random
 import sys
-from typing import Dict, List, Mapping, NoReturn, Sequence, Set
+from typing import Dict, List, Mapping, NoReturn, Optional, Sequence, Set
 from itertools import product, repeat
 import timeit
 
@@ -455,7 +455,7 @@ class Solver:
         return best_solution
 
 
-    def plot(self, axis: bool = True) -> None:
+    def plot(self, with_annotations: bool = True, axis: bool = True, dpi: Optional[int] = None) -> None:
         fig, ax = plt.subplots()
 
         ax.scatter(
@@ -467,8 +467,6 @@ class Solver:
             alpha=0.8,
             edgecolors='black'
         )
-        for u in self.instance.users:
-            ax.annotate(u.index, (u.x, u.y))
         
         ax.scatter(
             [
@@ -503,8 +501,13 @@ class Solver:
             alpha=0.5,
             edgecolors='black'
         )
-        for f in self.instance.facilities:
-            ax.annotate(f.index, (f.x, f.y))
+
+        if with_annotations:
+            for u in self.instance.users:
+                ax.annotate(u.index, (u.x, u.y))
+
+            for f in self.instance.facilities:
+                ax.annotate(f.index, (f.x, f.y))
 
         for user in self.instance.users:
             try:
@@ -527,7 +530,8 @@ class Solver:
             )
 
         ax.legend(loc=(1.01, 0))
-        fig.set_dpi(250)
+        if dpi:
+            fig.set_dpi(dpi)
 
         if not axis:
             ax.set_axis_off()
