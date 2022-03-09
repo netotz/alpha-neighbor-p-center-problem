@@ -11,6 +11,7 @@ Heuristic algorithms and metaheuristic procedures to solve the ANPCP.
 | PDP     |                      $p$-dispersion problem |
 | PMP     |                          $p$-median problem |
 | FVS     |                    Fast Vertex Substitution |
+| FAVS    |           Fast $\alpha$-Vertex Substitution |
 | FAGI    |       Fast Algorithm for Greedy Interchange |
 | FSB     |                             Fast Swap-Based |
 | GRASP   | Greedy Randomized Adaptive Search Procedure |
