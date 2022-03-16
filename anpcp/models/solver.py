@@ -32,11 +32,7 @@ class Solver:
 
 
     def __post_init__(self):
-        # edge case where alpha=1, it's PCP, so there's no alpha-1
-        self.alpha_range = {self.alpha, self.alpha + 1}
-        # if it's ANPCP, add alpha-1 to range
-        if self.alpha > 1:
-            self.alpha_range.add(self.alpha - 1)
+        self.alpha_range = set(range(1, self.alpha + 2))
         
         self.solution = Solution()
         if self.with_random_solution:
@@ -68,9 +64,9 @@ class Solver:
 
     def allocate_all(self) -> None:
         '''
-        Allocates all users to their 'alphas_range` closest facilities.
+        Allocates all users to their alpha-neighbors.
 
-        Time complexity: O(mn)
+        Time: O(mn)
         '''
         for user in self.instance.users_indexes:
             self.reallocate_user(user)
@@ -82,20 +78,22 @@ class Solver:
 
     def reallocate_user(self, user: int) -> None:
         '''
-        Completely reallocates a user to its `alphas_range` closest facilities.
+        Completely reallocates a user to its alpha-neighbors.
 
-        Time complexity: O(m)
+        Time: O(m)
         '''
+        # O(m)
         self.deallocate_user(user)
 
         k = 0
+        # O(m)
         for facility, distance in self.instance.sorted_distances[user]:
             if facility in self.solution.open_facilities:
                 k += 1
-                if k in self.alpha_range:
-                    self.allocate(user, facility, k)
-                if k >= self.alpha + 1:
+                if k > self.alpha + 1:
                     break
+
+                self.allocate(user, facility, k)
 
 
     def deallocate(self, user: int, facility: int) -> None:
@@ -117,12 +115,13 @@ class Solver:
         Gets the `kth` closest facility from `user` with its distance
         by checking each (user, facility) pair from allocations matrix.
 
-        To get more than facility at the same time, see `get_kths_closests`.
-
         If the there's no `kth` in allocations matrix, `NotAllocatedError` is raised.
 
-        Time complexity: O(p)
+        To get the alpha-neighbors of `user`, see `get_alpha_neighbors`.
+
+        Time: O(p)
         '''
+        # O(p)
         for facility in self.solution.open_facilities:
             if self.solution.allocations[user][facility] == kth:
                 distance = self.instance.get_distance(user, facility)
@@ -131,32 +130,34 @@ class Solver:
         raise NotAllocatedError
     
 
-    def get_alpha_range_closests(self, user: int) -> Dict[int, AllocatedFacility]:
+    def get_alpha_neighbors(self, user: int) -> Dict[int, AllocatedFacility]:
         '''
-        Gets the `alpha_range`-ths closest facilities from `user` with their distances
+        Gets the closest facilities from `user` up to its center (including it) with their distances
         by checking all (user, facility) pairs from allocations matrix.
 
         Returns a dictionary with the k-th position as key and an `AllocatedFacility` object as value.
 
         To get only one facility, see `get_kth_closest`.
 
-        Time complexity: O(p)
+        Time: O(p)
         '''
-        alpha_closests = dict()
+        alpha_neighbors = dict()
+        # O(a)
         alpha_range = set(self.alpha_range)
         
+        # O(p)
         for facility in self.solution.open_facilities:
             k = self.solution.allocations[user][facility]
             if k in alpha_range:
                 distance = self.instance.get_distance(user, facility)
-                alpha_closests[k] = AllocatedFacility(facility, user, distance)
+                alpha_neighbors[k] = AllocatedFacility(facility, user, distance)
 
                 alpha_range.discard(k)
                 # when all kth positions are found
-                if not alpha_range:
+                if len(alpha_range) == 0:
                     break
 
-        return alpha_closests
+        return alpha_neighbors
 
 
     def eval_obj_func(self) -> AllocatedFacility:
@@ -198,7 +199,7 @@ class Solver:
         Applies a swap to the solution by inserting `facility_in` to it
         and removing `facility_out` from it,
         then allocates all users by calling `allocate_all()`
-        and finally updates the objective function by calling `update_obj_func()`.
+        and finally updates the objective function with `update_obj_func()`.
         '''
         self.insert(facility_in)
         self.remove(facility_out)
@@ -282,7 +283,7 @@ class Solver:
         while True:
             # O(mn + pn) = O(mn)
             for affected in affecteds:
-                closests = self.get_alpha_range_closests(affected)
+                closests = self.get_alpha_neighbors(affected)
                 update_structures(affected, closests)
 
             # O(pm)
@@ -296,7 +297,7 @@ class Solver:
             for user in self.instance.users_indexes:
                 fi_distance = self.instance.get_distance(user, best_swap.facility_in)
 
-                closests = self.get_alpha_range_closests(user)
+                closests = self.get_alpha_neighbors(user)
                 closests_indexes = {c.index for c in closests.values()}
 
                 if (best_swap.facility_out in closests_indexes
@@ -317,7 +318,7 @@ class Solver:
 
     def fast_swap(self) -> Solution:
         '''
-        Fast vertex substitution,
+        Fast Vertex Substitution for ANPCP (FVS-A), 
         based from its application for the PCP.
         '''
         def move(facility_in: int) -> MovedFacility:
@@ -325,51 +326,69 @@ class Solver:
             Determines the best facility to remove if `facility_in` is inserted,
             and the objective function resulting from the swap.
 
-            Time complexity: O(pn + 3p) = O(pn)
+            Time O(pn)
             '''
             # current objective function
-            current_obj_func = 0
-            same_centers = {fr: 0 for fr in self.solution.open_facilities}
-            lost_centers = {fr: 0 for fr in self.solution.open_facilities}
+            curr_obj_func = 0
+            # O(p)
+            same_neighbors = {fr: 0 for fr in self.solution.open_facilities}
+            # O(p)
+            lost_neighbors = {fr: 0 for fr in self.solution.open_facilities}
 
-            # O(pn)
+            # O(n) * O(p) = O(pn)
             for user in self.instance.users_indexes:
                 fi_distance = self.instance.get_distance(user, facility_in)
 
-                closests = self.get_alpha_range_closests(user)
-                alphath = closests[self.alpha]
+                # O(p)
+                neighbors = self.get_alpha_neighbors(user)
+                alphath = neighbors[self.alpha]
 
-                if fi_distance < alphath.distance:
-                    current_obj_func = max(
-                        current_obj_func,
-                        max(
-                            fi_distance,
-                            closests[self.alpha - 1].distance
-                                if self.alpha > 1
-                                # if it's PCP
-                                else 0
-                        )
+                is_attracted = fi_distance < alphath.distance
+
+                if is_attracted:
+                    # store farther distance between fi and a-1
+                    farther_dist = max(
+                        fi_distance,
+                        neighbors[self.alpha - 1].distance
+                            if self.alpha > 1
+                            # or if it's PCP
+                            else 0
                     )
+                    curr_obj_func = max(curr_obj_func, farther_dist)
                 else:
-                    same_centers[alphath.index] = max(
-                        same_centers[alphath.index],
-                        alphath.distance
+                    # store closer distance between fi and a+1
+                    closer_dist = min(
+                        fi_distance,
+                        neighbors[self.alpha + 1].distance
                     )
+                
+                # O(a)
+                for kth, neighbor in neighbors.items():
+                    # TODO: refactor skipping a+1
+                    # a+1 is not part of the alpha-neighbors as it's farther than a
+                    if kth == self.alpha + 1:
+                        continue
+                    
+                    j = neighbor.index
 
-                    lost_centers[alphath.index] = max(
-                        lost_centers[alphath.index],
-                        min(
-                            fi_distance,
-                            closests[self.alpha + 1].distance
-                        )
-                    )
+                    if is_attracted:
+                        # alphath is irrelevant if user is attracted by fi
+                        if j == alphath.index:
+                            continue
 
+                        lost_neighbors[j] = max(lost_neighbors[j], alphath.distance)
+                        same_neighbors[j] = max(same_neighbors[j], farther_dist)
+                    else:
+                        lost_neighbors[j] = max(lost_neighbors[j], closer_dist)
+                        same_neighbors[j] = max(same_neighbors[j], alphath.distance)
+
+            # TODO: refactor getting g1 and g2 when updating r itself
             largest = MovedFacility(-1, 0)
             second_largest = MovedFacility(-1, 0)
             # O(p)
-            for fr, radius in same_centers.items():
+            for fr, radius in same_neighbors.items():
                 if radius > largest.radius:
-                    second_largest = MovedFacility(largest.index, largest.radius)
+                    second_largest = largest
                     largest = MovedFacility(fr, radius)
 
             # O(p)
@@ -378,8 +397,8 @@ class Solver:
                     MovedFacility(
                         fr,
                         max(
-                            current_obj_func,
-                            lost_centers[fr],
+                            curr_obj_func,
+                            lost_neighbors[fr],
                             second_largest.radius
                                 if fr == largest.index
                                 else largest.radius
@@ -398,7 +417,7 @@ class Solver:
             best_in = -1
             best_out = -1
             
-            # O(mpn)
+            # O(m - p) = O(m) * O(pn) = O(mpn)
             for fi in self.solution.closed_facilities:
                 fi_distance = self.instance.get_distance(
                     self.solution.critical_allocation.user,
@@ -406,6 +425,7 @@ class Solver:
                 )
 
                 if fi_distance < self.solution.get_objective_function():
+                    # O(pn)
                     best_move_out = move(fi)
 
                     if best_move_out.radius < best_obj_func:
