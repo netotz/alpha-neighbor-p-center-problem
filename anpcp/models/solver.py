@@ -315,7 +315,8 @@ class Solver:
             return best_out
 
 
-        while True:
+        is_improved = True
+        while is_improved:
             best_obj_func = self.solution.get_objective_function()
             best_in = -1
             best_out = -1
@@ -341,11 +342,9 @@ class Solver:
                         if is_first_improvement:
                             break
             
-            # if no improvement was found, end algorithm
-            if best_obj_func >= self.solution.get_objective_function():
-                break
-
-            self.swap(best_in, best_out)
+            is_improved = best_obj_func < self.solution.get_objective_function()
+            if is_improved:
+                self.swap(best_in, best_out)
         
         return self.solution
 
