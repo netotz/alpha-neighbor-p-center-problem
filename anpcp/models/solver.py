@@ -281,19 +281,18 @@ class Solver:
                         if j == alphath.index:
                             continue
 
-                        lost_neighbors[j] = max(lost_neighbors[j], alphath.distance)
-
-                        if farther_dist > same_neighbors[j]:
-                            same_neighbors[j] = farther_dist
-                            second_largest = largest
-                            largest = MovedFacility(j, farther_dist)
+                        lost_arg = alphath.distance
+                        same_arg = farther_dist
                     else:
-                        lost_neighbors[j] = max(lost_neighbors[j], closer_dist)
+                        lost_arg = closer_dist
+                        same_arg = alphath.distance
 
-                        if alphath.distance > same_neighbors[j]:
-                            same_neighbors[j] = alphath.distance
-                            second_largest = largest
-                            largest = MovedFacility(j, alphath.distance)
+                    lost_neighbors[j] = max(lost_neighbors[j], lost_arg)
+
+                    if same_arg > same_neighbors[j]:
+                        same_neighbors[j] = same_arg
+                        second_largest = largest
+                        largest = MovedFacility(j, same_arg)
 
             # O(p)
             best_out = min(
