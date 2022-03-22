@@ -316,11 +316,15 @@ class Solver:
         self.update_obj_func()
 
 
-    def fast_swap(self) -> Solution:
+    def fast_swap(self, is_first_improvement: bool) -> Solution:
         '''
         Fast Vertex Substitution for ANPCP (FVS-A), 
         based from its application for the PCP.
+
+        Time O(mpn)
         '''
+
+
         def move(facility_in: int) -> MovedFacility:
             '''
             Determines the best facility to remove if `facility_in` is inserted,
@@ -335,7 +339,7 @@ class Solver:
             # O(p)
             lost_neighbors = {fr: 0 for fr in self.solution.open_facilities}
 
-            # O(n) * O(p) = O(pn)
+            # O(pn)
             for user in self.instance.users_indexes:
                 fi_distance = self.instance.get_distance(user, facility_in)
 
@@ -413,11 +417,11 @@ class Solver:
 
 
         while True:
-            best_obj_func = sys.maxsize
+            best_obj_func = self.solution.get_objective_function()
             best_in = -1
             best_out = -1
             
-            # O(m - p) = O(m) * O(pn) = O(mpn)
+            # O(mpn)
             for fi in self.solution.closed_facilities:
                 fi_distance = self.instance.get_distance(
                     self.solution.critical_allocation.user,
@@ -428,11 +432,17 @@ class Solver:
                     # O(pn)
                     best_move_out = move(fi)
 
+                    # if the move improves (minimizes) objective function
                     if best_move_out.radius < best_obj_func:
                         best_obj_func = best_move_out.radius
                         best_in = fi
                         best_out = best_move_out.index
+
+                        # if is first improvement, apply the swap now
+                        if is_first_improvement:
+                            break
             
+            # if no improvement was found, end algorithm
             if best_obj_func >= self.solution.get_objective_function():
                 break
 
