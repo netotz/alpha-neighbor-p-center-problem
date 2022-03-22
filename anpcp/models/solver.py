@@ -263,11 +263,14 @@ class Solver:
                         fi_distance,
                         neighbors[self.alpha + 1].distance
                     )
+
+                largest = MovedFacility(-1, 0)
+                second_largest = MovedFacility(-1, 0)
                 
                 # O(a)
                 for kth, neighbor in neighbors.items():
                     # TODO: refactor skipping a+1
-                    # a+1 is not part of the alpha-neighbors as it's farther than a
+                    # a+1 is not part of the alpha-neighbors as it's farther than alpha
                     if kth == self.alpha + 1:
                         continue
                     
@@ -279,19 +282,18 @@ class Solver:
                             continue
 
                         lost_neighbors[j] = max(lost_neighbors[j], alphath.distance)
-                        same_neighbors[j] = max(same_neighbors[j], farther_dist)
+
+                        if farther_dist > same_neighbors[j]:
+                            same_neighbors[j] = farther_dist
+                            second_largest = largest
+                            largest = MovedFacility(j, farther_dist)
                     else:
                         lost_neighbors[j] = max(lost_neighbors[j], closer_dist)
-                        same_neighbors[j] = max(same_neighbors[j], alphath.distance)
 
-            # TODO: refactor getting g1 and g2 when updating r itself
-            largest = MovedFacility(-1, 0)
-            second_largest = MovedFacility(-1, 0)
-            # O(p)
-            for fr, radius in same_neighbors.items():
-                if radius > largest.radius:
-                    second_largest = largest
-                    largest = MovedFacility(fr, radius)
+                        if alphath.distance > same_neighbors[j]:
+                            same_neighbors[j] = alphath.distance
+                            second_largest = largest
+                            largest = MovedFacility(j, alphath.distance)
 
             # O(p)
             best_out = min(
