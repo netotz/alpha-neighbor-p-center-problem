@@ -172,8 +172,8 @@ class Solver:
         '''
         return max(
             (
-                self.get_kth_closest(c, self.alpha)
-                for c in self.instance.users_indexes
+                self.get_kth_closest(u, self.alpha)
+                for u in self.instance.users_indexes
             ),
             key=lambda af: af.distance
         )
