@@ -195,8 +195,7 @@ class Solver:
 
     def interchange(
             self,
-            is_first_improvement: bool,
-            combs: int = 1) -> Solution:
+            is_first_improvement: bool) -> Solution:
         '''
         Time O(m**2 pn)
         '''
@@ -207,14 +206,20 @@ class Solver:
         is_improved = True
         while is_improved:
             # O(m**2 pn)
-            for closeds in combinations(best_solution.closed_facilities, combs):
+            for fi in best_solution.closed_facilities:
+                fi_distance = self.instance.get_distance(
+                    best_solution.critical_allocation.user,
+                    fi
+                )
+
+                if fi_distance >= best_solution.get_objective_function():
+                    continue
+
                 # O(mpn)
-                for opens in combinations(best_solution.open_facilities, combs):
+                for fr in best_solution.open_facilities:
                     swapped = deepcopy(best_solution)
-                    for fi in closeds:
-                        swapped.insert(fi)
-                    for fr in opens:
-                        swapped.remove(fr)
+                    swapped.insert(fi)
+                    swapped.remove(fr)
 
                     self.solution = swapped
                     # O(mn)
@@ -352,19 +357,21 @@ class Solver:
                     fi
                 )
 
-                if fi_distance < self.solution.get_objective_function():
-                    # O(pn)
-                    best_move_out = move(fi)
+                if fi_distance >= self.solution.get_objective_function():
+                    continue
 
-                    # if the move improves (minimizes) objective function
-                    if best_move_out.radius < best_obj_func:
-                        best_obj_func = best_move_out.radius
-                        best_in = fi
-                        best_out = best_move_out.index
+                # O(pn)
+                best_move_out = move(fi)
 
-                        # if is first improvement, apply the swap now
-                        if is_first_improvement:
-                            break
+                # if the move improves (minimizes) objective function
+                if best_move_out.radius < best_obj_func:
+                    best_obj_func = best_move_out.radius
+                    best_in = fi
+                    best_out = best_move_out.index
+
+                    # if is first improvement, apply the swap now
+                    if is_first_improvement:
+                        break
             
             is_improved = best_obj_func < self.solution.get_objective_function()
             if is_improved:
