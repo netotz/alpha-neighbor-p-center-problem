@@ -1,8 +1,8 @@
+from copy import deepcopy
 from dataclasses import dataclass, field
 import random
-import sys
-from typing import Dict, List, Mapping, NoReturn, Optional, Sequence, Set
-from itertools import product, repeat
+from typing import Dict, List, NoReturn, Optional, Sequence, Set
+from itertools import combinations, product
 import timeit
 
 import matplotlib.pyplot as plt
@@ -180,31 +180,10 @@ class Solver:
 
 
     def update_obj_func(self) -> None:
+        '''
+        Time O(pn)
+        '''
         self.solution.critical_allocation = self.eval_obj_func()
-
-
-    def insert(self, facility: int) -> None:
-        self.solution.closed_facilities.discard(facility)
-        self.solution.open_facilities.add(facility)
-
-
-    def remove(self, facility: int) -> None:
-        self.solution.open_facilities.discard(facility)
-        self.solution.closed_facilities.add(facility)
-        self.deallocate_facility(facility)
-    
-
-    def swap(self, facility_in: int, facility_out: int) -> None:
-        '''
-        Applies a swap to the solution by inserting `facility_in` to it
-        and removing `facility_out` from it,
-        then allocates all users by calling `allocate_all()`
-        and finally updates the objective function with `update_obj_func()`.
-        '''
-        self.insert(facility_in)
-        self.remove(facility_out)
-        self.allocate_all()
-        self.update_obj_func()
 
 
     def construct(self) -> NoReturn:
@@ -214,7 +193,52 @@ class Solver:
         raise NotImplementedError
 
 
-    def fast_swap(self, is_first_improvement: bool) -> Solution:
+    def interchange(
+            self,
+            is_first_improvement: bool,
+            combs: int = 1) -> Solution:
+        '''
+        Time O(m**2 pn)
+        '''
+        best_solution = deepcopy(self.solution)
+
+        current_solution = best_solution
+
+        is_improved = True
+        while is_improved:
+            # O(m**2 pn)
+            for closeds in combinations(best_solution.closed_facilities, combs):
+                # O(mpn)
+                for opens in combinations(best_solution.open_facilities, combs):
+                    swapped = deepcopy(best_solution)
+                    for fi in closeds:
+                        swapped.insert(fi)
+                    for fr in opens:
+                        swapped.remove(fr)
+
+                    self.solution = swapped
+                    # O(mn)
+                    self.allocate_all()
+                    # O(pn)
+                    self.update_obj_func()
+
+                    if swapped.get_objective_function() < current_solution.get_objective_function():
+                        current_solution = swapped
+                        if is_first_improvement:
+                            break
+
+                is_improved = current_solution.get_objective_function() < best_solution.get_objective_function()
+                if is_improved:
+                    best_solution = current_solution
+                    # explore another neighborhood
+                    break
+
+        self.solution = best_solution
+
+        return best_solution
+
+
+    def fast_vertex_substitution(self, is_first_improvement: bool) -> Solution:
         '''
         Fast Vertex Substitution for ANPCP (FVS-A), 
         based from its application for the PCP.
@@ -344,7 +368,11 @@ class Solver:
             
             is_improved = best_obj_func < self.solution.get_objective_function()
             if is_improved:
-                self.swap(best_in, best_out)
+                self.solution.swap(best_in, best_out)
+                # O(mn)
+                self.allocate_all()
+                # O(pn)
+                self.update_obj_func()
         
         return self.solution
 
@@ -365,7 +393,7 @@ class Solver:
 
             current_solution = self.pdp(beta=beta, update=False)
             current_solution = self.interchange(
-                is_first=True,
+                is_first_improvement=True,
                 another_solution=current_solution
             )
 
