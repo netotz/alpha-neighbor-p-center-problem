@@ -317,11 +317,11 @@ class Solver:
                         same_arg = alphath.distance
 
                     lost_neighbors[j] = max(lost_neighbors[j], lost_arg)
+                    same_neighbors[j] = max(same_neighbors[j], same_arg)
 
-                    if same_arg > same_neighbors[j]:
-                        same_neighbors[j] = same_arg
+                    if same_neighbors[j] > largest:
                         second_largest = largest
-                        largest = MovedFacility(j, same_arg)
+                        largest = MovedFacility(j, same_neighbors[j])
 
             # O(p)
             best_out = min(
