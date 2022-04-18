@@ -319,7 +319,7 @@ class Solver:
                     lost_neighbors[j] = max(lost_neighbors[j], lost_arg)
                     same_neighbors[j] = max(same_neighbors[j], same_arg)
 
-                    if same_neighbors[j] > largest:
+                    if same_neighbors[j] > largest.radius:
                         second_largest = largest
                         largest = MovedFacility(j, same_neighbors[j])
 
