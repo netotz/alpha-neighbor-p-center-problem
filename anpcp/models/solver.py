@@ -2,13 +2,12 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 import random
 from typing import Dict, List, NoReturn, Optional, Sequence, Set
-from itertools import combinations, product
+from itertools import product
 import timeit
 
 import matplotlib.pyplot as plt
 
 from models.moved_facility import MovedFacility
-from models.profitable_swap import ProfitableSwap
 from models.allocated_facility import AllocatedFacility
 from models.instance import Instance
 from models.solution import Solution
@@ -30,10 +29,9 @@ class Solver:
     solution: Solution = field(init=False, default=None)
     history: List[Solution] = field(init=False, repr=False, default_factory=list)
 
-
     def __post_init__(self):
         self.alpha_range = set(range(1, self.alpha + 2))
-        
+
         self.solution = Solution()
         if self.with_random_solution:
             self.__randomize_solution()
@@ -44,44 +42,37 @@ class Solver:
             if len(self.solution.open_facilities) >= self.alpha:
                 self.update_obj_func()
 
-
     def __randomize_solution(self) -> None:
         self.solution.open_facilities = set(
-            random.sample(
-                self.instance.facilities_indexes,
-                self.p
-            )
+            random.sample(self.instance.facilities_indexes, self.p)
         )
-        self.solution.closed_facilities = self.instance.facilities_indexes - self.solution.open_facilities
-
+        self.solution.closed_facilities = (
+            self.instance.facilities_indexes - self.solution.open_facilities
+        )
 
     def __init_allocations(self) -> None:
         self.solution.allocations = [
-            [0 for _ in range(self.instance.m)]
-            for _ in range(self.instance.n)
+            [0 for _ in range(self.instance.m)] for _ in range(self.instance.n)
         ]
 
-
     def allocate_all(self) -> None:
-        '''
+        """
         Allocates all users to their alpha-neighbors.
 
         Time: O(mn)
-        '''
+        """
         for user in self.instance.users_indexes:
             self.reallocate_user(user)
-
 
     def allocate(self, user: int, facility: int, kth: int) -> None:
         self.solution.allocations[user][facility] = kth
 
-
     def reallocate_user(self, user: int) -> None:
-        '''
+        """
         Completely reallocates a user to its alpha-neighbors.
 
         Time: O(m)
-        '''
+        """
         # O(m)
         self.deallocate_user(user)
 
@@ -95,23 +86,19 @@ class Solver:
 
                 self.allocate(user, facility, k)
 
-
     def deallocate(self, user: int, facility: int) -> None:
         self.allocate(user, facility, 0)
-
 
     def deallocate_facility(self, facility: int) -> None:
         for user in self.instance.users_indexes:
             self.deallocate(user, facility)
 
-
     def deallocate_user(self, user: int) -> None:
         for facility in self.instance.facilities_indexes:
             self.deallocate(user, facility)
 
-
     def get_kth_closest(self, user: int, kth: int) -> AllocatedFacility:
-        '''
+        """
         Gets the `kth` closest facility from `user` with its distance
         by checking each (user, facility) pair from allocations matrix.
 
@@ -120,18 +107,17 @@ class Solver:
         To get the alpha-neighbors of `user`, see `get_alpha_neighbors`.
 
         Time: O(p)
-        '''
+        """
         # O(p)
         for facility in self.solution.open_facilities:
             if self.solution.allocations[user][facility] == kth:
                 distance = self.instance.get_distance(user, facility)
                 return AllocatedFacility(facility, user, distance)
-        
+
         raise NotAllocatedError
-    
 
     def get_alpha_neighbors(self, user: int) -> Dict[int, AllocatedFacility]:
-        '''
+        """
         Gets the closest facilities from `user` up to its center (including it) with their distances
         by checking all (user, facility) pairs from allocations matrix.
 
@@ -140,11 +126,11 @@ class Solver:
         To get only one facility, see `get_kth_closest`.
 
         Time: O(p)
-        '''
+        """
         alpha_neighbors = dict()
         # O(a)
         alpha_range = set(self.alpha_range)
-        
+
         # O(p)
         for facility in self.solution.open_facilities:
             k = self.solution.allocations[user][facility]
@@ -159,46 +145,37 @@ class Solver:
 
         return alpha_neighbors
 
-
     def eval_obj_func(self) -> AllocatedFacility:
-        '''
+        """
         Evaluates the objective function of field `solution`.
-        
+
         Returns the "critical pair", i.e.
         the maximum alpha-th facility and the distance to its allocated user,
         as an `AllocatedFacility` object.
 
         Time complexity: O(pn)
-        '''
+        """
         return max(
-            (
-                self.get_kth_closest(u, self.alpha)
-                for u in self.instance.users_indexes
-            ),
-            key=lambda af: af.distance
+            (self.get_kth_closest(u, self.alpha) for u in self.instance.users_indexes),
+            key=lambda af: af.distance,
         )
 
-
     def update_obj_func(self) -> None:
-        '''
+        """
         Time O(pn)
-        '''
+        """
         self.solution.critical_allocation = self.eval_obj_func()
 
-
     def construct(self) -> NoReturn:
-        '''
+        """
         TODO: Implement an algorithm to construct a solution from scratch.
-        '''
+        """
         raise NotImplementedError
 
-
-    def interchange(
-            self,
-            is_first_improvement: bool) -> Solution:
-        '''
+    def interchange(self, is_first_improvement: bool) -> Solution:
+        """
         Time O(m**2 pn)
-        '''
+        """
         best_solution = deepcopy(self.solution)
 
         current_solution = best_solution
@@ -208,8 +185,7 @@ class Solver:
             # O(m**2 pn)
             for fi in best_solution.closed_facilities:
                 fi_distance = self.instance.get_distance(
-                    best_solution.critical_allocation.user,
-                    fi
+                    best_solution.critical_allocation.user, fi
                 )
 
                 if fi_distance >= best_solution.get_objective_function():
@@ -227,12 +203,18 @@ class Solver:
                     # O(pn)
                     self.update_obj_func()
 
-                    if swapped.get_objective_function() < current_solution.get_objective_function():
+                    if (
+                        swapped.get_objective_function()
+                        < current_solution.get_objective_function()
+                    ):
                         current_solution = swapped
                         if is_first_improvement:
                             break
 
-                is_improved = current_solution.get_objective_function() < best_solution.get_objective_function()
+                is_improved = (
+                    current_solution.get_objective_function()
+                    < best_solution.get_objective_function()
+                )
                 if is_improved:
                     best_solution = current_solution
                     # explore another neighborhood
@@ -242,23 +224,21 @@ class Solver:
 
         return best_solution
 
-
     def fast_vertex_substitution(self, is_first_improvement: bool) -> Solution:
-        '''
-        Fast Vertex Substitution for ANPCP (FVS-A), 
+        """
+        Fast Vertex Substitution for ANPCP (FVS-A),
         based from its application for the PCP.
 
         Time O(mpn)
-        '''
-
+        """
 
         def move(facility_in: int) -> MovedFacility:
-            '''
+            """
             Determines the best facility to remove if `facility_in` is inserted,
             and the objective function resulting from the swap.
 
             Time O(pn)
-            '''
+            """
             # current objective function
             curr_obj_func = 0
             # O(p)
@@ -280,31 +260,27 @@ class Solver:
                     # store farther distance between fi and a-1
                     same_arg = max(
                         fi_distance,
-                        neighbors[self.alpha - 1].distance
-                            if self.alpha > 1
-                            # or if it's PCP
-                            else 0
+                        neighbors[self.alpha - 1].distance if self.alpha > 1
+                        # or if it's PCP
+                        else 0,
                     )
                     curr_obj_func = max(curr_obj_func, same_arg)
                     lost_arg = alphath.distance
                 else:
                     same_arg = alphath.distance
                     # store closer distance between fi and a+1
-                    lost_arg = min(
-                        fi_distance,
-                        neighbors[self.alpha + 1].distance
-                    )
+                    lost_arg = min(fi_distance, neighbors[self.alpha + 1].distance)
 
                 largest = MovedFacility(-1, 0)
                 second_largest = MovedFacility(-1, 0)
-                
+
                 # O(a)
                 for kth, neighbor in neighbors.items():
                     # TODO: refactor skipping a+1
                     # a+1 is not part of the alpha-neighbors as it's farther than alpha
                     if kth == self.alpha + 1:
                         continue
-                    
+
                     j = neighbor.index
 
                     # alphath is irrelevant if user is attracted by fi
@@ -327,29 +303,27 @@ class Solver:
                             curr_obj_func,
                             lost_neighbors[fr],
                             second_largest.radius
-                                if fr == largest.index
-                                else largest.radius
-                        )
+                            if fr == largest.index
+                            else largest.radius,
+                        ),
                     )
                     for fr in self.solution.open_facilities
                 ),
-                key=lambda af: af.radius
+                key=lambda af: af.radius,
             )
 
             return best_out
-
 
         is_improved = True
         while is_improved:
             best_obj_func = self.solution.get_objective_function()
             best_in = -1
             best_out = -1
-            
+
             # O(mpn)
             for fi in self.solution.closed_facilities:
                 fi_distance = self.instance.get_distance(
-                    self.solution.critical_allocation.user,
-                    fi
+                    self.solution.critical_allocation.user, fi
                 )
 
                 if fi_distance >= self.solution.get_objective_function():
@@ -367,7 +341,7 @@ class Solver:
                     # if is first improvement, apply the swap now
                     if is_first_improvement:
                         break
-            
+
             is_improved = best_obj_func < self.solution.get_objective_function()
             if is_improved:
                 self.solution.swap(best_in, best_out)
@@ -375,18 +349,17 @@ class Solver:
                 self.allocate_all()
                 # O(pn)
                 self.update_obj_func()
-        
+
         return self.solution
 
-
     def grasp(self, max_iters: int, beta: float = 0, update: bool = True) -> Set[int]:
-        '''
+        """
         Applies the GRASP metaheuristic to the current solver.
 
         `max_iters`: Maximum number of iterations until returning the best found solution.
 
         `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
-        '''
+        """
         best_solution = Solution(self)
 
         i = 0
@@ -395,8 +368,7 @@ class Solver:
 
             current_solution = self.pdp(beta=beta, update=False)
             current_solution = self.interchange(
-                is_first_improvement=True,
-                another_solution=current_solution
+                is_first_improvement=True, another_solution=current_solution
             )
 
             current_solution.time = timeit.default_timer() - start
@@ -412,52 +384,60 @@ class Solver:
 
         return best_solution
 
-
-    def plot(self, with_annotations: bool = True, axis: bool = True, dpi: Optional[int] = None) -> None:
+    def plot(
+        self,
+        with_annotations: bool = True,
+        axis: bool = True,
+        dpi: Optional[int] = None,
+    ) -> None:
         fig, ax = plt.subplots()
 
         ax.scatter(
             [u.x for u in self.instance.users],
             [u.y for u in self.instance.users],
-            color='tab:blue',
-            label='Users',
+            color="tab:blue",
+            label="Users",
             linewidths=0.3,
             alpha=0.8,
-            edgecolors='black'
-        )
-        
-        ax.scatter(
-            [
-                f.x for f in self.instance.facilities
-                if f.index in self.solution.open_facilities
-            ],
-            [
-                f.y for f in self.instance.facilities
-                if f.index in self.solution.open_facilities
-            ],
-            marker='s',
-            color='red',
-            label='Centers ($S$)',
-            linewidths=0.3,
-            alpha=0.8,
-            edgecolors='black'
+            edgecolors="black",
         )
 
         ax.scatter(
             [
-                f.x for f in self.instance.facilities
+                f.x
+                for f in self.instance.facilities
+                if f.index in self.solution.open_facilities
+            ],
+            [
+                f.y
+                for f in self.instance.facilities
+                if f.index in self.solution.open_facilities
+            ],
+            marker="s",
+            color="red",
+            label="Centers ($S$)",
+            linewidths=0.3,
+            alpha=0.8,
+            edgecolors="black",
+        )
+
+        ax.scatter(
+            [
+                f.x
+                for f in self.instance.facilities
                 if f.index in self.solution.closed_facilities
             ],
             [
-                f.y for f in self.instance.facilities
+                f.y
+                for f in self.instance.facilities
                 if f.index in self.solution.closed_facilities
             ],
-            marker='s',
-            color='gray',
-            label='Closed facilities',
+            marker="s",
+            color="gray",
+            label="Closed facilities",
             linewidths=0.2,
             alpha=0.5,
-            edgecolors='black'
+            edgecolors="black",
         )
 
         if with_annotations:
@@ -472,19 +452,20 @@ class Solver:
                 alphath = self.get_kth_closest(user.index, self.alpha)
             except NotAllocatedError:
                 continue
-            
+
             facility = self.instance.facilities[alphath.index]
             color = (
-                'orange' if alphath.index == self.solution.critical_allocation.index
-                            and alphath.distance == self.solution.get_objective_function()
-                else 'gray'
+                "orange"
+                if alphath.index == self.solution.critical_allocation.index
+                and alphath.distance == self.solution.get_objective_function()
+                else "gray"
             )
             ax.plot(
                 (user.x, facility.x),
                 (user.y, facility.y),
                 color=color,
-                linestyle=':',
-                alpha=0.5
+                linestyle=":",
+                alpha=0.5,
             )
 
         ax.legend(loc=(1.01, 0))
@@ -497,9 +478,10 @@ class Solver:
 
 
 def generate_solvers(
-        instances: Sequence[Instance],
-        p_percentages: Sequence[float],
-        alpha_values: Sequence[int]) -> List[Solver]:
+    instances: Sequence[Instance],
+    p_percentages: Sequence[float],
+    alpha_values: Sequence[int],
+) -> List[Solver]:
     return [
         Solver(instance, int(instance.n * p), alpha)
         for instance, p, alpha in product(instances, p_percentages, alpha_values)

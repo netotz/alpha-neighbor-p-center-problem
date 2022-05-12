@@ -2,12 +2,12 @@ from models.instance import Instance
 from models.solver import Solver
 
 
-instance = Instance.random(1000, 500)
-solver = Solver(instance, 50, 3, True)
+instance = Instance.random(200, 100)
+solver = Solver(instance, 10, 2, True)
 solver.plot(with_annotations=False, dpi=250)
 solver.solution
 
-solver.fast_swap()
+solver.fast_vertex_substitution()
 solver.plot(with_annotations=False, dpi=250)
 
 # solver.grasp(1, 0.4)
