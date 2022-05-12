@@ -278,17 +278,19 @@ class Solver:
 
                 if is_attracted:
                     # store farther distance between fi and a-1
-                    farther_dist = max(
+                    same_arg = max(
                         fi_distance,
                         neighbors[self.alpha - 1].distance
                             if self.alpha > 1
                             # or if it's PCP
                             else 0
                     )
-                    curr_obj_func = max(curr_obj_func, farther_dist)
+                    curr_obj_func = max(curr_obj_func, same_arg)
+                    lost_arg = alphath.distance
                 else:
+                    same_arg = alphath.distance
                     # store closer distance between fi and a+1
-                    closer_dist = min(
+                    lost_arg = min(
                         fi_distance,
                         neighbors[self.alpha + 1].distance
                     )
@@ -305,16 +307,9 @@ class Solver:
                     
                     j = neighbor.index
 
-                    if is_attracted:
-                        # alphath is irrelevant if user is attracted by fi
-                        if j == alphath.index:
-                            continue
-
-                        lost_arg = alphath.distance
-                        same_arg = farther_dist
-                    else:
-                        lost_arg = closer_dist
-                        same_arg = alphath.distance
+                    # alphath is irrelevant if user is attracted by fi
+                    if is_attracted and j == alphath.index:
+                        continue
 
                     lost_neighbors[j] = max(lost_neighbors[j], lost_arg)
                     same_neighbors[j] = max(same_neighbors[j], same_arg)
