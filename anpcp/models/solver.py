@@ -257,6 +257,7 @@ class Solver:
                 is_attracted = fi_distance < alphath.distance
 
                 if is_attracted:
+                    lost_arg = alphath.distance
                     # store farther distance between fi and a-1
                     same_arg = max(
                         fi_distance,
@@ -265,11 +266,10 @@ class Solver:
                         else 0,
                     )
                     curr_obj_func = max(curr_obj_func, same_arg)
-                    lost_arg = alphath.distance
                 else:
-                    same_arg = alphath.distance
                     # store closer distance between fi and a+1
                     lost_arg = min(fi_distance, neighbors[self.alpha + 1].distance)
+                    same_arg = alphath.distance
 
                 largest = MovedFacility(-1, 0)
                 second_largest = MovedFacility(-1, 0)
