@@ -22,10 +22,14 @@ class Instance:
     m: int = field(init=False)
 
     distances: List[List[int]] = field(init=False, default_factory=list, repr=False)
-    facilities_distances: List[List[int]] = field(init=False, default_factory=list, repr=False)
+    facilities_distances: List[List[int]] = field(
+        init=False, default_factory=list, repr=False
+    )
     sorted_distances: List[List[int]] = field(
         init=False, default_factory=list, repr=False
     )
+
+    farthests: Tuple[int, int] = field(init=False, default_factory=tuple, repr=False)
 
     def __post_init__(self) -> None:
         self.n = len(self.users)
@@ -49,6 +53,7 @@ class Instance:
             [round(d) for d in row]
             for row in spatial.distance_matrix(facilities_coords, facilities_coords)
         ]
+        self.farthests = self.get_farthest_indexes()
 
     @classmethod
     def random(cls, n: int, m: int, x_max: int = 1000, y_max: int = 1000) -> "Instance":
@@ -98,4 +103,16 @@ class Instance:
         return self.distances[from_user][to_facility]
 
     def get_farthest_indexes(self) -> Tuple[int, int]:
-        return np.unravel_index(self.distances.argmax(), self.distances.shape)
+        """
+        Time O(m**2)
+        """
+        _, fi, fj = max(
+            (
+                (self.facilities_distances[i][j], i, j)
+                for i in range(self.m)
+                for j in range(self.m)
+            ),
+            key=lambda t: t[0],
+        )
+
+        return fi, fj

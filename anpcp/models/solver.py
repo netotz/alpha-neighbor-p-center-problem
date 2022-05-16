@@ -173,30 +173,37 @@ class Solver:
     def construct(self, beta: float = 0) -> Solution:
         """
         Randomized Greedy Dispersion heuristic.
+
+        Time O(mp)
         """
         solution = Solution()
         # O(m)
         solution.closed_facilities = set(self.instance.facilities_indexes)
-        # choose random facility
-        facility = random.randint(0, len(solution.closed_facilities) - 1)
-        solution.insert(facility)
 
-        # O(mp**2)
+        # insert 2 farthest facilities
+        farthest1, last_inserted = self.instance.farthests
+        solution.insert(farthest1)
+        solution.insert(last_inserted)
+
+        # distances from each facility to current solution
+        s_dists = [
+            self.instance.facilities_distances[fi][farthest1]
+            # O(m)
+            for fi in range(self.instance.m)
+        ]
+
+        # O(mp)
         while len(solution.open_facilities) < self.p:
             costs: list[MovedFacility] = []
             min_cost = math.inf
             max_cost = -math.inf
 
-            # O(mp)
+            # O(m)
             for fi in solution.closed_facilities:
-                facility = MovedFacility(
-                    fi,
-                    min(
-                        self.instance.facilities_distances[fi][fs]
-                        # O(p)
-                        for fs in solution.open_facilities
-                    ),
+                s_dists[fi] = min(
+                    s_dists[fi], self.instance.facilities_distances[fi][last_inserted]
                 )
+                facility = MovedFacility(fi, s_dists[fi])
 
                 max_cost = max(max_cost, facility.radius)
                 min_cost = min(min_cost, facility.radius)
@@ -209,8 +216,8 @@ class Solver:
                 for f in costs
                 if f.radius >= max_cost - beta * (max_cost - min_cost)
             ]
-            chosen = random.choice(candidates)
-            solution.insert(chosen)
+            last_inserted = random.choice(candidates)
+            solution.insert(last_inserted)
 
         self.solution = solution
         # TODO: delegate this method
