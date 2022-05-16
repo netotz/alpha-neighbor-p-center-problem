@@ -1,5 +1,7 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
+import math
+from platform import mac_ver
 import random
 from typing import Dict, List, NoReturn, Optional, Sequence, Set
 from itertools import product
@@ -35,6 +37,8 @@ class Solver:
         self.solution = Solution()
         if self.with_random_solution:
             self.__randomize_solution()
+        else:
+            self.solution.closed_facilities = set(self.instance.facilities_indexes)
 
         self.__init_allocations()
         if self.solution.open_facilities:
@@ -166,11 +170,57 @@ class Solver:
         """
         self.solution.critical_allocation = self.eval_obj_func()
 
-    def construct(self) -> NoReturn:
+    def construct(self, beta: float = 0) -> Solution:
         """
-        TODO: Implement an algorithm to construct a solution from scratch.
+        Randomized Greedy Dispersion heuristic.
         """
-        raise NotImplementedError
+        solution = Solution()
+        # O(m)
+        solution.closed_facilities = set(self.instance.facilities_indexes)
+        # choose random facility
+        facility = random.randint(0, len(solution.closed_facilities) - 1)
+        solution.insert(facility)
+
+        # O(mp**2)
+        while len(solution.open_facilities) < self.p:
+            costs: list[MovedFacility] = []
+            min_cost = math.inf
+            max_cost = -math.inf
+
+            # O(mp)
+            for fi in solution.closed_facilities:
+                facility = MovedFacility(
+                    fi,
+                    min(
+                        self.instance.facilities_distances[fi][fs]
+                        # O(p)
+                        for fs in solution.open_facilities
+                    ),
+                )
+
+                max_cost = max(max_cost, facility.radius)
+                min_cost = min(min_cost, facility.radius)
+
+                costs.append(facility)
+
+            # O(m)
+            candidates = [
+                f.index
+                for f in costs
+                if f.radius >= max_cost - beta * (max_cost - min_cost)
+            ]
+            chosen = random.choice(candidates)
+            solution.insert(chosen)
+
+        self.solution = solution
+        # TODO: delegate this method
+        self.__init_allocations()
+        # O(mn)
+        self.allocate_all()
+        # O(pn)
+        self.update_obj_func()
+
+        return self.solution
 
     def interchange(self, is_first_improvement: bool) -> Solution:
         """

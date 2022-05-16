@@ -22,6 +22,7 @@ class Instance:
     m: int = field(init=False)
 
     distances: List[List[int]] = field(init=False, default_factory=list, repr=False)
+    facilities_distances: List[List[int]] = field(init=False, default_factory=list, repr=False)
     sorted_distances: List[List[int]] = field(
         init=False, default_factory=list, repr=False
     )
@@ -42,6 +43,11 @@ class Instance:
         ]
         self.sorted_distances = [
             sorted(enumerate(row), key=lambda c: c[1]) for row in self.distances
+        ]
+
+        self.facilities_distances = [
+            [round(d) for d in row]
+            for row in spatial.distance_matrix(facilities_coords, facilities_coords)
         ]
 
     @classmethod
