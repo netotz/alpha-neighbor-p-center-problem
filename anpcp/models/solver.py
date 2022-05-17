@@ -189,7 +189,7 @@ class Solver:
 
         # O(mp)
         while len(solution.open_facilities) < self.p:
-            costs: list[MovedFacility] = []
+            facilities: list[MovedFacility] = []
             min_cost = math.inf
             max_cost = -math.inf
 
@@ -200,17 +200,14 @@ class Solver:
                 )
                 facility = MovedFacility(fi, s_dists[fi])
 
-                max_cost = max(max_cost, facility.radius)
-                min_cost = min(min_cost, facility.radius)
+                max_cost = max(max_cost, s_dists[fi])
+                min_cost = min(min_cost, s_dists[fi])
 
-                costs.append(facility)
+                facilities.append(facility)
 
+            threshold = max_cost - beta * (max_cost - min_cost)
             # O(m)
-            candidates = [
-                f.index
-                for f in costs
-                if f.radius >= max_cost - beta * (max_cost - min_cost)
-            ]
+            candidates = [f.index for f in facilities if f.radius >= threshold]
             last_inserted = random.choice(candidates)
             solution.insert(last_inserted)
 
