@@ -176,21 +176,16 @@ class Solver:
 
         Time O(mp)
         """
+        # distances from each facility to current solution
+        s_dists = [math.inf] * self.instance.m
+
         solution = Solution()
         # O(m)
         solution.closed_facilities = set(self.instance.facilities_indexes)
 
-        # insert 2 farthest facilities
-        farthest1, last_inserted = self.instance.farthests
-        solution.insert(farthest1)
+        # choose random facility
+        last_inserted = random.randint(0, len(solution.closed_facilities) - 1)
         solution.insert(last_inserted)
-
-        # distances from each facility to current solution
-        s_dists = [
-            self.instance.facilities_distances[fi][farthest1]
-            # O(m)
-            for fi in range(self.instance.m)
-        ]
 
         # O(mp)
         while len(solution.open_facilities) < self.p:

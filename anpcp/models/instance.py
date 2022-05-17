@@ -53,7 +53,7 @@ class Instance:
             [round(d) for d in row]
             for row in spatial.distance_matrix(facilities_coords, facilities_coords)
         ]
-        self.farthests = self.get_farthest_indexes()
+        # self.farthests = self.get_farthest_indexes()
 
     @classmethod
     def random(cls, n: int, m: int, x_max: int = 1000, y_max: int = 1000) -> "Instance":
