@@ -1,7 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 import math
-from platform import mac_ver
 import random
 from typing import Dict, List, NoReturn, Optional, Sequence, Set
 from itertools import product
@@ -177,6 +176,7 @@ class Solver:
         Time O(mp)
         """
         # distances from each facility to current solution
+        # O(m)
         s_dists = [math.inf] * self.instance.m
 
         solution = Solution()
@@ -243,8 +243,7 @@ class Solver:
                 # O(mpn)
                 for fr in best_solution.open_facilities:
                     swapped = deepcopy(best_solution)
-                    swapped.insert(fi)
-                    swapped.remove(fr)
+                    swapped.swap(fi, fr)
 
                     self.solution = swapped
                     # O(mn)
@@ -401,7 +400,7 @@ class Solver:
 
         return self.solution
 
-    def grasp(self, max_iters: int, beta: float = 0, update: bool = True) -> Set[int]:
+    def grasp(self, max_iters: int, beta: float = 0) -> Solution:
         """
         Applies the GRASP metaheuristic to the current solver.
 
@@ -409,27 +408,28 @@ class Solver:
 
         `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
         """
-        best_solution = Solution(self)
+        best_solution = None
 
         i = 0
         while i < max_iters:
             start = timeit.default_timer()
 
-            current_solution = self.pdp(beta=beta, update=False)
-            current_solution = self.interchange(
-                is_first_improvement=True, another_solution=current_solution
-            )
+            self.construct(beta=beta)
+            self.fast_vertex_substitution(True)
 
-            current_solution.time = timeit.default_timer() - start
-            self.history.append(current_solution)
+            self.solution.time = timeit.default_timer() - start
+            self.history.append(self.solution)
 
-            if current_solution.objective_function < best_solution.objective_function:
-                best_solution = current_solution
+            if (
+                best_solution is None
+                or self.solution.get_objective_function()
+                < best_solution.get_objective_function()
+            ):
+                best_solution = self.solution
 
             i += 1
 
-        if update:
-            self.solution = best_solution
+        self.solution = best_solution
 
         return best_solution
 
