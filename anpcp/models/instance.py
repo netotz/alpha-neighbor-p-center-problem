@@ -5,7 +5,6 @@ from typing import List, Set, Tuple
 from random import randint
 
 from scipy import spatial
-import tsplib95
 
 from models.vertex import Vertex
 
@@ -21,14 +20,12 @@ class Instance:
     m: int = field(init=False)
     n: int = field(init=False)
 
-    distances: List[List[int]] = field(init=False, default_factory=list, repr=False)
+    distances: List[List[int]] = field(default_factory=list, repr=False)
     sorted_distances: List[List[int]] = field(
         init=False, default_factory=list, repr=False
     )
 
-    facilities_distances: List[List[int]] = field(
-        init=False, default_factory=list, repr=False
-    )
+    facilities_distances: List[List[int]] = field(default_factory=list, repr=False)
     # farthests: Tuple[int, int] = field(init=False, default_factory=tuple, repr=False)
 
     def __post_init__(self) -> None:
@@ -41,18 +38,20 @@ class Instance:
         users_coords = [[u.x, u.y] for u in self.users]
         facilities_coords = [[f.x, f.y] for f in self.facilities]
 
-        self.distances = [
-            [round(d) for d in row]
-            for row in spatial.distance_matrix(users_coords, facilities_coords)
-        ]
+        if not self.distances:
+            self.distances = [
+                [round(d) for d in row]
+                for row in spatial.distance_matrix(users_coords, facilities_coords)
+            ]
         self.sorted_distances = [
             sorted(enumerate(row), key=lambda c: c[1]) for row in self.distances
         ]
 
-        self.facilities_distances = [
-            [round(d) for d in row]
-            for row in spatial.distance_matrix(facilities_coords, facilities_coords)
-        ]
+        if not self.facilities_distances:
+            self.facilities_distances = [
+                [round(d) for d in row]
+                for row in spatial.distance_matrix(facilities_coords, facilities_coords)
+            ]
         # self.farthests = self.get_farthest_indexes()
 
     @classmethod
@@ -82,10 +81,16 @@ class Instance:
         with open(filepath, "r") as jsonfile:
             data = json.load(jsonfile)
 
-        return Instance(
-            [Vertex(f["i"], f["x"], f["y"]) for f in data["facilities"]],
-            [Vertex(u["i"], u["x"], u["y"]) for u in data["users"]],
-        )
+        try:
+            return Instance(
+                [Vertex(f["i"], f["x"], f["y"]) for f in data["facilities"]],
+                [Vertex(u["i"], u["x"], u["y"]) for u in data["users"]],
+                data["distances"],
+                data["facilities_distances"],
+            )
+        except json.JSONDecodeError as error:
+            print("The input file has an incorrect format.")
+            print(error)
 
     def write_json(self, directory: str, id: int) -> None:
         """
