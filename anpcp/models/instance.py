@@ -3,7 +3,6 @@ import os
 from typing import List, Set, Tuple
 from random import randint
 
-import numpy as np
 from scipy import spatial
 import tsplib95
 
@@ -22,14 +21,14 @@ class Instance:
     m: int = field(init=False)
 
     distances: List[List[int]] = field(init=False, default_factory=list, repr=False)
-    facilities_distances: List[List[int]] = field(
-        init=False, default_factory=list, repr=False
-    )
     sorted_distances: List[List[int]] = field(
         init=False, default_factory=list, repr=False
     )
 
-    farthests: Tuple[int, int] = field(init=False, default_factory=tuple, repr=False)
+    facilities_distances: List[List[int]] = field(
+        init=False, default_factory=list, repr=False
+    )
+    # farthests: Tuple[int, int] = field(init=False, default_factory=tuple, repr=False)
 
     def __post_init__(self) -> None:
         self.n = len(self.users)
