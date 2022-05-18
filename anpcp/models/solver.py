@@ -55,7 +55,7 @@ class Solver:
 
     def __init_allocations(self) -> None:
         self.solution.allocations = [
-            [0 for _ in range(self.instance.m)] for _ in range(self.instance.n)
+            [0 for _ in range(self.instance.n)] for _ in range(self.instance.m)
         ]
 
     def allocate_all(self) -> None:
@@ -177,7 +177,7 @@ class Solver:
         """
         # distances from each facility to current solution
         # O(m)
-        s_dists = [math.inf] * self.instance.m
+        s_dists = [math.inf] * self.instance.n
 
         solution = Solution()
         # O(m)

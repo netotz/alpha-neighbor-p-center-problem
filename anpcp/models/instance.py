@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import json
 import os
 from typing import List, Set, Tuple
 from random import randint
@@ -11,14 +12,14 @@ from models.vertex import Vertex
 
 @dataclass
 class Instance:
-    users: List[Vertex] = field(repr=False)
     facilities: List[Vertex] = field(repr=False)
+    users: List[Vertex] = field(repr=False)
 
     users_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
     facilities_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
 
-    n: int = field(init=False)
     m: int = field(init=False)
+    n: int = field(init=False)
 
     distances: List[List[int]] = field(init=False, default_factory=list, repr=False)
     sorted_distances: List[List[int]] = field(
@@ -31,8 +32,8 @@ class Instance:
     # farthests: Tuple[int, int] = field(init=False, default_factory=tuple, repr=False)
 
     def __post_init__(self) -> None:
-        self.n = len(self.users)
-        self.m = len(self.facilities)
+        self.m = len(self.users)
+        self.n = len(self.facilities)
 
         self.users_indexes = {u.index for u in self.users}
         self.facilities_indexes = {f.index for f in self.facilities}
@@ -68,10 +69,10 @@ class Instance:
         distinct_coords = list(distinct_coords)
 
         # each list has its own enumeration
-        users = [Vertex(i, x, y) for i, (x, y) in enumerate(distinct_coords[:n])]
-        facilities = [Vertex(i, x, y) for i, (x, y) in enumerate(distinct_coords[n:])]
+        facilities = [Vertex(i, x, y) for i, (x, y) in enumerate(distinct_coords[:n])]
+        users = [Vertex(i, x, y) for i, (x, y) in enumerate(distinct_coords[n:])]
 
-        return Instance(users, facilities)
+        return Instance(facilities, users)
 
     @classmethod
     def read(cls, filename: str) -> "Instance":
@@ -82,21 +83,21 @@ class Instance:
         nodes = problem.node_coords if problem.node_coords else problem.display_data
         return Instance([Vertex(i - 1, int(x), int(y)) for i, (x, y) in nodes.items()])
 
-    def write(self, directory: str, id: int = 1) -> None:
-        """
-        ! Deprecated
-        """
-        filename = f"anpcp{self.n}_{id}.tsp"
-        filepath = os.path.join(directory, filename)
-        with open(filepath, "w") as file:
-            file.write(f"NAME: {filename}\n")
-            file.write("TYPE: ANPCP\n")
-            file.write(f"DIMENSION: {self.n}\n")
-            file.write("EDGE_WEIGHT_TYPE: EUC_2D\n")
-            file.write("NODE_COORD_SECTION\n")
-            for v in self.vertexes:
-                file.write(f"{v.index + 1} {v.x} {v.y}\n")
-            file.write("EOF\n")
+    def write_json(self, directory: str, id: int) -> None:
+        """ """
+        data = {
+            "n": self.n,
+            "m": self.m,
+            "facilities": [{"i": f.index, "x": f.x, "y": f.y} for f in self.facilities],
+            "users": [{"i": u.index, "x": u.x, "y": u.y} for u in self.users],
+            "distances": self.distances,
+            "facilities_distances": self.facilities_distances,
+        }
+        filename = f"anpcp_{self.n}_{self.m}_{id}.json"
+        path = os.path.join(directory, filename)
+
+        with open(path, "w") as jsonfile:
+            json.dump(data, jsonfile)
 
     def get_distance(self, from_user: int, to_facility: int) -> int:
         return self.distances[from_user][to_facility]
@@ -108,8 +109,8 @@ class Instance:
         _, fi, fj = max(
             (
                 (self.facilities_distances[i][j], i, j)
-                for i in range(self.m)
-                for j in range(self.m)
+                for i in range(self.n)
+                for j in range(self.n)
             ),
             key=lambda t: t[0],
         )
