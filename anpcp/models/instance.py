@@ -75,16 +75,22 @@ class Instance:
         return Instance(facilities, users)
 
     @classmethod
-    def read(cls, filename: str) -> "Instance":
+    def read_json(cls, filepath: str) -> "Instance":
         """
-        ! Deprecated
+        Reads an instance JSON file and loads its data.
         """
-        problem = tsplib95.load(filename)
-        nodes = problem.node_coords if problem.node_coords else problem.display_data
-        return Instance([Vertex(i - 1, int(x), int(y)) for i, (x, y) in nodes.items()])
+        with open(filepath, "r") as jsonfile:
+            data = json.load(jsonfile)
+
+        return Instance(
+            [Vertex(f["i"], f["x"], f["y"]) for f in data["facilities"]],
+            [Vertex(u["i"], u["x"], u["y"]) for u in data["users"]],
+        )
 
     def write_json(self, directory: str, id: int) -> None:
-        """ """
+        """
+        Writes instance data to a JSON file.
+        """
         data = {
             "n": self.n,
             "m": self.m,
