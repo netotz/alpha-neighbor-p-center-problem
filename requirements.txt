@@ -5,3 +5,4 @@ scipy===1.7.1
 numpy===1.21.2
 tsplib95===0.7.1
 ipykernel===6.4.1
+pandas==1.4.2

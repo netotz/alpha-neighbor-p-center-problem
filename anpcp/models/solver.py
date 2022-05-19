@@ -35,7 +35,7 @@ class Solver:
 
         self.solution = Solution()
         if self.with_random_solution:
-            self.__randomize_solution()
+            self.randomize_solution()
         else:
             self.solution.closed_facilities = set(self.instance.facilities_indexes)
 
@@ -45,13 +45,15 @@ class Solver:
             if len(self.solution.open_facilities) >= self.alpha:
                 self.update_obj_func()
 
-    def __randomize_solution(self) -> None:
+    def randomize_solution(self) -> Solution:
         self.solution.open_facilities = set(
             random.sample(self.instance.facilities_indexes, self.p)
         )
         self.solution.closed_facilities = (
             self.instance.facilities_indexes - self.solution.open_facilities
         )
+
+        return self.solution
 
     def __init_allocations(self) -> None:
         self.solution.allocations = [
@@ -225,7 +227,7 @@ class Solver:
         """
         Time O(m**2 pn)
         """
-        best_solution = deepcopy(self.solution)
+        best_solution = self.solution
 
         current_solution = best_solution
 
