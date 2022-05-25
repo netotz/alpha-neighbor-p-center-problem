@@ -186,7 +186,7 @@ class Solver:
         solution.closed_facilities = set(self.instance.facilities_indexes)
 
         # choose random facility
-        last_inserted = random.randint(0, len(solution.closed_facilities) - 1)
+        last_inserted = random.choice(list(solution.closed_facilities))
         solution.insert(last_inserted)
 
         # O(mp)
@@ -227,52 +227,67 @@ class Solver:
         """
         Time O(m**2 pn)
         """
-        best_solution = self.solution
+        current_radius = self.solution.get_obj_func()
 
-        current_solution = best_solution
+        best_radius = current_radius
+        best_fi = best_fr = -1
 
         is_improved = True
         while is_improved:
             # O(m**2 pn)
-            for fi in best_solution.closed_facilities:
+            for fi in self.solution.closed_facilities:
                 fi_distance = self.instance.get_distance(
-                    best_solution.critical_allocation.user, fi
+                    self.solution.critical_allocation.user, fi
                 )
 
-                if fi_distance >= best_solution.get_objective_function():
+                if fi_distance >= current_radius:
                     continue
 
-                # O(mpn)
-                for fr in best_solution.open_facilities:
-                    swapped = deepcopy(best_solution)
-                    swapped.swap(fi, fr)
-
-                    self.solution = swapped
+                # O(mpn) = O(p) * O(mn)
+                for fr in self.solution.open_facilities:
+                    self.solution.swap(fi, fr)
                     # O(mn)
                     self.allocate_all()
                     # O(pn)
                     self.update_obj_func()
 
-                    if (
-                        swapped.get_objective_function()
-                        < current_solution.get_objective_function()
-                    ):
-                        current_solution = swapped
+                    if self.solution.get_obj_func() < best_radius:
+                        best_radius = self.solution.get_obj_func()
+                        best_fi = fi
+                        best_fr = fr
+
                         if is_first_improvement:
                             break
 
-                is_improved = (
-                    current_solution.get_objective_function()
-                    < best_solution.get_objective_function()
-                )
-                if is_improved:
-                    best_solution = current_solution
-                    # explore another neighborhood
+                    # if it's best improvement, "restore" base solution
+                    self.solution.swap(fr, fi)
+
+                is_improved = best_radius < current_radius
+                if is_improved and is_first_improvement:
                     break
+                # if solution hasn't improved or is best improvement,
+                # keep serching (next fi)
 
-        self.solution = best_solution
+            is_improved = best_radius < current_radius
+            if is_improved:
+                if is_first_improvement:
+                    current_radius = best_radius
+                    # current solution is already best,
+                    # because it's the last one updated
+                    continue
 
-        return best_solution
+                self.solution.swap(best_fi, best_fr)
+                self.allocate_all()
+                self.update_obj_func()
+
+                current_radius = self.solution.get_obj_func()
+                best_radius = current_radius
+
+        # when it stops improving,
+        # it must be updated because last swap didn't update
+        self.allocate_all()
+        self.update_obj_func()
+        return self.solution
 
     def fast_vertex_substitution(self, is_first_improvement: bool) -> Solution:
         """
@@ -366,7 +381,7 @@ class Solver:
 
         is_improved = True
         while is_improved:
-            best_obj_func = self.solution.get_objective_function()
+            best_obj_func = self.solution.get_obj_func()
             best_in = -1
             best_out = -1
 
@@ -376,7 +391,7 @@ class Solver:
                     self.solution.critical_allocation.user, fi
                 )
 
-                if fi_distance >= self.solution.get_objective_function():
+                if fi_distance >= self.solution.get_obj_func():
                     continue
 
                 # O(pn)
@@ -392,7 +407,7 @@ class Solver:
                     if is_first_improvement:
                         break
 
-            is_improved = best_obj_func < self.solution.get_objective_function()
+            is_improved = best_obj_func < self.solution.get_obj_func()
             if is_improved:
                 self.solution.swap(best_in, best_out)
                 # O(mn)
@@ -424,8 +439,7 @@ class Solver:
 
             if (
                 best_solution is None
-                or self.solution.get_objective_function()
-                < best_solution.get_objective_function()
+                or self.solution.get_obj_func() < best_solution.get_obj_func()
             ):
                 best_solution = self.solution
 
@@ -508,7 +522,7 @@ class Solver:
             color = (
                 "orange"
                 if alphath.index == self.solution.critical_allocation.index
-                and alphath.distance == self.solution.get_objective_function()
+                and alphath.distance == self.solution.get_obj_func()
                 else "gray"
             )
             ax.plot(
