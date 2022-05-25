@@ -225,6 +225,8 @@ class Solver:
 
     def interchange(self, is_first_improvement: bool) -> Solution:
         """
+        Naive Interchange, checks every possible swap.
+
         Time O(m**2 pn)
         """
         current_radius = self.solution.get_obj_func()
@@ -284,7 +286,7 @@ class Solver:
                 best_radius = current_radius
 
         # when it stops improving,
-        # it must be updated because last swap didn't update
+        # it must be updated because last swap didn't update it
         self.allocate_all()
         self.update_obj_func()
         return self.solution
