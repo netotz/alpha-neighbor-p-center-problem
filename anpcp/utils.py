@@ -33,6 +33,7 @@ def compare_local_search(
         ni = deepcopy(solver.solution)
 
         solver.solution = deepcopy(initial)
+
         start = timeit.default_timer()
         solver.fast_vertex_substitution(is_first_improvement)
         solver.solution.time = timeit.default_timer() - start
@@ -42,15 +43,15 @@ def compare_local_search(
         table["m"].append(solver.instance.m)
         table["p"].append(solver.p)
         table["alpha"].append(solver.alpha)
-        initial_of = initial.get_objective_function()
+        initial_of = initial.get_obj_func()
         table["initial OF"].append(initial_of)
 
-        ni_of = ni.get_objective_function()
+        ni_of = ni.get_obj_func()
         table["NI OF"].append(ni_of)
         table["NI time"].append(ni.time)
         table["NI improvement"].append(100 * abs(ni_of - initial_of) / initial_of)
 
-        fvs_of = fvs.get_objective_function()
+        fvs_of = fvs.get_obj_func()
         table["FVS OF"].append(fvs_of)
         table["FVS time"].append(fvs.time)
         table["FVS improvement"].append(100 * abs(fvs_of - initial_of) / initial_of)

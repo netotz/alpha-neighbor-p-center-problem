@@ -13,7 +13,7 @@ class Solution:
     critical_allocation: AllocatedFacility = field(init=False, default=None)
     time: float = field(init=False, repr=False, default=-1)
 
-    def get_objective_function(self) -> int:
+    def get_obj_func(self) -> int:
         """
         Gets the ANPCP objective function of this solution
         by accessing the `critical_allocation` field
