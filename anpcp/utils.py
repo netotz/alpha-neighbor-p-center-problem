@@ -16,7 +16,7 @@ def compare_local_search(
     If `from_random`, the initial solution for the local search will be random,
     otherwise, the initial solution will be greedily constructed (beta = 0).
     """
-    table = defaultdict(list)
+    datalist = list()
 
     for solver in solvers:
         if from_random:
@@ -39,24 +39,59 @@ def compare_local_search(
         solver.solution.time = timeit.default_timer() - start
         fvs = deepcopy(solver.solution)
 
-        table["n"].append(solver.instance.n)
-        table["m"].append(solver.instance.m)
-        table["p"].append(solver.p)
-        table["alpha"].append(solver.alpha)
         initial_of = initial.get_obj_func()
-        table["initial OF"].append(initial_of)
-
         ni_of = ni.get_obj_func()
-        table["NI OF"].append(ni_of)
-        table["NI time"].append(ni.time)
-        table["NI improvement"].append(100 * abs(ni_of - initial_of) / initial_of)
-
         fvs_of = fvs.get_obj_func()
-        table["FVS OF"].append(fvs_of)
-        table["FVS time"].append(fvs.time)
-        table["FVS improvement"].append(100 * abs(fvs_of - initial_of) / initial_of)
 
-    return pd.DataFrame.from_dict(table)
+        datalist.append(
+            (
+                solver.instance.n,
+                solver.instance.m,
+                solver.p,
+                solver.alpha,
+                initial_of,
+                ni_of,
+                ni.time,
+                100 * abs(ni_of - initial_of) / initial_of,
+                fvs_of,
+                fvs.time,
+                100 * abs(fvs_of - initial_of) / initial_of,
+            )
+        )
+
+    # dataframe = pd.DataFrame.from_dict(datadict)
+    dataframe = pd.DataFrame(
+        datalist,
+        columns="n,m,p,alpha,OF,OF,time,improvement,OF,time,improvement".split(","),
+    )
+    dataframe = pd.concat(
+        {
+            "instance": dataframe.iloc[:, range(4)],
+            "RGD": dataframe.iloc[:, 4],
+            "NI": dataframe.iloc[:, range(5, 8)],
+            "FVS": dataframe.iloc[:, range(8, 11)],
+        },
+        axis=1,
+    )
+
+    return dataframe
+
+
+def format_latex_table(dataframe: pd.DataFrame, path: str) -> None:
+    def format_time(time: float) -> str:
+        return f"{time:.3f}"
+
+    def format_improvement(improvement: float) -> str:
+        return f"{improvement:.1f}%"
+
+    formatters = {
+        ("NI", "time"): format_time,
+        ("NI", "improvement"): format_improvement,
+        ("FVS", "time"): format_time,
+        ("FVS", "improvement"): format_improvement,
+    }
+
+    dataframe.to_latex(path, formatters=formatters)
 
 
 def get_stats_df(
