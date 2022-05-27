@@ -1,4 +1,3 @@
-from collections import defaultdict
 from copy import deepcopy
 import timeit
 from typing import Any, Dict, Iterable, Mapping, Callable, Optional, Set
@@ -59,39 +58,34 @@ def compare_local_search(
             )
         )
 
-    # dataframe = pd.DataFrame.from_dict(datadict)
     dataframe = pd.DataFrame(
         datalist,
-        columns="n,m,p,alpha,OF,OF,time,improvement,OF,time,improvement".split(","),
+        columns="n m p alpha OF OF time improvement OF time improvement".split(),
     )
-    dataframe = pd.concat(
+
+    mean = get_mean(dataframe)
+
+    return mean
+
+
+def get_mean(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates the mean of `dataframe` grouped by parameters.
+    """
+    meandata = dataframe.groupby("n m p alpha".split()).mean()
+    meandata = pd.concat(
         {
-            "instance": dataframe.iloc[:, range(4)],
-            "RGD": dataframe.iloc[:, 4],
-            "NI": dataframe.iloc[:, range(5, 8)],
-            "FVS": dataframe.iloc[:, range(8, 11)],
+            "RGD": meandata.iloc[:, 0],
+            "NI": meandata.iloc[:, range(1, 4)],
+            "FVS": meandata.iloc[:, range(4, 7)],
         },
         axis=1,
     )
-
-    return dataframe
+    return meandata
 
 
 def format_latex_table(dataframe: pd.DataFrame, path: str) -> None:
-    def format_time(time: float) -> str:
-        return f"{time:.3f}"
-
-    def format_improvement(improvement: float) -> str:
-        return f"{improvement:.1f}%"
-
-    formatters = {
-        ("NI", "time"): format_time,
-        ("NI", "improvement"): format_improvement,
-        ("FVS", "time"): format_time,
-        ("FVS", "improvement"): format_improvement,
-    }
-
-    dataframe.to_latex(path, formatters=formatters)
+    dataframe.to_latex(path, float_format="%.2f", multirow=True)
 
 
 def get_stats_df(
