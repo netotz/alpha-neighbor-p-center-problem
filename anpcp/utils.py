@@ -63,24 +63,18 @@ def compare_local_search(
         columns="n m p alpha OF OF time improvement OF time improvement".split(),
     )
 
-    mean = get_mean(dataframe)
+    initial_header = "rand" if from_random else "RGD"
 
-    return mean
-
-
-def get_mean(dataframe: pd.DataFrame) -> pd.DataFrame:
-    """
-    Calculates the mean of `dataframe` grouped by parameters.
-    """
     meandata = dataframe.groupby("n m p alpha".split()).mean()
     meandata = pd.concat(
         {
-            "RGD": meandata.iloc[:, 0],
+            initial_header: meandata.iloc[:, 0],
             "NI": meandata.iloc[:, range(1, 4)],
             "FVS": meandata.iloc[:, range(4, 7)],
         },
         axis=1,
     )
+
     return meandata
 
 
