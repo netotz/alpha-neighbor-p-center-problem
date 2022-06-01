@@ -34,6 +34,7 @@ def compare_local_search(solvers: Iterable[Solver], from_random: bool):
         )
 
         datalist_if.append(run_local_search(solver, True, initial))
+        solver.solution = deepcopy(initial)
         datalist_ib.append(run_local_search(solver, False, initial))
 
     initial_header = "rand" if from_random else "RGD"
