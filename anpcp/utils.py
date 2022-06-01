@@ -71,24 +71,26 @@ def run_local_search(
         ni_of,
         100 * abs(ni_of - initial_of) / initial_of,
         ni.time,
+        ni.moves,
         fvs_of,
         100 * abs(fvs_of - initial_of) / initial_of,
         fvs.time,
+        fvs.moves,
     )
 
 
 def create_dataframe(data: Iterable[Tuple], initial_header: str):
     dataframe = pd.DataFrame(
         data,
-        columns="n m p alpha OF OF improvement time OF improvement time".split(),
+        columns="n m p alpha OF OF improvement time moves OF improvement time moves".split(),
     )
 
     mean_dataframe = dataframe.groupby("n m p alpha".split()).mean()
     mean_dataframe = pd.concat(
         {
             initial_header: mean_dataframe.iloc[:, 0],
-            "NI": mean_dataframe.iloc[:, range(1, 4)],
-            "A-FVS": mean_dataframe.iloc[:, range(4, 7)],
+            "NI": mean_dataframe.iloc[:, range(1, 5)],
+            "A-FVS": mean_dataframe.iloc[:, range(5, 9)],
         },
         axis=1,
     )

@@ -228,11 +228,10 @@ class Solver:
 
         Time O(m**2 pn)
         """
-        current_radius = self.solution.get_obj_func()
-
-        best_radius = current_radius
+        best_radius = current_radius = self.solution.get_obj_func()
         best_fi = best_fr = -1
 
+        moves = 0
         is_improved = True
         while is_improved:
             # O(m**2 pn)
@@ -261,6 +260,7 @@ class Solver:
                             break
 
                     # if it's best improvement, "restore" base solution
+                    # by reverting the swap
                     self.solution.swap(fr, fi)
 
                 is_improved = best_radius < current_radius
@@ -270,7 +270,10 @@ class Solver:
                 # keep serching (next fi)
 
             is_improved = best_radius < current_radius
+            # apply the move
             if is_improved:
+                moves += 1
+
                 if is_first_improvement:
                     current_radius = best_radius
                     # current solution is already best,
@@ -281,13 +284,15 @@ class Solver:
                 self.allocate_all()
                 self.update_obj_func()
 
-                current_radius = self.solution.get_obj_func()
-                best_radius = current_radius
+                current_radius = best_radius = self.solution.get_obj_func()
 
-        # when it stops improving,
-        # it must be updated because last swap didn't update it
+        # when it doesn't improve,
+        # it must be updated because the last swap (the reverted)
+        # didn't update it
         self.allocate_all()
         self.update_obj_func()
+        self.solution.moves = moves
+
         return self.solution
 
     def fast_vertex_substitution(self, is_first_improvement: bool) -> Solution:
@@ -380,11 +385,13 @@ class Solver:
 
             return best_out
 
+        moves = 0
         is_improved = True
         while is_improved:
-            best_obj_func = self.solution.get_obj_func()
-            best_in = -1
-            best_out = -1
+            current_radius = self.solution.get_obj_func()
+
+            best_radius = current_radius
+            best_fi = best_fr = -1
 
             # O(mpn)
             for fi in self.solution.closed_facilities:
@@ -392,29 +399,34 @@ class Solver:
                     self.solution.critical_allocation.user, fi
                 )
 
-                if fi_distance >= self.solution.get_obj_func():
+                if fi_distance >= current_radius:
                     continue
 
                 # O(pn)
-                best_move_out = move(fi)
+                best_move = move(fi)
 
                 # if the move improves (minimizes) objective function
-                if best_move_out.radius < best_obj_func:
-                    best_obj_func = best_move_out.radius
-                    best_in = fi
-                    best_out = best_move_out.index
+                if best_move.radius < best_radius:
+                    best_radius = best_move.radius
+                    best_fi = fi
+                    best_fr = best_move.index
 
                     # if is first improvement, apply the swap now
                     if is_first_improvement:
                         break
 
-            is_improved = best_obj_func < self.solution.get_obj_func()
+            is_improved = best_radius < current_radius
+            # apply the move
             if is_improved:
-                self.solution.swap(best_in, best_out)
+                moves += 1
+
+                self.solution.swap(best_fi, best_fr)
                 # O(mn)
                 self.allocate_all()
                 # O(pn)
                 self.update_obj_func()
+
+        self.solution.moves = moves
 
         return self.solution
 
