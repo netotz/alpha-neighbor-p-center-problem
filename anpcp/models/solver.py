@@ -33,16 +33,11 @@ class Solver:
         self.alpha_range = set(range(1, self.alpha + 2))
 
         self.solution = Solution()
+        self.__init_allocations()
         if self.with_random_solution:
             self.randomize_solution()
         else:
             self.solution.closed_facilities = set(self.instance.facilities_indexes)
-
-        self.__init_allocations()
-        if self.solution.open_facilities:
-            self.allocate_all()
-            if len(self.solution.open_facilities) >= self.alpha:
-                self.update_obj_func()
 
     def randomize_solution(self) -> Solution:
         self.solution.open_facilities = set(
@@ -51,6 +46,9 @@ class Solver:
         self.solution.closed_facilities = (
             self.instance.facilities_indexes - self.solution.open_facilities
         )
+
+        self.allocate_all()
+        self.update_obj_func()
 
         return self.solution
 
