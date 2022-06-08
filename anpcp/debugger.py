@@ -1,18 +1,15 @@
+import os
+from utils import compare_local_search
 from models.instance import Instance
 from models.solver import Solver
 
+# filepath = os.path.abspath("data\\anpcp_50_50_0.json")
+# instance = Instance.read_json(filepath)
 
-instance = Instance.random(200, 100)
+instance = Instance.random(100, 100)
 solver = Solver(instance, 10, 2, True)
-solver.plot(with_annotations=False, dpi=250)
-solver.solution
 
-solver.fast_vertex_substitution()
-solver.plot(with_annotations=False, dpi=250)
+# solver.construct()
+# solver.interchange(False)
 
-# solver.grasp(1, 0.4)
-# args = dict(
-#     is_first=True,
-#     k=2
-# )
-# Solver.interchange(solver, **args)
+solver.fast_vertex_substitution(True)
