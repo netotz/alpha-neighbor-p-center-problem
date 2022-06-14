@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import dataclass, field
 import math
 import random
@@ -285,7 +286,7 @@ class Solver:
                 current_radius = best_radius = self.solution.get_obj_func()
 
         # when it doesn't improve,
-        # it must be updated because the last swap (the reverted)
+        # it must be updated because the last swap (the "restored")
         # didn't update it
         self.allocate_all()
         self.update_obj_func()
@@ -428,7 +429,9 @@ class Solver:
 
         return self.solution
 
-    def grasp(self, max_iters: int, beta: float = 0) -> Solution:
+    def grasp(
+        self, max_iters: int, beta: float = 0, is_rand_beta: bool = False
+    ) -> Solution:
         """
         Applies the GRASP metaheuristic to the current solver.
 
@@ -437,26 +440,24 @@ class Solver:
         `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
         """
         best_solution = None
+        best_radius = current_radius = math.inf
 
         i = 0
         while i < max_iters:
-            start = timeit.default_timer()
+            self.construct(beta=random.uniform(0, 1) if is_rand_beta else beta)
+            rgd_time = self.solution.time
 
-            self.construct(beta=beta)
             self.fast_vertex_substitution(True)
+            current_radius = self.solution.get_obj_func()
 
-            self.solution.time = timeit.default_timer() - start
-            self.history.append(self.solution)
+            self.solution.time += rgd_time
 
-            if (
-                best_solution is None
-                or self.solution.get_obj_func() < best_solution.get_obj_func()
-            ):
-                best_solution = self.solution
+            if best_solution is None or current_radius < best_radius:
+                best_solution = deepcopy(self.solution)
 
             i += 1
 
-        self.solution = best_solution
+        self.solution = deepcopy(best_solution)
 
         return best_solution
 
