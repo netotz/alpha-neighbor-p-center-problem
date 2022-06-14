@@ -103,6 +103,13 @@ def format_latex_table(dataframe: pd.DataFrame, path: str):
     dataframe.to_latex(path, float_format="%.2f", multirow=True)
 
 
+def compare_betas(solvers: Iterable[Solver]):
+    """
+    Compares the results of running GRASP with different values for beta (RGD).
+    """
+    pass
+
+
 def get_stats_df(
     solvers: Iterable[Solver],
     constructive: Optional[Callable[..., Set[int]]],
