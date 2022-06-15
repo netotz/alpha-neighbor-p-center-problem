@@ -432,7 +432,7 @@ class Solver:
 
         return self.solution
 
-    def grasp(self, max_iters: int, beta: Optional[float] = 0) -> Solution:
+    def grasp(self, max_iters: int, beta: float = 0) -> Solution:
         """
         Applies the GRASP metaheuristic to the current solver.
 
@@ -451,7 +451,7 @@ class Solver:
 
             start = timeit.default_timer()
 
-            self.construct(beta=random.uniform(0, 1) if beta is None else beta)
+            self.construct(random.uniform(0, 1) if beta == -1 else beta)
             self.fast_vertex_substitution(True)
 
             total_time += timeit.default_timer() - start
