@@ -33,8 +33,7 @@ class Solver:
     def __post_init__(self):
         self.alpha_range = set(range(1, self.alpha + 2))
 
-        self.solution = Solution()
-        self.__init_allocations()
+        self.init_solution()
         if self.with_random_solution:
             self.randomize_solution()
         else:
@@ -57,6 +56,10 @@ class Solver:
         self.solution.allocations = [
             [0 for _ in range(self.instance.n)] for _ in range(self.instance.m)
         ]
+
+    def init_solution(self):
+        self.solution = Solution()
+        self.__init_allocations()
 
     def allocate_all(self) -> None:
         """
@@ -429,9 +432,7 @@ class Solver:
 
         return self.solution
 
-    def grasp(
-        self, max_iters: int, beta: float = 0, is_rand_beta: bool = False
-    ) -> Solution:
+    def grasp(self, max_iters: int, beta: Optional[float] = 0) -> Solution:
         """
         Applies the GRASP metaheuristic to the current solver.
 
@@ -442,24 +443,29 @@ class Solver:
         best_solution = None
         best_radius = current_radius = math.inf
 
+        total_time = 0
+
         i = 0
         while i < max_iters:
-            self.construct(beta=random.uniform(0, 1) if is_rand_beta else beta)
-            rgd_time = self.solution.time
+            self.init_solution()
 
+            start = timeit.default_timer()
+
+            self.construct(beta=random.uniform(0, 1) if beta is None else beta)
             self.fast_vertex_substitution(True)
+
+            total_time += timeit.default_timer() - start
+
             current_radius = self.solution.get_obj_func()
-
-            self.solution.time += rgd_time
-
             if best_solution is None or current_radius < best_radius:
                 best_solution = deepcopy(self.solution)
 
             i += 1
 
         self.solution = deepcopy(best_solution)
+        self.solution.time = total_time
 
-        return best_solution
+        return self.solution
 
     def plot(
         self,
