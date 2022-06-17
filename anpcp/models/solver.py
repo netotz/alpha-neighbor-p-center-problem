@@ -443,7 +443,7 @@ class Solver:
         best_solution = None
         best_radius = current_radius = math.inf
 
-        total_time = 0
+        total_time = moves = 0
 
         i = 0
         while i < max_iters:
@@ -459,11 +459,14 @@ class Solver:
             current_radius = self.solution.get_obj_func()
             if best_solution is None or current_radius < best_radius:
                 best_solution = deepcopy(self.solution)
+                best_radius = current_radius
+                moves += 1
 
             i += 1
 
         self.solution = deepcopy(best_solution)
         self.solution.time = total_time
+        self.solution.moves = moves
 
         return self.solution
 
