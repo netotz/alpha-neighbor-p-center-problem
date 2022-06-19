@@ -6,7 +6,7 @@ from random import randint
 
 from scipy import spatial
 
-from models.vertex import Vertex
+from models.vertex import VertexType, Vertex
 
 
 @dataclass
@@ -110,6 +110,28 @@ class Instance:
         with open(path, "w") as jsonfile:
             json.dump(data, jsonfile)
 
+    @classmethod
+    def read_tsp(cls, filepath: str) -> "Instance":
+        """
+        Reads a modified instance of the TSP Lib (extension .anpcp.tsp).
+
+        The original indexes of the nodes are lost
+        because `Solver` uses a matrix of distances
+        whose indexes are ranges starting at 0.
+        """
+        facilities = list()
+        users = list()
+        i = j = 0
+        for _, x, y, t in read_node_coords(filepath):
+            if t == VertexType.USER:
+                users.append(Vertex(i, x, y))
+                i += 1
+            elif t == VertexType.FACILITY:
+                facilities.append(Vertex(j, x, y))
+                j += 1
+
+        return Instance(facilities, users)
+
     def get_distance(self, from_user: int, to_facility: int) -> int:
         return self.distances[from_user][to_facility]
 
@@ -127,3 +149,26 @@ class Instance:
         )
 
         return fi, fj
+
+
+def read_node_coords(filepath: str) -> List[List[int]]:
+    """
+    Returns node coords as list of lists,
+    where each node has format [index, x, y, type].
+    """
+    lines = list()
+    with open(filepath, "r") as file:
+        lines = file.read().split("\n")
+
+    # find index where coords start
+    i = 1
+    for line in lines:
+        if line.startswith("NODE_COORD_SECTION"):
+            break
+        i += 1
+
+    # trim last index as it's EOF
+    nodes = lines[i:-1]
+    # each node is a string "i x y t"
+    # so split it and convert them to ints
+    return [list(map(int, node.split())) for node in nodes]
