@@ -137,6 +137,34 @@ def compare_betas(solvers: Iterable[Solver], betas: Iterable[float]):
     return dataframe.groupby("tsp n m p alpha beta".split()).mean()
 
 
+def run_grasp(solvers: Iterable[Solver]):
+    datalist = list()
+
+    MAX_ITERS = 50
+
+    for solver in solvers:
+        solver.grasp(MAX_ITERS, 0)
+        obj_func = solver.solution.get_obj_func()
+
+        datalist.append(
+            (
+                solver.instance.tsp_name,
+                solver.instance.n,
+                solver.instance.m,
+                solver.p,
+                solver.alpha,
+                obj_func,
+                solver.solution.time,
+                solver.solution.moves,
+            )
+        )
+
+    dataframe = pd.DataFrame(
+        datalist, columns="tsp n m p alpha OF time improvs".split()
+    )
+    return dataframe.groupby("tsp n m p alpha ".split()).mean()
+
+
 def get_stats_df(
     solvers: Iterable[Solver],
     constructive: Optional[Callable[..., Set[int]]],
