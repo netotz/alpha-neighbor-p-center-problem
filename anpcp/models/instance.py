@@ -13,6 +13,7 @@ from models.vertex import VertexType, Vertex
 class Instance:
     facilities: List[Vertex] = field(repr=False)
     users: List[Vertex] = field(repr=False)
+    tsp_name: str = ""
 
     users_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
     facilities_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
@@ -117,7 +118,7 @@ class Instance:
 
         The original indexes of the nodes are lost
         because `Solver` uses a matrix of distances
-        whose indexes are ranges starting at 0.
+        whose indexes must be ranges starting at 0.
         """
         facilities = list()
         users = list()
@@ -130,7 +131,12 @@ class Instance:
                 facilities.append(Vertex(j, x, y))
                 j += 1
 
-        return Instance(facilities, users)
+        # split path into (head, tail), where tail is filename
+        filename = os.path.split(filepath)[1]
+        # split filename by _, where first item is the original TSP Lib name
+        name = filename.split("_")[0]
+
+        return Instance(facilities, users, name)
 
     def get_distance(self, from_user: int, to_facility: int) -> int:
         return self.distances[from_user][to_facility]
