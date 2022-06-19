@@ -16,8 +16,13 @@ def split_instance(filename: str, percentage: float):
     filepath = os.path.join(dirpath, filename)
 
     instance = tsplib95.load(filepath)
+    tsp_name = instance.name
+
     # get number of facilities
     m = int(instance.dimension * percentage)
+    n = instance.dimension - m
+    anpcp_name = f"{tsp_name}_{n}_{m}"
+
     # choose indexes to be facilities
     facilities_indexes = set(random.sample(range(1, instance.dimension + 1), m))
 
@@ -32,7 +37,9 @@ def split_instance(filename: str, percentage: float):
 
     # check last index used for this instance
     i = 0
-    while os.path.exists(os.path.join(dirpath, f"{instance.name}_{m}_{i}.anpcp.tsp")):
+    while os.path.exists(os.path.join(dirpath, f"{anpcp_name}_{i}.anpcp.tsp")):
         i += 1
 
-    instance.save(os.path.join(dirpath, f"{instance.name}_{m}_{i}.anpcp.tsp"))
+    # update instance name
+    instance.name = f"{anpcp_name}_{i}"
+    instance.save(os.path.join(dirpath, f"{instance.name}.anpcp.tsp"))
