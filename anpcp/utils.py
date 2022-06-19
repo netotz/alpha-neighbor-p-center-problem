@@ -119,6 +119,7 @@ def compare_betas(solvers: Iterable[Solver], betas: Iterable[float]):
 
             datalist.append(
                 (
+                    solver.instance.tsp_name,
                     solver.instance.n,
                     solver.instance.m,
                     solver.p,
@@ -131,9 +132,9 @@ def compare_betas(solvers: Iterable[Solver], betas: Iterable[float]):
             )
 
     dataframe = pd.DataFrame(
-        datalist, columns="n m p alpha beta OF time improvs".split()
+        datalist, columns="tsp n m p alpha beta OF time improvs".split()
     )
-    return dataframe.groupby("n m p alpha beta".split()).mean()
+    return dataframe.groupby("tsp n m p alpha beta".split()).mean()
 
 
 def get_stats_df(
