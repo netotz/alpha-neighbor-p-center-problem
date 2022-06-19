@@ -175,7 +175,7 @@ def get_stats_df(
 
         data.append(
             (
-                solver.instance.m,
+                solver.instance.n,
                 solver.p,
                 solver.alpha,
                 constructive_name,

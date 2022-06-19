@@ -54,7 +54,7 @@ class Solver:
 
     def __init_allocations(self) -> None:
         self.solution.allocations = [
-            [0 for _ in range(self.instance.n)] for _ in range(self.instance.m)
+            [0 for _ in range(self.instance.m)] for _ in range(self.instance.n)
         ]
 
     def init_solution(self):
@@ -100,6 +100,7 @@ class Solver:
             self.deallocate(user, facility)
 
     def deallocate_user(self, user: int) -> None:
+        # O(m)
         for facility in self.instance.facilities_indexes:
             self.deallocate(user, facility)
 
@@ -180,7 +181,7 @@ class Solver:
         """
         # distances from each facility to current solution
         # O(m)
-        s_dists = [math.inf] * self.instance.n
+        s_dists = [math.inf] * self.instance.m
 
         solution = Solution()
         # O(m)
@@ -569,6 +570,6 @@ def generate_solvers(
     alpha_values: Sequence[int],
 ) -> List[Solver]:
     return [
-        Solver(instance, int(instance.n * p), alpha)
+        Solver(instance, int(instance.m * p), alpha)
         for instance, p, alpha in product(instances, p_percentages, alpha_values)
     ]

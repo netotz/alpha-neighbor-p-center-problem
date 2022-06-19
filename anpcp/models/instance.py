@@ -17,8 +17,8 @@ class Instance:
     users_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
     facilities_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
 
-    m: int = field(init=False)
     n: int = field(init=False)
+    m: int = field(init=False)
 
     distances: List[List[int]] = field(default_factory=list, repr=False)
     sorted_distances: List[List[int]] = field(
@@ -29,8 +29,8 @@ class Instance:
     # farthests: Tuple[int, int] = field(init=False, default_factory=tuple, repr=False)
 
     def __post_init__(self) -> None:
-        self.m = len(self.users)
-        self.n = len(self.facilities)
+        self.n = len(self.users)
+        self.m = len(self.facilities)
 
         self.users_indexes = {u.index for u in self.users}
         self.facilities_indexes = {f.index for f in self.facilities}
@@ -68,8 +68,8 @@ class Instance:
         distinct_coords = list(distinct_coords)
 
         # each list has its own enumeration
-        facilities = [Vertex(i, x, y) for i, (x, y) in enumerate(distinct_coords[:n])]
-        users = [Vertex(i, x, y) for i, (x, y) in enumerate(distinct_coords[n:])]
+        facilities = [Vertex(i, x, y) for i, (x, y) in enumerate(distinct_coords[:m])]
+        users = [Vertex(i, x, y) for i, (x, y) in enumerate(distinct_coords[m:])]
 
         return Instance(facilities, users)
 
@@ -97,14 +97,14 @@ class Instance:
         Writes instance data to a JSON file.
         """
         data = {
-            "n": self.n,
             "m": self.m,
+            "n": self.n,
             "facilities": [{"i": f.index, "x": f.x, "y": f.y} for f in self.facilities],
             "users": [{"i": u.index, "x": u.x, "y": u.y} for u in self.users],
             "distances": self.distances,
             "facilities_distances": self.facilities_distances,
         }
-        filename = f"anpcp_{self.n}_{self.m}_{id}.json"
+        filename = f"anpcp_{self.m}_{self.n}_{id}.json"
         path = os.path.join(directory, filename)
 
         with open(path, "w") as jsonfile:
@@ -120,8 +120,8 @@ class Instance:
         _, fi, fj = max(
             (
                 (self.facilities_distances[i][j], i, j)
-                for i in range(self.n)
-                for j in range(self.n)
+                for i in range(self.m)
+                for j in range(self.m)
             ),
             key=lambda t: t[0],
         )
