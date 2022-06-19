@@ -177,4 +177,4 @@ def read_node_coords(filepath: str) -> List[List[int]]:
     nodes = lines[i:-1]
     # each node is a string "i x y t"
     # so split it and convert them to ints
-    return [list(map(int, node.split())) for node in nodes]
+    return [[int(float(value)) for value in node.split()] for node in nodes]
