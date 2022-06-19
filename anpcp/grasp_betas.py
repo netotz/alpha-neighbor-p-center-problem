@@ -7,10 +7,12 @@ from models.solver import generate_solvers
 from utils import compare_betas
 
 
-def get_solvers(n: int, m: int, amount: int):
+def get_solvers(names, amount: int):
     datapath = os.path.abspath("..\\data")
+
     instances = [
-        Instance.read_json(os.path.join(datapath, f"anpcp_{n}_{m}_{i}.json"))
+        Instance.read_tsp(os.path.join(datapath, f"{name}_{i}.anpcp.tsp"))
+        for name in names
         for i in range(amount)
     ]
     return generate_solvers(instances, (0.1, 0.25, 0.5), (2, 3))
@@ -22,10 +24,8 @@ def read_results():
 
 
 def __run():
-    solvers50 = get_solvers(50, 50, 5)
-    solvers100 = get_solvers(100, 100, 5)
-    solvers500 = get_solvers(500, 500, 5)
-    solvers = solvers50 + solvers100 + solvers500
+    names = ["ch150_100_50", "rat575_384_191", "pr1002_668_334"]
+    solvers = get_solvers(names, 3)
 
     # beta = -1 means that beta is selected at random in each iteration
     BETAS = (0, 0.25, 0.5, 0.75, 1, -1)
