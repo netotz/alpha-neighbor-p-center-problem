@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 from models.instance import Instance
-from models.solver import generate_solvers
+from models.solver import Solver
 from utils import run_grasp
 
 
@@ -15,7 +15,14 @@ def get_solvers(names, amount: int):
         for name in names
         for i in range(amount)
     ]
-    return generate_solvers(instances, (0.25, 0.5, 0.75), (2, 3))
+
+    return [
+        Solver(instance, p, alpha)
+        for instance in instances
+        for p in range(10, 101, 10)
+        if p < instance.m
+        for alpha in (2, 3)
+    ]
 
 
 def read_results():
