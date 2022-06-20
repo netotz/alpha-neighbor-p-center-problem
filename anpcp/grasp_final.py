@@ -25,7 +25,7 @@ def get_solvers(names, amount: int):
     ]
 
 
-def read_results():
+def read_results() -> pd.DataFrame:
     filepath = ".\\nb_results\\grasp\\final.pkl"
     return pd.read_pickle(filepath)
 
