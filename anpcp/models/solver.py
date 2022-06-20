@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import dataclass, field
 import math
 import random
@@ -32,8 +33,7 @@ class Solver:
     def __post_init__(self):
         self.alpha_range = set(range(1, self.alpha + 2))
 
-        self.solution = Solution()
-        self.__init_allocations()
+        self.init_solution()
         if self.with_random_solution:
             self.randomize_solution()
         else:
@@ -54,8 +54,12 @@ class Solver:
 
     def __init_allocations(self) -> None:
         self.solution.allocations = [
-            [0 for _ in range(self.instance.n)] for _ in range(self.instance.m)
+            [0 for _ in range(self.instance.m)] for _ in range(self.instance.n)
         ]
+
+    def init_solution(self):
+        self.solution = Solution()
+        self.__init_allocations()
 
     def allocate_all(self) -> None:
         """
@@ -96,6 +100,7 @@ class Solver:
             self.deallocate(user, facility)
 
     def deallocate_user(self, user: int) -> None:
+        # O(m)
         for facility in self.instance.facilities_indexes:
             self.deallocate(user, facility)
 
@@ -176,7 +181,7 @@ class Solver:
         """
         # distances from each facility to current solution
         # O(m)
-        s_dists = [math.inf] * self.instance.n
+        s_dists = [math.inf] * self.instance.m
 
         solution = Solution()
         # O(m)
@@ -285,7 +290,7 @@ class Solver:
                 current_radius = best_radius = self.solution.get_obj_func()
 
         # when it doesn't improve,
-        # it must be updated because the last swap (the reverted)
+        # it must be updated because the last swap (the "restored")
         # didn't update it
         self.allocate_all()
         self.update_obj_func()
@@ -437,28 +442,34 @@ class Solver:
         `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
         """
         best_solution = None
+        best_radius = current_radius = math.inf
+
+        total_time = moves = 0
 
         i = 0
         while i < max_iters:
+            self.init_solution()
+
             start = timeit.default_timer()
 
-            self.construct(beta=beta)
+            self.construct(random.uniform(0, 1) if beta == -1 else beta)
             self.fast_vertex_substitution(True)
 
-            self.solution.time = timeit.default_timer() - start
-            self.history.append(self.solution)
+            total_time += timeit.default_timer() - start
 
-            if (
-                best_solution is None
-                or self.solution.get_obj_func() < best_solution.get_obj_func()
-            ):
-                best_solution = self.solution
+            current_radius = self.solution.get_obj_func()
+            if best_solution is None or current_radius < best_radius:
+                best_solution = deepcopy(self.solution)
+                best_radius = current_radius
+                moves += 1
 
             i += 1
 
-        self.solution = best_solution
+        self.solution = deepcopy(best_solution)
+        self.solution.time = total_time
+        self.solution.moves = moves
 
-        return best_solution
+        return self.solution
 
     def plot(
         self,
@@ -559,6 +570,6 @@ def generate_solvers(
     alpha_values: Sequence[int],
 ) -> List[Solver]:
     return [
-        Solver(instance, int(instance.n * p), alpha)
+        Solver(instance, int(instance.m * p), alpha)
         for instance, p, alpha in product(instances, p_percentages, alpha_values)
     ]

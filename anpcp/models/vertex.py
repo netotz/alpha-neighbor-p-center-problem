@@ -1,6 +1,12 @@
 from dataclasses import dataclass
+from enum import IntEnum
 from typing import Tuple
 import math
+
+
+class VertexType(IntEnum):
+    USER = 0
+    FACILITY = 1
 
 
 @dataclass
