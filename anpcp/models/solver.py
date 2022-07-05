@@ -474,7 +474,7 @@ class Solver:
     def plot(
         self,
         with_annotations: bool = True,
-        axis: bool = True,
+        axis: bool = False,
         dpi: Optional[int] = None,
     ) -> None:
         fig, ax = plt.subplots()
