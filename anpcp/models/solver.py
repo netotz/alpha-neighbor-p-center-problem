@@ -7,6 +7,7 @@ from itertools import product
 import timeit
 
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from models.moved_facility import MovedFacility
 from models.allocated_facility import AllocatedFacility
@@ -175,7 +176,7 @@ class Solver:
 
     def construct(self, beta: float = 0) -> Solution:
         """
-        Randomized Greedy Dispersion heuristic.
+        Randomized Greedy Dispersion (RGD) construction heuristic.
 
         Time O(mp)
         """
@@ -300,8 +301,7 @@ class Solver:
 
     def fast_vertex_substitution(self, is_first_improvement: bool) -> Solution:
         """
-        Fast Vertex Substitution for ANPCP (FVS-A),
-        based from its application for the PCP.
+        Alpha Fast Vertex Substitution (ANPCP) local search heuristic.
 
         Time O(mpn)
         """
@@ -471,11 +471,64 @@ class Solver:
 
         return self.solution
 
+    def grasp_iters_detailed(self, max_iters: int, beta: float = 0) -> pd.DataFrame:
+        datalist = list()
+
+        best_solution = None
+        best_radius = current_radius = math.inf
+
+        total_time = moves = 0
+
+        i = 0
+        while i < max_iters:
+            self.init_solution()
+
+            start = timeit.default_timer()
+
+            beta_used = random.random() if beta == -1 else beta
+            self.construct(beta_used)
+            rgd_of = self.solution.get_obj_func()
+
+            self.fast_vertex_substitution(True)
+            afvs_of = self.solution.get_obj_func()
+
+            total_time += timeit.default_timer() - start
+
+            current_radius = self.solution.get_obj_func()
+            is_new_best = best_solution is None or current_radius < best_radius
+            if is_new_best:
+                best_solution = deepcopy(self.solution)
+                best_radius = current_radius
+                moves += 1
+
+            datalist.append(
+                (
+                    i,
+                    beta_used,
+                    rgd_of,
+                    afvs_of,
+                    total_time,
+                    is_new_best,
+                )
+            )
+
+            i += 1
+
+        self.solution = deepcopy(best_solution)
+        self.solution.time = total_time
+        self.solution.moves = moves
+
+        dataframe = pd.DataFrame(
+            datalist, columns="iter beta rgd_of afvs_of time is_best".split()
+        )
+        return dataframe
+
     def plot(
         self,
         with_annotations: bool = True,
         axis: bool = False,
         dpi: Optional[int] = None,
+        filename: str = "",
     ) -> None:
         fig, ax = plt.subplots()
 
@@ -561,6 +614,10 @@ class Solver:
 
         if not axis:
             ax.set_axis_off()
+
+        if filename:
+            fig.savefig(filename, bbox_inches="tight")
+
         plt.show()
 
 
