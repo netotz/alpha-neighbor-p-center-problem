@@ -1,8 +1,8 @@
 import os
 
 import pandas as pd
-from anpcp.models.solver import Solver
 
+from models.solver import Solver
 from models.instance import Instance
 
 
