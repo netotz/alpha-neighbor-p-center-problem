@@ -471,7 +471,7 @@ class Solver:
 
         return self.solution
 
-    def grasp_iters_detailed(self, max_iters: int, beta: float = 0) -> pd.DataFrame:
+    def grasp_iters_detailed(self, max_iters: int, beta: float) -> pd.DataFrame:
         datalist = list()
 
         best_solution = None
@@ -503,6 +503,11 @@ class Solver:
 
             datalist.append(
                 (
+                    self.instance.tsp_name,
+                    self.instance.n,
+                    self.instance.m,
+                    self.p,
+                    self.alpha,
                     i,
                     beta_used,
                     rgd_of,
@@ -519,7 +524,8 @@ class Solver:
         self.solution.moves = moves
 
         dataframe = pd.DataFrame(
-            datalist, columns="iter beta rgd_of afvs_of time is_best".split()
+            datalist,
+            columns="tsp n m p alpha iter beta RGD_OF AFVS_OF time is_best".split(),
         )
         return dataframe
 
