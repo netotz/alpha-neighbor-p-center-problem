@@ -503,11 +503,6 @@ class Solver:
 
             datalist.append(
                 (
-                    self.instance.tsp_name,
-                    self.instance.n,
-                    self.instance.m,
-                    self.p,
-                    self.alpha,
                     i,
                     beta_used,
                     rgd_of,
@@ -525,7 +520,7 @@ class Solver:
 
         dataframe = pd.DataFrame(
             datalist,
-            columns="tsp n m p alpha iter beta RGD_OF AFVS_OF time is_best".split(),
+            columns="iter beta RGD_OF AFVS_OF time is_new_best".split(),
         )
         return dataframe
 
