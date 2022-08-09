@@ -6,16 +6,16 @@ from models.solver import Solver
 from models.instance import Instance
 
 
-def read_results():
-    filepath = ".\\nb_results\\grasp\\iters.pkl"
+def read_results(instance_name: str):
+    filepath = f".\\nb_results\\grasp\\iters_{instance_name}.pkl"
     return pd.read_pickle(filepath)
 
 
 def __run():
     datapath = os.path.abspath("..\\data")
 
-    name = "rl1323_882_441"
-    filepath = os.path.join(datapath, f"{name}_0.anpcp.tsp")
+    name = "rl1323_882_441_0"
+    filepath = os.path.join(datapath, f"{name}.anpcp.tsp")
     instance = Instance.read_tsp(filepath)
     solver = Solver(instance, 44, 3)
 
@@ -23,7 +23,7 @@ def __run():
     RAND_BETA = -1
     results = solver.grasp_iters_detailed(MAX_ITERS, RAND_BETA)
 
-    filepath = ".\\nb_results\\grasp\\iters.pkl"
+    filepath = f".\\nb_results\\grasp\\iters_{name}.pkl"
     results.to_pickle(filepath)
 
 
