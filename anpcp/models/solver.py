@@ -527,12 +527,14 @@ class Solver:
     def plot(
         self,
         with_annotations: bool = True,
+        with_assignments: bool = True,
         axis: bool = False,
         dpi: Optional[int] = None,
         filename: str = "",
     ) -> None:
         fig, ax = plt.subplots()
 
+        # plot users
         ax.scatter(
             [u.x for u in self.instance.users],
             [u.y for u in self.instance.users],
@@ -543,6 +545,7 @@ class Solver:
             edgecolors="black",
         )
 
+        # plot centers (open facilities)
         ax.scatter(
             [
                 f.x
@@ -562,6 +565,7 @@ class Solver:
             edgecolors="black",
         )
 
+        # plot closed facilities
         ax.scatter(
             [
                 f.x
@@ -581,6 +585,7 @@ class Solver:
             edgecolors="black",
         )
 
+        # plot indexes of nodes
         if with_annotations:
             for u in self.instance.users:
                 ax.annotate(u.index, (u.x, u.y))
@@ -588,26 +593,28 @@ class Solver:
             for f in self.instance.facilities:
                 ax.annotate(f.index, (f.x, f.y))
 
-        for user in self.instance.users:
-            try:
-                alphath = self.get_kth_closest(user.index, self.alpha)
-            except NotAllocatedError:
-                continue
+        # plot assignments
+        if with_assignments:
+            for user in self.instance.users:
+                try:
+                    alphath = self.get_kth_closest(user.index, self.alpha)
+                except NotAllocatedError:
+                    continue
 
-            facility = self.instance.facilities[alphath.index]
-            color = (
-                "orange"
-                if alphath.index == self.solution.critical_allocation.index
-                and alphath.distance == self.solution.get_obj_func()
-                else "gray"
-            )
-            ax.plot(
-                (user.x, facility.x),
-                (user.y, facility.y),
-                color=color,
-                linestyle=":",
-                alpha=0.5,
-            )
+                facility = self.instance.facilities[alphath.index]
+                color = (
+                    "orange"
+                    if alphath.index == self.solution.critical_allocation.index
+                    and alphath.distance == self.solution.get_obj_func()
+                    else "gray"
+                )
+                ax.plot(
+                    (user.x, facility.x),
+                    (user.y, facility.y),
+                    color=color,
+                    linestyle=":",
+                    alpha=0.5,
+                )
 
         ax.legend(loc=(1.01, 0))
         if dpi:
