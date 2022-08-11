@@ -18,7 +18,7 @@ def __run():
     filepath = os.path.join(datapath, f"{name}.anpcp.tsp")
     instance = Instance.read_tsp(filepath)
 
-    p = 44
+    p = 20
     alpha = 3
     solver = Solver(instance, p, alpha)
 
