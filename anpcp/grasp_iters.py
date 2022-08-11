@@ -17,13 +17,17 @@ def __run():
     name = "rl1323_882_441_0"
     filepath = os.path.join(datapath, f"{name}.anpcp.tsp")
     instance = Instance.read_tsp(filepath)
-    solver = Solver(instance, 44, 3)
+
+    p = 44
+    alpha = 3
+    solver = Solver(instance, p, alpha)
 
     MAX_ITERS = 5000
     RAND_BETA = -1
     results = solver.grasp_iters_detailed(MAX_ITERS, RAND_BETA)
 
-    filepath = f".\\nb_results\\grasp\\iters_{name}.pkl"
+    filename = f"iters_{name}_p{p}_a{alpha}.pkl"
+    filepath = f".\\nb_results\\grasp\\{filename}"
     results.to_pickle(filepath)
 
 
