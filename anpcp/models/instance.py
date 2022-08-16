@@ -73,7 +73,10 @@ class Instance:
 
         while len(distinct_coords) < total:
             distinct_coords |= {
-                (rng.integers(x_max, endpoint=True), rng.integers(y_max, endpoint=True))
+                (
+                    rng.integers(x_max, endpoint=True).item(),
+                    rng.integers(y_max, endpoint=True).item(),
+                )
                 for _ in range(total - len(distinct_coords))
             }
 
