@@ -100,8 +100,6 @@ class Instance:
             return Instance(
                 [Vertex(f["i"], f["x"], f["y"]) for f in data["facilities"]],
                 [Vertex(u["i"], u["x"], u["y"]) for u in data["users"]],
-                data["distances"],
-                data["facilities_distances"],
             )
         except json.JSONDecodeError as error:
             print("The input file has an incorrect format.")
@@ -116,8 +114,6 @@ class Instance:
             "n": self.n,
             "facilities": [{"i": f.index, "x": f.x, "y": f.y} for f in self.facilities],
             "users": [{"i": u.index, "x": u.x, "y": u.y} for u in self.users],
-            "distances": self.distances,
-            "facilities_distances": self.facilities_distances,
         }
         filename = f"anpcp_{self.n}_{self.m}_{id}.json"
         path = os.path.join(directory, filename)
