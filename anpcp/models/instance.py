@@ -119,7 +119,7 @@ class Instance:
             "distances": self.distances,
             "facilities_distances": self.facilities_distances,
         }
-        filename = f"anpcp_{self.m}_{self.n}_{id}.json"
+        filename = f"anpcp_{self.n}_{self.m}_{id}.json"
         path = os.path.join(directory, filename)
 
         with open(path, "w") as jsonfile:
