@@ -15,12 +15,13 @@ def __run():
     datapath = os.path.abspath("..\\data")
 
     # TSPLIB instances
-    # name = "rl1323_882_441_0.anpcp.tsp"
+    # name = "rl1323_882_441_0"
+    # filepath = os.path.join(datapath, f"{name}.anpcp.tsp")
     # instance = Instance.read_tsp(filepath)
 
     # random generated instances
-    name = "anpcp_882_441_0.json"
-    filepath = os.path.join(datapath, f"{name}")
+    name = "anpcp_882_441_0"
+    filepath = os.path.join(datapath, f"{name}.json")
     instance = Instance.read_json(filepath)
 
     p = 20
