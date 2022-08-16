@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
 import json
 import os
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 from random import randint
 
 from scipy import spatial
+import numpy as np
 
 from models.vertex import VertexType, Vertex
 
@@ -56,13 +57,23 @@ class Instance:
         # self.farthests = self.get_farthest_indexes()
 
     @classmethod
-    def random(cls, n: int, m: int, x_max: int = 1000, y_max: int = 1000) -> "Instance":
+    def random(
+        cls,
+        n: int,
+        m: int,
+        x_max: int = 1000,
+        y_max: int = 1000,
+        seed: Optional[int] = None,
+    ) -> "Instance":
         distinct_coords = set()
         total = n + m
 
+        # use seeded random generator for reproducibility
+        rng = np.random.default_rng(seed)
+
         while len(distinct_coords) < total:
             distinct_coords |= {
-                (randint(0, x_max), randint(0, y_max))
+                (rng.integers(x_max, endpoint=True), rng.integers(y_max, endpoint=True))
                 for _ in range(total - len(distinct_coords))
             }
 
