@@ -25,10 +25,18 @@ def __run(name: str, p: int, alpha: int, iters: int = 5000, beta: float = -1):
     CLI to run iterations experiment on `name` instance.
     """
     datapath = os.path.abspath("..\\data")
-    extension = ".json" if name.startswith("anpcp_") else ".anpcp.tsp"
+
+    if name.startswith("anpcp_"):
+        extension = ".json"
+        reader = Instance.read_json
+    else:
+        extension = ".anpcp.tsp"
+        reader = Instance.read_tsp
+
     filepath = os.path.join(datapath, f"{name}{extension}")
 
-    instance = Instance.read_json(filepath)
+    # TODO: move reader selection into Instance class
+    instance = reader(filepath)
     solver = Solver(instance, p, alpha)
 
     print("Running...")
@@ -36,7 +44,7 @@ def __run(name: str, p: int, alpha: int, iters: int = 5000, beta: float = -1):
     print("Finished.")
 
     filename = f"iters_{name}_p{p}_a{alpha}.pkl"
-    filepath = f".\\nb_results\\grasp\\{filename}"
+    filepath = os.path.join("nb_results", "grasp", filename)
     results.to_pickle(filepath)
 
 
