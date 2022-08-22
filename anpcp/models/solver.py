@@ -546,24 +546,25 @@ class Solver:
         )
 
         # plot centers (open facilities)
-        ax.scatter(
-            [
-                f.x
-                for f in self.instance.facilities
-                if f.index in self.solution.open_facilities
-            ],
-            [
-                f.y
-                for f in self.instance.facilities
-                if f.index in self.solution.open_facilities
-            ],
-            marker="s",
-            color="red",
-            label="Centers ($S$)",
-            linewidths=0.3,
-            alpha=0.8,
-            edgecolors="black",
-        )
+        if self.solution.open_facilities:
+            ax.scatter(
+                [
+                    f.x
+                    for f in self.instance.facilities
+                    if f.index in self.solution.open_facilities
+                ],
+                [
+                    f.y
+                    for f in self.instance.facilities
+                    if f.index in self.solution.open_facilities
+                ],
+                marker="s",
+                color="red",
+                label="Centers ($S$)",
+                linewidths=0.3,
+                alpha=0.8,
+                edgecolors="black",
+            )
 
         # plot closed facilities
         ax.scatter(
@@ -581,7 +582,7 @@ class Solver:
             color="gray",
             label="Closed facilities",
             linewidths=0.2,
-            alpha=0.5,
+            alpha=0.8,
             edgecolors="black",
         )
 
