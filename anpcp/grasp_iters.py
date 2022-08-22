@@ -6,9 +6,11 @@ import click
 from models.solver import Solver
 from models.instance import Instance
 
+DIRPATH = os.path.join("nb_results", "grasp", "iters")
+
 
 def read_results(instance_name: str):
-    filepath = f".\\nb_results\\grasp\\iters_{instance_name}.pkl"
+    filepath = os.path.join(DIRPATH, f"iters_{instance_name}.pkl")
     return pd.read_pickle(filepath)
 
 
@@ -44,7 +46,7 @@ def __run(name: str, p: int, alpha: int, iters: int = 5000, beta: float = -1):
     print("Finished.")
 
     filename = f"iters_{name}_p{p}_a{alpha}.pkl"
-    filepath = os.path.join("nb_results", "grasp", filename)
+    filepath = os.path.join(DIRPATH, filename)
     results.to_pickle(filepath)
 
 
