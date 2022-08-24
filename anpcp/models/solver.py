@@ -7,6 +7,7 @@ from itertools import product
 import timeit
 
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from models.moved_facility import MovedFacility
 from models.allocated_facility import AllocatedFacility
@@ -175,7 +176,7 @@ class Solver:
 
     def construct(self, beta: float = 0) -> Solution:
         """
-        Randomized Greedy Dispersion heuristic.
+        Randomized Greedy Dispersion (RGD) construction heuristic.
 
         Time O(mp)
         """
@@ -300,8 +301,7 @@ class Solver:
 
     def fast_vertex_substitution(self, is_first_improvement: bool) -> Solution:
         """
-        Fast Vertex Substitution for ANPCP (FVS-A),
-        based from its application for the PCP.
+        Alpha Fast Vertex Substitution (ANPCP) local search heuristic.
 
         Time O(mpn)
         """
@@ -471,14 +471,70 @@ class Solver:
 
         return self.solution
 
+    def grasp_iters_detailed(self, max_iters: int, beta: float) -> pd.DataFrame:
+        datalist = list()
+
+        best_solution = None
+        best_radius = current_radius = math.inf
+
+        total_time = moves = 0
+
+        i = 0
+        while i < max_iters:
+            self.init_solution()
+
+            start = timeit.default_timer()
+
+            beta_used = random.random() if beta == -1 else beta
+            self.construct(beta_used)
+            rgd_of = self.solution.get_obj_func()
+
+            self.fast_vertex_substitution(True)
+            afvs_of = self.solution.get_obj_func()
+
+            total_time += timeit.default_timer() - start
+
+            current_radius = self.solution.get_obj_func()
+            is_new_best = best_solution is None or current_radius < best_radius
+            if is_new_best:
+                best_solution = deepcopy(self.solution)
+                best_radius = current_radius
+                moves += 1
+
+            datalist.append(
+                (
+                    i,
+                    beta_used,
+                    rgd_of,
+                    afvs_of,
+                    total_time,
+                    is_new_best,
+                )
+            )
+
+            i += 1
+
+        self.solution = deepcopy(best_solution)
+        self.solution.time = total_time
+        self.solution.moves = moves
+
+        dataframe = pd.DataFrame(
+            datalist,
+            columns="iter beta RGD_OF AFVS_OF time is_new_best".split(),
+        )
+        return dataframe
+
     def plot(
         self,
         with_annotations: bool = True,
-        axis: bool = True,
+        with_assignments: bool = True,
+        axis: bool = False,
         dpi: Optional[int] = None,
+        filename: str = "",
     ) -> None:
         fig, ax = plt.subplots()
 
+        # plot users
         ax.scatter(
             [u.x for u in self.instance.users],
             [u.y for u in self.instance.users],
@@ -489,25 +545,28 @@ class Solver:
             edgecolors="black",
         )
 
-        ax.scatter(
-            [
-                f.x
-                for f in self.instance.facilities
-                if f.index in self.solution.open_facilities
-            ],
-            [
-                f.y
-                for f in self.instance.facilities
-                if f.index in self.solution.open_facilities
-            ],
-            marker="s",
-            color="red",
-            label="Centers ($S$)",
-            linewidths=0.3,
-            alpha=0.8,
-            edgecolors="black",
-        )
+        # plot centers (open facilities)
+        if self.solution.open_facilities:
+            ax.scatter(
+                [
+                    f.x
+                    for f in self.instance.facilities
+                    if f.index in self.solution.open_facilities
+                ],
+                [
+                    f.y
+                    for f in self.instance.facilities
+                    if f.index in self.solution.open_facilities
+                ],
+                marker="s",
+                color="red",
+                label="Centers ($S$)",
+                linewidths=0.3,
+                alpha=0.8,
+                edgecolors="black",
+            )
 
+        # plot closed facilities
         ax.scatter(
             [
                 f.x
@@ -523,10 +582,11 @@ class Solver:
             color="gray",
             label="Closed facilities",
             linewidths=0.2,
-            alpha=0.5,
+            alpha=0.8,
             edgecolors="black",
         )
 
+        # plot indexes of nodes
         if with_annotations:
             for u in self.instance.users:
                 ax.annotate(u.index, (u.x, u.y))
@@ -534,26 +594,28 @@ class Solver:
             for f in self.instance.facilities:
                 ax.annotate(f.index, (f.x, f.y))
 
-        for user in self.instance.users:
-            try:
-                alphath = self.get_kth_closest(user.index, self.alpha)
-            except NotAllocatedError:
-                continue
+        # plot assignments
+        if with_assignments:
+            for user in self.instance.users:
+                try:
+                    alphath = self.get_kth_closest(user.index, self.alpha)
+                except NotAllocatedError:
+                    continue
 
-            facility = self.instance.facilities[alphath.index]
-            color = (
-                "orange"
-                if alphath.index == self.solution.critical_allocation.index
-                and alphath.distance == self.solution.get_obj_func()
-                else "gray"
-            )
-            ax.plot(
-                (user.x, facility.x),
-                (user.y, facility.y),
-                color=color,
-                linestyle=":",
-                alpha=0.5,
-            )
+                facility = self.instance.facilities[alphath.index]
+                color = (
+                    "orange"
+                    if alphath.index == self.solution.critical_allocation.index
+                    and alphath.distance == self.solution.get_obj_func()
+                    else "gray"
+                )
+                ax.plot(
+                    (user.x, facility.x),
+                    (user.y, facility.y),
+                    color=color,
+                    linestyle=":",
+                    alpha=0.5,
+                )
 
         ax.legend(loc=(1.01, 0))
         if dpi:
@@ -561,6 +623,10 @@ class Solver:
 
         if not axis:
             ax.set_axis_off()
+
+        if filename:
+            fig.savefig(filename, bbox_inches="tight")
+
         plt.show()
 
 

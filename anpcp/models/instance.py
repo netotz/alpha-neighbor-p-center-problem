@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
 import json
 import os
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 from random import randint
 
 from scipy import spatial
+import numpy as np
 
 from models.vertex import VertexType, Vertex
 
@@ -56,13 +57,26 @@ class Instance:
         # self.farthests = self.get_farthest_indexes()
 
     @classmethod
-    def random(cls, n: int, m: int, x_max: int = 1000, y_max: int = 1000) -> "Instance":
+    def random(
+        cls,
+        n: int,
+        m: int,
+        x_max: int = 1000,
+        y_max: int = 1000,
+        seed: Optional[int] = None,
+    ) -> "Instance":
         distinct_coords = set()
         total = n + m
 
+        # use seeded random generator for reproducibility
+        rng = np.random.default_rng(seed)
+
         while len(distinct_coords) < total:
             distinct_coords |= {
-                (randint(0, x_max), randint(0, y_max))
+                (
+                    rng.integers(x_max, endpoint=True).item(),
+                    rng.integers(y_max, endpoint=True).item(),
+                )
                 for _ in range(total - len(distinct_coords))
             }
 
@@ -86,8 +100,6 @@ class Instance:
             return Instance(
                 [Vertex(f["i"], f["x"], f["y"]) for f in data["facilities"]],
                 [Vertex(u["i"], u["x"], u["y"]) for u in data["users"]],
-                data["distances"],
-                data["facilities_distances"],
             )
         except json.JSONDecodeError as error:
             print("The input file has an incorrect format.")
@@ -102,10 +114,8 @@ class Instance:
             "n": self.n,
             "facilities": [{"i": f.index, "x": f.x, "y": f.y} for f in self.facilities],
             "users": [{"i": u.index, "x": u.x, "y": u.y} for u in self.users],
-            "distances": self.distances,
-            "facilities_distances": self.facilities_distances,
         }
-        filename = f"anpcp_{self.m}_{self.n}_{id}.json"
+        filename = f"anpcp_{self.n}_{self.m}_{id}.json"
         path = os.path.join(directory, filename)
 
         with open(path, "w") as jsonfile:

@@ -107,6 +107,7 @@ def format_latex_table(dataframe: pd.DataFrame, path: str):
 def compare_betas(solvers: Iterable[Solver], betas: Iterable[float]):
     """
     Compares the results of running GRASP with different values for beta (RGD).
+    The resulting dataframe is not grouped.
     """
     datalist = list()
 
@@ -134,7 +135,7 @@ def compare_betas(solvers: Iterable[Solver], betas: Iterable[float]):
     dataframe = pd.DataFrame(
         datalist, columns="tsp n m p alpha beta OF time improvs".split()
     )
-    return dataframe.groupby("tsp n m p alpha beta".split()).mean()
+    return dataframe
 
 
 def run_grasp(solvers: Iterable[Solver]):
