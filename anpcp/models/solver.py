@@ -433,13 +433,13 @@ class Solver:
 
         return self.solution
 
-    def grasp(self, max_iters: int, beta: float = 0) -> Solution:
+    def grasp(self, iters: int, beta: float = 0) -> Solution:
         """
         Applies the GRASP metaheuristic to the current solver.
 
-        `max_iters`: Maximum number of iterations until returning the best found solution.
+        `iters`: Number of consecutive iterations without improvement to stop the solver.
 
-        `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
+        `beta`: Value between 0 and 1 for the RCL in the constructive heuristic. Use -1 for a random value.
         """
         best_solution = None
         best_radius = current_radius = math.inf
@@ -447,12 +447,13 @@ class Solver:
         total_time = moves = 0
 
         i = 0
-        while i < max_iters:
+        while i < iters:
             self.init_solution()
 
             start = timeit.default_timer()
 
-            self.construct(random.uniform(0, 1) if beta == -1 else beta)
+            beta_used = random.random() if beta == -1 else beta
+            self.construct(beta_used)
             self.fast_vertex_substitution(True)
 
             total_time += timeit.default_timer() - start
@@ -463,7 +464,9 @@ class Solver:
                 best_radius = current_radius
                 moves += 1
 
-            i += 1
+                i = 0
+            else:
+                i += 1
 
         self.solution = deepcopy(best_solution)
         self.solution.time = total_time
@@ -472,6 +475,11 @@ class Solver:
         return self.solution
 
     def grasp_iters_detailed(self, max_iters: int, beta: float) -> pd.DataFrame:
+        """
+        Modified method for the experiment of calibrating iterations.
+
+        To use GRASP for other purposes, see `grasp`.
+        """
         datalist = list()
 
         best_solution = None
