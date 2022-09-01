@@ -1,42 +1,128 @@
+import math
 import os
 
+import numpy as np
 import pandas as pd
+import click
 
 from models.instance import Instance
-from models.solver import generate_solvers
-from utils import compare_betas
+from models.solver import Solver, generate_solvers
 
 
-def get_solvers(names, amount: int):
-    datapath = os.path.abspath("..\\data")
-
-    instances = [
-        Instance.read_tsp(os.path.join(datapath, f"{name}_{i}.anpcp.tsp"))
-        for name in names
-        for i in range(amount)
-    ]
-    return generate_solvers(instances, (0.1, 0.25, 0.5), (2, 3))
+DATA_PATH = os.path.join("..", "data")
+BETA_PATH = os.path.join("nb_results", "grasp", "betas")
 
 
-def read_results():
-    filepath = ".\\nb_results\\grasp\\betas.pkl"
-    return pd.read_pickle(filepath)
+def get_solvers(name: str, p_percents: list[float], alpha_values: list[int]):
+    if name.startswith("anpcp_"):
+        extension = ".json"
+        reader = Instance.read_json
+    else:
+        extension = ".anpcp.tsp"
+        reader = Instance.read_tsp
+
+    instances = []
+    filepath = os.path.join(DATA_PATH, f"{name}{extension}")
+    # if variant i doesn't exist
+    # if not os.path.exists(filepath):
+    #     break
+
+    instances.append(reader(filepath))
+
+    return generate_solvers(instances, p_percents, alpha_values)
 
 
-def __run():
-    names = ["ch150_100_50", "rat575_384_191", "pr1002_668_334"]
-    solvers = get_solvers(names, 3)
+@click.command()
+@click.option("-n", "--name", required=True, help="Instance name, without extension.")
+@click.option(
+    "-p",
+    "--p-percents",
+    multiple=True,
+    type=float,
+    default=[0.05, 0.1, 0.2],
+    show_default=True,
+    help="Decimal percentages for p where 1 = 100%.",
+)
+@click.option(
+    "-a",
+    "--alpha-values",
+    multiple=True,
+    type=int,
+    default=[2, 3],
+    show_default=True,
+    help="Values for alpha.",
+)
+@click.option(
+    "-i",
+    "--iters",
+    type=int,
+    default=100,
+    show_default=True,
+    help="Consecutive iterations without improvement to stop.",
+)
+@click.option(
+    "-b",
+    "--beta-space",
+    type=float,
+    default=0.2,
+    show_default=True,
+    help="""
+    Spacing between samples. -1 will be added.
+    
+    e.g. -b 0.2 -> betas = [0, 0.2, 0.4, 0.6, 0.8, 1, -1]
+    """,
+)
+def __run(
+    name: str,
+    p_percents: list[float],
+    alpha_values: list[int],
+    iters: int,
+    beta_space: float,
+):
+    solvers = get_solvers(name, p_percents, alpha_values)
 
-    # beta = -1 means that beta is selected at random in each iteration
-    BETAS = (0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, -1)
+    denominator = int(1 / beta_space)
+    betas = np.linspace(0, 1, denominator + 1).tolist()
+    betas.append(-1)
 
-    results = compare_betas(solvers, BETAS)
+    datalist = []
+    for solver in solvers:
+        row = [solver.p, solver.alpha]
 
-    filepath = ".\\nb_results\\grasp\\betas.pkl"
+        best_of = math.inf
+        obj_funcs = []
+        # run grasp for each beta
+        for beta in betas:
+            solver.grasp(iters, beta)
+
+            obj_func = solver.solution.get_obj_func()
+            obj_funcs.append(obj_func)
+
+            best_of = min(best_of, obj_func)
+
+        row.extend(obj_funcs)
+        row.append(best_of)
+        # calculate relative increase of each OF with respect to the best one
+        row.extend([100 * (of - best_of) / best_of for of in obj_funcs])
+
+        datalist.append(row)
+
+    headers = "p alpha".split()
+    headers.extend(map(str, betas))
+    headers.append("best")
+    headers.extend(f"d_{b}" for b in betas)
+    results = pd.DataFrame(datalist, columns=headers)
+
+    filepath = os.path.join(BETA_PATH, f"betas_{name}.pkl")
     results.to_pickle(filepath)
+
+
+def read_results(instance_name: str):
+    filepath = os.path.join(BETA_PATH, f"betas_{instance_name}.pkl")
+    return pd.read_pickle(filepath)
 
 
 if __name__ == "__main__":
     print("Running...")
     __run()
-    print("Finished.")
+    print("Finished...")
