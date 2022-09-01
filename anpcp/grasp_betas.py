@@ -85,6 +85,15 @@ def __run(
     betas = np.linspace(0, 1, denominator + 1).tolist()
     betas.append(-1)
 
+    print("Running...")
+    results = calibrate(solvers, betas, iters)
+    print("Finished.")
+
+    filepath = os.path.join(BETA_PATH, f"betas_{name}.pkl")
+    results.to_pickle(filepath)
+
+
+def calibrate(solvers: list[Solver], betas: list[float], iters: int):
     datalist = []
     for solver in solvers:
         row = [solver.p, solver.alpha]
@@ -111,10 +120,8 @@ def __run(
     headers.extend(map(str, betas))
     headers.append("best")
     headers.extend(f"d_{b}" for b in betas)
-    results = pd.DataFrame(datalist, columns=headers)
 
-    filepath = os.path.join(BETA_PATH, f"betas_{name}.pkl")
-    results.to_pickle(filepath)
+    return pd.DataFrame(datalist, columns=headers)
 
 
 def read_results(instance_name: str):
@@ -123,6 +130,4 @@ def read_results(instance_name: str):
 
 
 if __name__ == "__main__":
-    print("Running...")
     __run()
-    print("Finished...")
