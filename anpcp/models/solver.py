@@ -446,8 +446,8 @@ class Solver:
 
         total_time = moves = 0
 
-        i = 0
-        while i < iters:
+        last_imp = i = iwi = 0
+        while iwi < iters:
             self.init_solution()
 
             start = timeit.default_timer()
@@ -464,13 +464,16 @@ class Solver:
                 best_radius = current_radius
                 moves += 1
 
-                i = 0
+                iwi = 0
+                last_imp = i
             else:
-                i += 1
+                iwi += 1
+            i += 1
 
         self.solution = deepcopy(best_solution)
         self.solution.time = total_time
         self.solution.moves = moves
+        self.solution.last_imp = last_imp
 
         return self.solution
 
