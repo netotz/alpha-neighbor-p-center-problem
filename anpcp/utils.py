@@ -120,7 +120,7 @@ def compare_betas(solvers: Iterable[Solver], betas: Iterable[float]):
 
             datalist.append(
                 (
-                    solver.instance.tsp_name,
+                    solver.instance.name,
                     solver.instance.n,
                     solver.instance.m,
                     solver.p,
@@ -149,7 +149,7 @@ def run_grasp(solvers: Iterable[Solver]):
 
         datalist.append(
             (
-                solver.instance.tsp_name,
+                solver.instance.name,
                 solver.instance.n,
                 solver.instance.m,
                 solver.p,

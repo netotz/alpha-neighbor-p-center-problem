@@ -14,7 +14,7 @@ from models.vertex import VertexType, Vertex
 class Instance:
     facilities: List[Vertex] = field(repr=False)
     users: List[Vertex] = field(repr=False)
-    tsp_name: str = ""
+    name: str = ""
 
     users_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
     facilities_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
