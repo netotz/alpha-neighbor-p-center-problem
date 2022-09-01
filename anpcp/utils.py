@@ -104,40 +104,6 @@ def format_latex_table(dataframe: pd.DataFrame, path: str):
     dataframe.to_latex(path, float_format="%.2f", multirow=True)
 
 
-def compare_betas(solvers: Iterable[Solver], betas: Iterable[float]):
-    """
-    Compares the results of running GRASP with different values for beta (RGD).
-    The resulting dataframe is not grouped.
-    """
-    datalist = list()
-
-    MAX_ITERS = 100
-
-    for solver in solvers:
-        for beta in betas:
-            solver.grasp(MAX_ITERS, beta)
-            obj_func = solver.solution.get_obj_func()
-
-            datalist.append(
-                (
-                    solver.instance.name,
-                    solver.instance.n,
-                    solver.instance.m,
-                    solver.p,
-                    solver.alpha,
-                    beta,
-                    obj_func,
-                    solver.solution.time,
-                    solver.solution.moves,
-                )
-            )
-
-    dataframe = pd.DataFrame(
-        datalist, columns="tsp n m p alpha beta OF time improvs".split()
-    )
-    return dataframe
-
-
 def run_grasp(solvers: Iterable[Solver]):
     datalist = list()
 
