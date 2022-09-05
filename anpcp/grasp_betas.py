@@ -112,7 +112,7 @@ def __run(
 def calibrate(solvers: list[Solver], betas: list[float], iters: int):
     datalist = []
     for solver in solvers:
-        row = [solver.p, solver.alpha]
+        row = [solver.instance.index, solver.p, solver.alpha]
 
         best_of = math.inf
         obj_funcs = []
@@ -131,7 +131,7 @@ def calibrate(solvers: list[Solver], betas: list[float], iters: int):
 
         datalist.append(row)
 
-    headers = "p alpha".split()
+    headers = "i p alpha".split()
     headers.extend(map(str, betas))
     headers.extend(f"d_{b}" for b in betas)
 
