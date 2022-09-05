@@ -67,7 +67,7 @@ def get_solvers(name: str, p_percents: list[float], alpha_values: list[int]):
     default=0.2,
     show_default=True,
     help="""
-    Spacing between samples. -1 will be added.
+    Spacing between values for beta. -1 will be added.
     
     e.g. -b 0.2 -> betas = [0, 0.2, 0.4, 0.6, 0.8, 1, -1]
     """,
@@ -112,7 +112,6 @@ def calibrate(solvers: list[Solver], betas: list[float], iters: int):
             best_of = min(best_of, obj_func)
 
         row.extend(obj_funcs)
-        row.append(best_of)
         # calculate relative increase of each OF with respect to the best one
         row.extend([100 * (of - best_of) / best_of for of in obj_funcs])
 
@@ -120,7 +119,6 @@ def calibrate(solvers: list[Solver], betas: list[float], iters: int):
 
     headers = "p alpha".split()
     headers.extend(map(str, betas))
-    headers.append("best")
     headers.extend(f"d_{b}" for b in betas)
 
     return pd.DataFrame(datalist, columns=headers)
