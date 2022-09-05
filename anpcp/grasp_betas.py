@@ -82,7 +82,9 @@ def __run(
     solvers = get_solvers(name, p_percents, alpha_values)
 
     denominator = int(1 / beta_space)
-    betas = np.linspace(0, 1, denominator + 1).tolist()
+    values = np.linspace(0, 1, denominator + 1)
+    # prevent decimals like 0.60000000001
+    betas = [round(b, 3) for b in values]
     betas.append(-1)
 
     print("Running...")
