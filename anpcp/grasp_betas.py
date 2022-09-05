@@ -13,7 +13,9 @@ DATA_PATH = os.path.join("..", "data")
 BETA_PATH = os.path.join("nb_results", "grasp", "betas")
 
 
-def get_solvers(name: str, p_percents: list[float], alpha_values: list[int]):
+def get_solvers(
+    name: str, amount: int, p_percents: list[float], alpha_values: list[int]
+):
     if name.startswith("anpcp_"):
         extension = ".json"
         reader = Instance.read_json
@@ -22,18 +24,29 @@ def get_solvers(name: str, p_percents: list[float], alpha_values: list[int]):
         reader = Instance.read_tsp
 
     instances = []
-    filepath = os.path.join(DATA_PATH, f"{name}{extension}")
-    # if variant i doesn't exist
-    # if not os.path.exists(filepath):
-    #     break
+    for i in range(amount):
+        filepath = os.path.join(DATA_PATH, f"{name}_{i}{extension}")
+        # if variant i doesn't exist
+        if not os.path.exists(filepath):
+            break
 
-    instances.append(reader(filepath))
+        instances.append(reader(filepath))
 
     return generate_solvers(instances, p_percents, alpha_values)
 
 
 @click.command()
-@click.option("-n", "--name", required=True, help="Instance name, without extension.")
+@click.option(
+    "-n", "--name", required=True, help="Instance name, without extension or index."
+)
+@click.option(
+    "-v",
+    "--variations",
+    type=int,
+    default=10,
+    show_default=True,
+    help="Maximum number of variations of the base instance (--name) to run.",
+)
 @click.option(
     "-p",
     "--p-percents",
@@ -74,12 +87,13 @@ def get_solvers(name: str, p_percents: list[float], alpha_values: list[int]):
 )
 def __run(
     name: str,
+    variations: int,
     p_percents: list[float],
     alpha_values: list[int],
     iters: int,
     beta_space: float,
 ):
-    solvers = get_solvers(name, p_percents, alpha_values)
+    solvers = get_solvers(name, variations, p_percents, alpha_values)
 
     denominator = int(1 / beta_space)
     values = np.linspace(0, 1, denominator + 1)
