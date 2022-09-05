@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 import json
 import os
 from typing import List, Optional, Set, Tuple
-from random import randint
 
 from scipy import spatial
 import numpy as np
@@ -15,6 +14,7 @@ class Instance:
     facilities: List[Vertex] = field(repr=False)
     users: List[Vertex] = field(repr=False)
     name: str = ""
+    index: int = -1
 
     users_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
     facilities_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
@@ -89,6 +89,24 @@ class Instance:
         return Instance(facilities, users)
 
     @classmethod
+    def read(cls, filepath: str) -> "Instance":
+        filename = os.path.basename(filepath)
+
+        instance = (
+            cls.read_json(filepath)
+            if filename.startswith("anpcp_")
+            else cls.read_tsp(filepath)
+        )
+
+        name = filename.split(".")[0]
+        index = name.split("_")[-1]
+
+        instance.name = name
+        instance.index = index
+
+        return instance
+
+    @classmethod
     def read_json(cls, filepath: str) -> "Instance":
         """
         Reads an instance JSON file and loads its data.
@@ -141,12 +159,7 @@ class Instance:
                 facilities.append(Vertex(j, x, y))
                 j += 1
 
-        # split path into (head, tail), where tail is filename
-        filename = os.path.split(filepath)[1]
-        # split filename by _, where first item is the original TSP Lib name
-        name = filename.split("_")[0]
-
-        return Instance(facilities, users, name)
+        return Instance(facilities, users)
 
     def get_distance(self, from_user: int, to_facility: int) -> int:
         return self.distances[from_user][to_facility]
