@@ -18,10 +18,8 @@ def get_solvers(
 ):
     if name.startswith("anpcp_"):
         extension = ".json"
-        reader = Instance.read_json
     else:
         extension = ".anpcp.tsp"
-        reader = Instance.read_tsp
 
     instances = []
     for i in range(amount):
@@ -30,7 +28,7 @@ def get_solvers(
         if not os.path.exists(filepath):
             break
 
-        instances.append(reader(filepath))
+        instances.append(Instance.read(filepath))
 
     return generate_solvers(instances, p_percents, alpha_values)
 
@@ -93,6 +91,10 @@ def __run(
     iters: int,
     beta_space: float,
 ):
+    """
+    Runs GRASP on all the configurations specified for an instance
+    and creates a dataframe of the results intended to calibrate the beta parameter.
+    """
     solvers = get_solvers(name, variations, p_percents, alpha_values)
 
     denominator = int(1 / beta_space)
