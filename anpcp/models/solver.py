@@ -433,26 +433,34 @@ class Solver:
 
         return self.solution
 
-    def grasp(self, iters: int, beta: float = 0) -> Solution:
+    def grasp(self, iters: int, beta: float = 0, time_limit: float = -1) -> Solution:
         """
-        Applies the GRASP metaheuristic to the current solver.
+        Applies the GRASP metaheuristic to the current solver,
+        and stops when either `iters` or `time_limit` is reached.
 
         `iters`: Number of consecutive iterations without improvement to stop the solver.
 
-        `beta`: Value between 0 and 1 for the RCL in the constructive heuristic. Use -1 for a random value.
+        `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
+        Use -1 for a random value.
+
+        `time_limit`: Time limit in seconds to stop GRASP. Use -1 for no limit.
         """
+        if time_limit == -1:
+            time_limit = math.inf
+
         best_solution = None
         best_radius = current_radius = math.inf
 
         total_time = moves = 0
 
         last_imp = i = iwi = 0
-        while iwi < iters:
+        while iwi < iters and total_time < time_limit:
             self.init_solution()
+
+            beta_used = random.random() if beta == -1 else beta
 
             start = timeit.default_timer()
 
-            beta_used = random.random() if beta == -1 else beta
             self.construct(beta_used)
             self.fast_vertex_substitution(True)
 

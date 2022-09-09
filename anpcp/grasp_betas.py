@@ -83,6 +83,14 @@ def get_solvers(
     e.g. -b 0.2 -> betas = [0, 0.2, 0.4, 0.6, 0.8, 1, -1]
     """,
 )
+@click.option(
+    "-t",
+    "--time",
+    type=float,
+    default=60 * 60 * 2,
+    show_default=True,
+    help="Time limit in seconds before stopping each GRASP (each beta). Use -1 for no limit.",
+)
 def __run(
     name: str,
     variations: int,
@@ -90,6 +98,7 @@ def __run(
     alpha_values: list[int],
     iters: int,
     beta_space: float,
+    time: float,
 ):
     """
     Runs GRASP on all the configurations specified for an instance
@@ -104,14 +113,14 @@ def __run(
     betas.append(-1)
 
     print("Running...")
-    results = calibrate(solvers, betas, iters)
+    results = calibrate(solvers, betas, iters, time)
     print("Finished.")
 
     filepath = os.path.join(BETA_PATH, f"betas_{name}.pkl")
     results.to_pickle(filepath)
 
 
-def calibrate(solvers: list[Solver], betas: list[float], iters: int):
+def calibrate(solvers: list[Solver], betas: list[float], iters: int, time_limit: float):
     datalist = []
     for solver in solvers:
         row = [solver.instance.index, solver.p, solver.alpha]
@@ -120,7 +129,7 @@ def calibrate(solvers: list[Solver], betas: list[float], iters: int):
         obj_funcs = []
         # run grasp for each beta
         for beta in betas:
-            solver.grasp(iters, beta)
+            solver.grasp(iters, beta, time_limit)
 
             obj_func = solver.solution.get_obj_func()
             obj_funcs.append(obj_func)
