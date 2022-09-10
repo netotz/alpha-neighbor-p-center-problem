@@ -127,9 +127,15 @@ def calibrate(solvers: list[Solver], betas: list[float], iters: int, time_limit:
 
         best_of = math.inf
         obj_funcs = []
+        # total time taken by each solution
+        times = []
+        # iterations where last improvement occurred
+        improvements = []
         # run grasp for each beta
         for beta in betas:
             solver.grasp(iters, beta, time_limit)
+            times.append(solver.solution.time)
+            improvements.append(solver.solution.last_improvement)
 
             obj_func = solver.solution.get_obj_func()
             obj_funcs.append(obj_func)
@@ -139,12 +145,13 @@ def calibrate(solvers: list[Solver], betas: list[float], iters: int, time_limit:
         row.extend(obj_funcs)
         # calculate relative increase of each OF with respect to the best one
         row.extend([100 * (of - best_of) / best_of for of in obj_funcs])
+        row.extend(times)
+        row.extend(improvements)
 
         datalist.append(row)
 
     headers = "i p alpha".split()
-    headers.extend(map(str, betas))
-    headers.extend(f"d_{b}" for b in betas)
+    headers.extend([str(b) for b in betas] * 4)
 
     return pd.DataFrame(datalist, columns=headers)
 
