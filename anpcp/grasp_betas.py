@@ -116,7 +116,7 @@ def __run(
     results = calibrate(solvers, betas, iters, time)
     print("Finished.")
 
-    filepath = os.path.join(BETA_PATH, f"betas_{name}.pkl")
+    filepath = os.path.join(BETA_PATH, f"betas_{name}_t{time}.pkl")
     results.to_pickle(filepath)
 
 
