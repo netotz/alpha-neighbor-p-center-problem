@@ -481,7 +481,7 @@ class Solver:
         self.solution = deepcopy(best_solution)
         self.solution.time = total_time
         self.solution.moves = moves
-        self.solution.last_imp = last_imp
+        self.solution.last_improvement = last_imp
 
         return self.solution
 

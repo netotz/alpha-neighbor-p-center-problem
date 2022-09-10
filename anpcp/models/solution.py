@@ -13,7 +13,7 @@ class Solution:
     critical_allocation: AllocatedFacility = field(init=False, default=None)
     time: float = field(init=False, repr=False, default=-1)
     moves: int = field(init=False, repr=False, default=-1)
-    last_imp: int = field(init=False, repr=False, default=-1)
+    last_improvement: int = field(init=False, repr=False, default=-1)
 
     def get_obj_func(self) -> int:
         """
