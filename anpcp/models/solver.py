@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 import math
 import random
 from typing import Dict, List, Optional, Sequence, Set
-from itertools import product
 import timeit
 
 import matplotlib.pyplot as plt
@@ -656,5 +655,7 @@ def generate_solvers(
 ) -> List[Solver]:
     return [
         Solver(instance, int(instance.m * p), alpha)
-        for instance, p, alpha in product(instances, p_percentages, alpha_values)
+        for instance in instances
+        for p in p_percentages
+        for alpha in alpha_values
     ]
