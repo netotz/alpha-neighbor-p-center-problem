@@ -5,32 +5,8 @@ import numpy as np
 import pandas as pd
 import click
 
-from models.instance import Instance
-from models.solver import Solver, generate_solvers
-
-
-DATA_PATH = os.path.join("..", "data")
-BETA_PATH = os.path.join("nb_results", "grasp", "betas")
-
-
-def get_solvers(
-    name: str, amount: int, p_percents: list[float], alpha_values: list[int]
-):
-    if name.startswith("anpcp_"):
-        extension = ".json"
-    else:
-        extension = ".anpcp.tsp"
-
-    instances = []
-    for i in range(amount):
-        filepath = os.path.join(DATA_PATH, f"{name}_{i}{extension}")
-        # if variant i doesn't exist
-        if not os.path.exists(filepath):
-            break
-
-        instances.append(Instance.read(filepath))
-
-    return generate_solvers(instances, p_percents, alpha_values)
+from utils import BETA_PATH, get_solvers
+from models.solver import Solver
 
 
 @click.command()

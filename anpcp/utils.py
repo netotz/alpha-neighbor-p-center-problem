@@ -1,20 +1,20 @@
 from copy import deepcopy
+import os
 import timeit
 from typing import (
-    Any,
-    Dict,
     Iterable,
-    Mapping,
-    Callable,
-    Optional,
-    Set,
     Tuple,
 )
 
-from models.solution import Solution
-from models.solver import Solver
-
 import pandas as pd
+
+from models.instance import Instance
+from models.solution import Solution
+from models.solver import Solver, generate_solvers
+
+
+DATA_PATH = os.path.join("..", "data")
+BETA_PATH = os.path.join("nb_results", "grasp", "betas")
 
 
 def compare_local_search(solvers: Iterable[Solver], from_random: bool):
@@ -130,3 +130,23 @@ def run_grasp(solvers: Iterable[Solver]):
         datalist, columns="tsp n m p alpha OF time improvs".split()
     )
     return dataframe.groupby("tsp n m p alpha ".split()).mean()
+
+
+def get_solvers(
+    name: str, amount: int, p_percents: list[float], alpha_values: list[int]
+):
+    if name.startswith("anpcp_"):
+        extension = ".json"
+    else:
+        extension = ".anpcp.tsp"
+
+    instances = []
+    for i in range(amount):
+        filepath = os.path.join(DATA_PATH, f"{name}_{i}{extension}")
+        # if variant i doesn't exist
+        if not os.path.exists(filepath):
+            break
+
+        instances.append(Instance.read(filepath))
+
+    return generate_solvers(instances, p_percents, alpha_values)
