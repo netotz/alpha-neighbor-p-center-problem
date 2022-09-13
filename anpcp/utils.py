@@ -145,7 +145,7 @@ def get_solvers(
         filepath = os.path.join(DATA_PATH, f"{name}_{i}{extension}")
         # if variant i doesn't exist
         if not os.path.exists(filepath):
-            break
+            continue
 
         instances.append(Instance.read(filepath))
 
