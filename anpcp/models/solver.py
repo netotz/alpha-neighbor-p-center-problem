@@ -551,6 +551,25 @@ class Solver:
         filename: str = "",
     ) -> None:
         fig, ax = plt.subplots()
+        # plot closed facilities
+        ax.scatter(
+            [
+                f.x
+                for f in self.instance.facilities
+                if f.index in self.solution.closed_facilities
+            ],
+            [
+                f.y
+                for f in self.instance.facilities
+                if f.index in self.solution.closed_facilities
+            ],
+            marker="s",
+            color="gray",
+            label="Closed facilities",
+            linewidths=0.2,
+            alpha=0.8,
+            edgecolors="black",
+        )
 
         # plot users
         ax.scatter(
@@ -583,26 +602,6 @@ class Solver:
                 alpha=0.8,
                 edgecolors="black",
             )
-
-        # plot closed facilities
-        ax.scatter(
-            [
-                f.x
-                for f in self.instance.facilities
-                if f.index in self.solution.closed_facilities
-            ],
-            [
-                f.y
-                for f in self.instance.facilities
-                if f.index in self.solution.closed_facilities
-            ],
-            marker="s",
-            color="gray",
-            label="Closed facilities",
-            linewidths=0.2,
-            alpha=0.8,
-            edgecolors="black",
-        )
 
         # plot indexes of nodes
         if with_annotations:
