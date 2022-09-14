@@ -14,7 +14,6 @@ from models.solver import Solver, generate_solvers
 
 
 DATA_PATH = os.path.join("..", "data")
-BETA_PATH = os.path.join("nb_results", "grasp", "betas")
 
 
 def compare_local_search(solvers: Iterable[Solver], from_random: bool):

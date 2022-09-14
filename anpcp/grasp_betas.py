@@ -5,8 +5,11 @@ import numpy as np
 import pandas as pd
 import click
 
-from utils import BETA_PATH, get_solvers
+from utils import get_solvers
 from models.solver import Solver
+
+
+BETA_PATH = os.path.join("nb_results", "grasp", "betas")
 
 
 @click.command()
