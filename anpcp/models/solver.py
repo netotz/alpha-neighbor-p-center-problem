@@ -1,8 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 import math
-import os
-import pickle
 import random
 from typing import Dict, List, Optional, Sequence, Set
 import timeit
@@ -18,18 +16,6 @@ from models.solution import Solution
 
 class NotAllocatedError(Exception):
     pass
-
-
-@dataclass
-class SolverDto:
-    """
-    Subset of `Solver` to save persistent data in pickle files.
-    """
-
-    instance_name: str
-    p: int
-    alpha: int
-    solution: Solution
 
 
 @dataclass
@@ -74,30 +60,6 @@ class Solver:
     def init_solution(self):
         self.solution = Solution()
         self.__init_allocations()
-
-    def to_json_dto(self) -> SolverDto:
-        return SolverDto(self.instance.name, self.p, self.alpha, self.solution)
-
-    def write_pickle(self, directory: str = os.path.curdir) -> None:
-        filename = f"solver_{self.instance.name}_p{self.p}_a{self.alpha}.pkl"
-        filepath = os.path.join(directory, filename)
-
-        json_dto = self.to_json_dto()
-        # write binary
-        with open(filepath, "wb") as file:
-            pickle.dump(json_dto, file)
-
-    @classmethod
-    def read_pickle(cls, instance: Instance, filepath: str) -> "Solver":
-        # read binary
-        with open(filepath, "rb") as file:
-            json_dto: SolverDto = pickle.load(file)
-
-        solver = Solver(instance, json_dto.p, json_dto.alpha)
-        solver.solution = json_dto.solution
-        solver.update_obj_func()
-
-        return solver
 
     def allocate_all(self) -> None:
         """
@@ -265,7 +227,7 @@ class Solver:
 
     def interchange(self, is_first_improvement: bool) -> Solution:
         """
-        Naive Interchange, checks every possible swap.
+        Greedy Interchange, checks every possible swap.
 
         Time O(m**2 pn)
         """
