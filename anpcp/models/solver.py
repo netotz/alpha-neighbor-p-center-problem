@@ -522,7 +522,7 @@ class Solver:
 
         return self.solution
 
-    def grasp_iters_detailed(self, max_iters: int, beta: float) -> pd.DataFrame:
+    def _grasp_iters_detailed(self, max_iters: int, beta: float) -> pd.DataFrame:
         """
         Modified method for the experiment of calibrating iterations.
 
