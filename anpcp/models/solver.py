@@ -18,6 +18,13 @@ class NotAllocatedError(Exception):
 
 
 @dataclass
+class MinMaxAvg:
+    minimum: int
+    maximum: int
+    average: float
+
+
+@dataclass
 class Solver:
     instance: Instance
     p: int
@@ -105,10 +112,9 @@ class Solver:
 
     def get_kth_closest(self, user: int, kth: int) -> AllocatedFacility:
         """
-        Gets the `kth` closest facility from `user` with its distance
-        by checking each (user, facility) pair from allocations matrix.
+        Gets the `kth` closest facility from `user` with its distance.
 
-        If the there's no `kth` in allocations matrix, `NotAllocatedError` is raised.
+        Raises `NotAllocatedError` if there's no `kth` in allocations matrix.
 
         To get the alpha-neighbors of `user`, see `get_alpha_neighbors`.
 
@@ -124,8 +130,7 @@ class Solver:
 
     def get_alpha_neighbors(self, user: int) -> Dict[int, AllocatedFacility]:
         """
-        Gets the closest facilities from `user` up to its center (including it) with their distances
-        by checking all (user, facility) pairs from allocations matrix.
+        Gets the closest facilities from `user` up to its center (including it) with their distances.
 
         Returns a dictionary with the k-th position as key and an `AllocatedFacility` object as value.
 
@@ -171,6 +176,23 @@ class Solver:
         Time O(pn)
         """
         self.solution.critical_allocation = self.eval_obj_func()
+
+    def get_users_per_center(self):
+        n = len(self.solution.allocations)
+
+        min_users = math.inf
+        max_users = -math.inf
+        users_sum = 0
+
+        for center in self.solution.open_facilities:
+            users = sum(self.solution.allocations[user][center] == self.alpha for user in range(n))
+
+            min_users = min(min_users, users)
+            max_users = max(max_users, users)
+            users_sum += users
+
+        avg_users = users_sum / self.p
+        return MinMaxAvg(min_users, max_users, avg_users)
 
     def construct(self, beta: float = 0) -> Solution:
         """
