@@ -86,7 +86,7 @@ class Instance:
         facilities = [Vertex(i, x, y) for i, (x, y) in enumerate(distinct_coords[:m])]
         users = [Vertex(i, x, y) for i, (x, y) in enumerate(distinct_coords[m:])]
 
-        return Instance(facilities, users)
+        return cls(facilities, users)
 
     @classmethod
     def read(cls, filepath: str) -> "Instance":
@@ -115,7 +115,7 @@ class Instance:
             data = json.load(jsonfile)
 
         try:
-            return Instance(
+            return cls(
                 [Vertex(f["i"], f["x"], f["y"]) for f in data["facilities"]],
                 [Vertex(u["i"], u["x"], u["y"]) for u in data["users"]],
             )
@@ -159,7 +159,7 @@ class Instance:
                 facilities.append(Vertex(j, x, y))
                 j += 1
 
-        return Instance(facilities, users)
+        return cls(facilities, users)
 
     def get_distance(self, from_user: int, to_facility: int) -> int:
         return self.distances[from_user][to_facility]
