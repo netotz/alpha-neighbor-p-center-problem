@@ -2,10 +2,9 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 import math
 import random
-from typing import Dict, List, Optional, Sequence, Set
+from typing import Dict, List, Sequence, Set
 import timeit
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from models.moved_facility import MovedFacility
@@ -542,109 +541,49 @@ class Solver:
         )
         return dataframe
 
-    def plot(
-        self,
-        with_annotations: bool = True,
-        with_assignments: bool = True,
-        axis: bool = False,
-        dpi: Optional[int] = None,
-        filename: str = "",
-    ) -> None:
-        fig, ax = plt.subplots()
-        # plot closed facilities
-        ax.scatter(
-            [
-                f.x
-                for f in self.instance.facilities
-                if f.index in self.solution.closed_facilities
-            ],
-            [
-                f.y
-                for f in self.instance.facilities
-                if f.index in self.solution.closed_facilities
-            ],
-            marker="s",
-            color="gray",
-            label="Closed facilities",
-            linewidths=0.2,
-            alpha=0.8,
-            edgecolors="black",
-        )
+    def _grasp_final(self, iters: int, beta: float, time_limit: float = -1) -> Solution:
+        """
+        Modified method for final experiments of GRASP.
+        """
+        if time_limit == -1:
+            time_limit = math.inf
 
-        # plot users
-        ax.scatter(
-            [u.x for u in self.instance.users],
-            [u.y for u in self.instance.users],
-            color="tab:blue",
-            label="Users",
-            linewidths=0.3,
-            alpha=0.8,
-            edgecolors="black",
-        )
+        best_solution = None
+        best_radius = current_radius = math.inf
 
-        # plot centers (open facilities)
-        if self.solution.open_facilities:
-            ax.scatter(
-                [
-                    f.x
-                    for f in self.instance.facilities
-                    if f.index in self.solution.open_facilities
-                ],
-                [
-                    f.y
-                    for f in self.instance.facilities
-                    if f.index in self.solution.open_facilities
-                ],
-                marker="s",
-                color="red",
-                label="Centers ($S$)",
-                linewidths=0.3,
-                alpha=0.8,
-                edgecolors="black",
-            )
+        total_time = moves = 0
 
-        # plot indexes of nodes
-        if with_annotations:
-            for u in self.instance.users:
-                ax.annotate(u.index, (u.x, u.y))
+        last_imp = i = iwi = 0
+        while iwi < iters and total_time < time_limit:
+            self.init_solution()
 
-            for f in self.instance.facilities:
-                ax.annotate(f.index, (f.x, f.y))
+            beta_used = random.random() if beta == -1 else beta
 
-        # plot assignments
-        if with_assignments:
-            for user in self.instance.users:
-                try:
-                    alphath = self.get_kth_closest(user.index, self.alpha)
-                except NotAllocatedError:
-                    continue
+            start = timeit.default_timer()
 
-                facility = self.instance.facilities[alphath.index]
-                color = (
-                    "orange"
-                    if alphath.index == self.solution.critical_allocation.index
-                    and alphath.distance == self.solution.get_obj_func()
-                    else "gray"
-                )
-                ax.plot(
-                    (user.x, facility.x),
-                    (user.y, facility.y),
-                    color=color,
-                    linestyle=":",
-                    alpha=0.5,
-                )
+            self.construct(beta_used)
+            self.fast_vertex_substitution(True)
 
-        ax.legend(loc=(1.01, 0))
-        if dpi:
-            fig.set_dpi(dpi)
+            total_time += timeit.default_timer() - start
 
-        if not axis:
-            ax.set_axis_off()
+            current_radius = self.solution.get_obj_func()
+            if best_solution is None or current_radius < best_radius:
+                best_solution = deepcopy(self.solution)
+                best_radius = current_radius
+                moves += 1
 
-        if filename:
-            fig.savefig(filename, bbox_inches="tight")
+                iwi = 0
+                last_imp = i
+            else:
+                iwi += 1
+            i += 1
 
-        plt.show()
+        self.solution = deepcopy(best_solution)
+        self.solution.time = total_time
+        self.solution.moves = moves
+        self.solution.last_improvement = last_imp
+
+        return self.solution
 
 
 def generate_solvers(
