@@ -103,34 +103,6 @@ def format_latex_table(dataframe: pd.DataFrame, path: str):
     dataframe.to_latex(path, float_format="%.2f", multirow=True)
 
 
-def run_grasp(solvers: Iterable[Solver]):
-    datalist = list()
-
-    MAX_ITERS = 50
-
-    for solver in solvers:
-        solver.grasp(MAX_ITERS, 0)
-        obj_func = solver.solution.get_obj_func()
-
-        datalist.append(
-            (
-                solver.instance.name,
-                solver.instance.n,
-                solver.instance.m,
-                solver.p,
-                solver.alpha,
-                obj_func,
-                solver.solution.time,
-                solver.solution.moves,
-            )
-        )
-
-    dataframe = pd.DataFrame(
-        datalist, columns="tsp n m p alpha OF time improvs".split()
-    )
-    return dataframe.groupby("tsp n m p alpha ".split()).mean()
-
-
 def get_solvers(
     name: str, amount: int, p_percents: list[float], alpha_values: list[int]
 ):
