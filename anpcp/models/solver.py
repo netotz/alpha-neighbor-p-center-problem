@@ -11,6 +11,7 @@ from models.moved_facility import MovedFacility
 from models.allocated_facility import AllocatedFacility
 from models.instance import Instance
 from models.solution import Solution
+from models.min_max_avg import MinMaxAvg
 
 
 class NotAllocatedError(Exception):
@@ -179,7 +180,7 @@ class Solver:
         """
         self.solution.critical_allocation = self.eval_obj_func()
 
-    def get_users_per_center(self):
+    def get_users_per_center_stats(self):
         n = len(self.solution.allocations)
 
         min_users = math.inf

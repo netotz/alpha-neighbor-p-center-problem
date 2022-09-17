@@ -1,24 +1,18 @@
 from copy import deepcopy
-from dataclasses import dataclass
-from itertools import chain
 import math
 import os
 import random
 import timeit
 
 import pandas as pd
+import click
 
+from models.solver_io import write_solver_pickle
 from models.solver import Solver
-from models.min_max_avg import MinMaxAvg
-from utils import get_solvers
+from utils import get_solvers, DATA_PATH
 
 
-@dataclass
-class GraspAfvsRecord:
-    best_rgd_of: int
-    best_afvs_of: int
-    best_rgd_diff: float
-    afvs_improvement_stats: MinMaxAvg
+FINAL_PATH = os.path.join("nb_results", "grasp", "final")
 
 
 class GraspFinalSolver(Solver):
@@ -81,52 +75,143 @@ class GraspFinalSolver(Solver):
         avg_afvs_improvement = afvs_improvements_sum / i
         best_rgd_diff = 100 * abs(best_afvs_of - best_rgd_of) / best_rgd_of
 
-        afvs_improvement_stats = MinMaxAvg(
-            min_afvs_improvement, max_afvs_improvement, avg_afvs_improvement
-        )
-
-        return GraspAfvsRecord(
+        return (
             best_rgd_of,
             best_afvs_of,
             best_rgd_diff,
-            afvs_improvement_stats,
+            min_afvs_improvement,
+            max_afvs_improvement,
+            avg_afvs_improvement,
         )
 
 
-FINAL_PATH = os.path.join("nb_results", "grasp", "final")
+# tentative instances for final experiment
+names = [
+    "pr439_293_146",
+    "rat575_384_191",
+    "rat783_522_261",
+    "dsj1000_667_333",
+    "rl1323_882_441",
+    "rl1889_1260_629",
+]
 
-# calibrated parameters
-BETA = 0.2
-ITERATIONS = 100
 
-# arbitrary limit, 30 minutes
-TIME_LIMIT = 1800
+@click.command()
+@click.option(
+    "-n",
+    "--name",
+    required=True,
+    help="Instance names, without extension or index.",
+)
+@click.option(
+    "-v",
+    "--variations",
+    type=int,
+    default=10,
+    show_default=True,
+    help="Maximum number of variations of the base instance (--name) to run.",
+)
+@click.option(
+    "-p",
+    "--p-percents",
+    multiple=True,
+    type=float,
+    default=[0.05, 0.1, 0.15],
+    show_default=True,
+    help="Decimal percentages for p where 1 = 100%.",
+)
+@click.option(
+    "-a",
+    "--alpha-values",
+    multiple=True,
+    type=int,
+    default=[2, 3],
+    show_default=True,
+    help="Values for alpha.",
+)
+@click.option(
+    "-i",
+    "--iters",
+    type=int,
+    default=100,
+    show_default=True,
+    help="Consecutive iterations without improvement to stop.",
+)
+@click.option(
+    "-b",
+    "--beta",
+    type=float,
+    default=0.2,
+    show_default=True,
+    help="Value for the beta parameter.",
+)
+@click.option(
+    "-t",
+    "--time",
+    type=float,
+    default=1800,
+    show_default=True,
+    help="Time limit in seconds before stopping. Use -1 for no limit.",
+)
+def __run(
+    name: str,
+    variations: int,
+    p_percents: list[float],
+    alpha_values: list[int],
+    iters: int,
+    beta: float,
+    time: float,
+):
+    datalist = []
+
+    solvers: list[Solver] = get_solvers(name, variations, p_percents, alpha_values)
+
+    for solver in solvers:
+        print(
+            f"\tCurrent: {solver.instance.name}, p = {solver.p}, alpha = {solver.alpha} ..."
+        )
+
+        row = [name, solver.instance.index, solver.p, solver.alpha]
+
+        gfs = GraspFinalSolver.from_solver(solver)
+        write_solver_pickle(gfs, FINAL_PATH)
+        afvs_record = gfs._grasp_final(iters, beta, time)
+
+        users_stats = gfs.get_users_per_center_stats()
+
+        row.extend(afvs_record)
+        row.append(gfs.solution.time)
+        row.append(gfs.solution.last_improvement)
+        row.extend(users_stats.to_tuple())
+
+        datalist.append(row)
+
+    headers = [
+        "instance",
+        "i",
+        "p",
+        "alpha",
+        "best_rgd",
+        "best_afvs",
+        "diff",
+        "min_imp",
+        "max_imp",
+        "avg_imp",
+        "time",
+        "last_imp",
+        "min_upc",
+        "max_upc",
+        "avg_upc",
+    ]
+    results = pd.DataFrame(datalist, columns=headers)
+
+    filepath = os.path.join(FINAL_PATH, f"final_{name}.pkl")
+    results.to_pickle(filepath)
 
 
 def read_results(instance_name: str) -> pd.DataFrame:
     filepath = os.path.join(FINAL_PATH, f"final_{instance_name}.pkl")
     return pd.read_pickle(filepath)
-
-
-def __run():
-    names = [
-        "pr439_293_146",
-        "rat575_384_191",
-        "rat783_522_261",
-        "dsj1000_667_333",
-        "rl1323_882_441",
-        "rl1889_1260_629",
-    ]
-    solvers: chain[Solver] = chain.from_iterable(
-        get_solvers(name, 10) for name in names
-    )
-
-    for solver in solvers:
-        gfs = GraspFinalSolver.from_solver(solver)
-        afvs_record = gfs._grasp_final(ITERATIONS, BETA, TIME_LIMIT)
-
-    # filepath = ".\\nb_results\\grasp\\final.pkl"
-    # results.to_pickle(filepath)
 
 
 if __name__ == "__main__":

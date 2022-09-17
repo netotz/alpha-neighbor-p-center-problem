@@ -105,7 +105,7 @@ def format_latex_table(dataframe: pd.DataFrame, path: str):
 
 def get_solvers(
     name: str, amount: int, p_percents: list[float], alpha_values: list[int]
-):
+) -> list[Solver]:
     if name.startswith("anpcp_"):
         extension = ".json"
     else:
