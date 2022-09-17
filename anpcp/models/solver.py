@@ -18,13 +18,6 @@ class NotAllocatedError(Exception):
 
 
 @dataclass
-class MinMaxAvg:
-    minimum: int
-    maximum: int
-    average: float
-
-
-@dataclass
 class Solver:
     instance: Instance
     p: int
@@ -66,6 +59,15 @@ class Solver:
     def init_solution(self):
         self.solution = Solution()
         self.__init_allocations()
+
+    @classmethod
+    def from_solver(cls, solver: "Solver"):
+        """
+        Returns a shallow copy of `solver`.
+        This method was created to get an instance of a derived solver,
+        like `GraspFinalSolver`.
+        """
+        return cls(solver.instance, solver.p, solver.alpha)
 
     def allocate_all(self) -> None:
         """
@@ -185,7 +187,10 @@ class Solver:
         users_sum = 0
 
         for center in self.solution.open_facilities:
-            users = sum(self.solution.allocations[user][center] == self.alpha for user in range(n))
+            users = sum(
+                self.solution.allocations[user][center] == self.alpha
+                for user in range(n)
+            )
 
             min_users = min(min_users, users)
             max_users = max(max_users, users)
@@ -562,50 +567,6 @@ class Solver:
             columns="iter beta RGD_OF AFVS_OF time is_new_best".split(),
         )
         return dataframe
-
-    def _grasp_final(self, iters: int, beta: float, time_limit: float = -1) -> Solution:
-        """
-        Modified method for final experiments of GRASP.
-        """
-        if time_limit == -1:
-            time_limit = math.inf
-
-        best_solution = None
-        best_radius = current_radius = math.inf
-
-        total_time = moves = 0
-
-        last_imp = i = iwi = 0
-        while iwi < iters and total_time < time_limit:
-            self.init_solution()
-
-            beta_used = random.random() if beta == -1 else beta
-
-            start = timeit.default_timer()
-
-            self.construct(beta_used)
-            self.fast_vertex_substitution(True)
-
-            total_time += timeit.default_timer() - start
-
-            current_radius = self.solution.get_obj_func()
-            if best_solution is None or current_radius < best_radius:
-                best_solution = deepcopy(self.solution)
-                best_radius = current_radius
-                moves += 1
-
-                iwi = 0
-                last_imp = i
-            else:
-                iwi += 1
-            i += 1
-
-        self.solution = deepcopy(best_solution)
-        self.solution.time = total_time
-        self.solution.moves = moves
-        self.solution.last_improvement = last_imp
-
-        return self.solution
 
 
 def generate_solvers(
