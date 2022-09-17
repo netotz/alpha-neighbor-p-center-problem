@@ -10,3 +10,6 @@ class MinMaxAvg:
     minimum: float
     maximum: float
     average: float
+
+    def to_tuple(self):
+        return (self.minimum, self.maximum, self.average)
