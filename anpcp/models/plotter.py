@@ -87,14 +87,15 @@ def plot_solver(
                 "orange"
                 if alphath.index == solver.solution.critical_allocation.index
                 and alphath.distance == solver.solution.get_obj_func()
-                else "gray"
+                else "darkgray"
             )
             ax.plot(
                 (user.x, facility.x),
                 (user.y, facility.y),
                 color=color,
                 linestyle=":",
-                alpha=0.5,
+                linewidth=0.5,
+                alpha=0.9,
             )
 
     ax.legend(loc=(1.01, 0))
