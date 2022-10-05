@@ -214,6 +214,23 @@ def read_results(instance_name: str) -> pd.DataFrame:
     return pd.read_pickle(filepath)
 
 
+PREFIX = "final_"
+
+
+def get_filenames() -> list[str]:
+    """
+    Searches the directory `FINAL_PATH` and returns a list of
+    the filenames of the experiment results.
+    """
+    return [
+        # remove prefix and extension from filename
+        filename[len(PREFIX) :].split(".")[0]
+        for filename in os.listdir(FINAL_PATH)
+        # ignore 'solver_' files
+        if filename.startswith(PREFIX)
+    ]
+
+
 if __name__ == "__main__":
     print("Running...")
     __run()
