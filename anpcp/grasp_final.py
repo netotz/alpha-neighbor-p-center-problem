@@ -2,6 +2,7 @@ from copy import deepcopy
 import math
 import os
 import random
+import re
 import timeit
 
 import pandas as pd
@@ -214,21 +215,25 @@ def read_results(instance_name: str) -> pd.DataFrame:
     return pd.read_pickle(filepath)
 
 
-PREFIX = "final_"
-
-
 def get_filenames() -> list[str]:
     """
     Searches the directory `FINAL_PATH` and returns a list of
     the filenames of the experiment results.
     """
-    return [
+    PREFIX = "final_"
+    EXTENSION = ".pkl"
+
+    filenames = [
         # remove prefix and extension from filename
         filename[len(PREFIX) :].split(".")[0]
         for filename in os.listdir(FINAL_PATH)
-        # ignore 'solver_' files
-        if filename.startswith(PREFIX)
+        # ignore 'solver_' and .tex files
+        if filename.startswith(PREFIX) and filename.endswith(EXTENSION)
     ]
+    # sort names by number of nodes
+    filenames.sort(key=lambda n: int(re.findall(r"\d+", n)[0]))
+
+    return filenames
 
 
 if __name__ == "__main__":
