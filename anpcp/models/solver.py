@@ -31,7 +31,7 @@ class Solver:
     history: List[Solution] = field(init=False, repr=False, default_factory=list)
 
     def __post_init__(self):
-        self.alpha_range = set(range(1, self.alpha + 2))
+        self.set_alpha_range()
 
         self.init_solution()
         if self.with_random_solution:
@@ -60,6 +60,9 @@ class Solver:
     def init_solution(self):
         self.solution = Solution()
         self.__init_allocations()
+
+    def set_alpha_range(self):
+        self.alpha_range = set(range(1, self.alpha + 2))
 
     @classmethod
     def from_solver(cls, solver: "Solver"):
@@ -179,6 +182,16 @@ class Solver:
         Time O(pn)
         """
         self.solution.critical_allocation = self.eval_obj_func()
+
+    def reset_alpha(self, new_alpha: int) -> None:
+        """
+        Resets this solver with `new_alpha` as the alpha parameter,
+        keeping the same solution.
+        """
+        self.alpha = new_alpha
+        self.set_alpha_range()
+        self.allocate_all()
+        self.update_obj_func()
 
     def get_users_per_center_stats(self):
         n = len(self.solution.allocations)
