@@ -4,10 +4,10 @@ from dataclasses import dataclass
 @dataclass
 class AllocatedFacility:
     """
-    Data class designed to wrap a facility `index`,
-    its allocated `customer`, and their `distance`.
+    Wraps a facility `index`, its allocated `customer`, and their `distance`.
+    These 3 attributes are `int`.
 
-    This object only replaces the need to use a tuple[int, int].
+    This class replaces the need to use a `tuple[int, int]`.
     """
 
     index: int

@@ -1,20 +1,19 @@
 from copy import deepcopy
+import os
 import timeit
 from typing import (
-    Any,
-    Dict,
     Iterable,
-    Mapping,
-    Callable,
-    Optional,
-    Set,
     Tuple,
 )
 
-from models.solution import Solution
-from models.solver import Solver
-
 import pandas as pd
+
+from models.instance import Instance
+from models.solution import Solution
+from models.solver import Solver, generate_solvers
+
+
+DATA_PATH = os.path.join("..", "data")
 
 
 def compare_local_search(solvers: Iterable[Solver], from_random: bool):
@@ -104,29 +103,21 @@ def format_latex_table(dataframe: pd.DataFrame, path: str):
     dataframe.to_latex(path, float_format="%.2f", multirow=True)
 
 
-def run_grasp(solvers: Iterable[Solver]):
-    datalist = list()
+def get_solvers(
+    name: str, amount: int, p_percents: list[float], alpha_values: list[int]
+) -> list[Solver]:
+    if name.startswith("anpcp_"):
+        extension = ".json"
+    else:
+        extension = ".anpcp.tsp"
 
-    MAX_ITERS = 50
+    instances = []
+    for i in range(amount):
+        filepath = os.path.join(DATA_PATH, f"{name}_{i}{extension}")
+        # if variant i doesn't exist
+        if not os.path.exists(filepath):
+            continue
 
-    for solver in solvers:
-        solver.grasp(MAX_ITERS, 0)
-        obj_func = solver.solution.get_obj_func()
+        instances.append(Instance.read(filepath))
 
-        datalist.append(
-            (
-                solver.instance.name,
-                solver.instance.n,
-                solver.instance.m,
-                solver.p,
-                solver.alpha,
-                obj_func,
-                solver.solution.time,
-                solver.solution.moves,
-            )
-        )
-
-    dataframe = pd.DataFrame(
-        datalist, columns="tsp n m p alpha OF time improvs".split()
-    )
-    return dataframe.groupby("tsp n m p alpha ".split()).mean()
+    return generate_solvers(instances, p_percents, alpha_values)

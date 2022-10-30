@@ -42,7 +42,7 @@ def __run(name: str, p: int, alpha: int, iters: int = 5000, beta: float = -1):
     solver = Solver(instance, p, alpha)
 
     print("Running...")
-    results = solver.grasp_iters_detailed(iters, beta)
+    results = solver._grasp_iters_detailed(iters, beta)
     print("Finished.")
 
     filename = f"iters_{name}_p{p}_a{alpha}.pkl"

@@ -2,17 +2,16 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 import math
 import random
-from typing import Dict, List, Optional, Sequence, Set
-from itertools import product
+from typing import Dict, List, Sequence, Set
 import timeit
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from models.moved_facility import MovedFacility
 from models.allocated_facility import AllocatedFacility
 from models.instance import Instance
 from models.solution import Solution
+from models.min_max_avg import MinMaxAvg
 
 
 class NotAllocatedError(Exception):
@@ -32,7 +31,7 @@ class Solver:
     history: List[Solution] = field(init=False, repr=False, default_factory=list)
 
     def __post_init__(self):
-        self.alpha_range = set(range(1, self.alpha + 2))
+        self.set_alpha_range()
 
         self.init_solution()
         if self.with_random_solution:
@@ -61,6 +60,18 @@ class Solver:
     def init_solution(self):
         self.solution = Solution()
         self.__init_allocations()
+
+    def set_alpha_range(self):
+        self.alpha_range = set(range(1, self.alpha + 2))
+
+    @classmethod
+    def from_solver(cls, solver: "Solver"):
+        """
+        Returns a shallow copy of `solver`.
+        This method was created to get an instance of a derived solver,
+        like `GraspFinalSolver`.
+        """
+        return cls(solver.instance, solver.p, solver.alpha)
 
     def allocate_all(self) -> None:
         """
@@ -107,10 +118,9 @@ class Solver:
 
     def get_kth_closest(self, user: int, kth: int) -> AllocatedFacility:
         """
-        Gets the `kth` closest facility from `user` with its distance
-        by checking each (user, facility) pair from allocations matrix.
+        Gets the `kth` closest facility from `user` with its distance.
 
-        If the there's no `kth` in allocations matrix, `NotAllocatedError` is raised.
+        Raises `NotAllocatedError` if there's no `kth` in allocations matrix.
 
         To get the alpha-neighbors of `user`, see `get_alpha_neighbors`.
 
@@ -126,8 +136,7 @@ class Solver:
 
     def get_alpha_neighbors(self, user: int) -> Dict[int, AllocatedFacility]:
         """
-        Gets the closest facilities from `user` up to its center (including it) with their distances
-        by checking all (user, facility) pairs from allocations matrix.
+        Gets the closest facilities from `user` up to its center (including it) with their distances.
 
         Returns a dictionary with the k-th position as key and an `AllocatedFacility` object as value.
 
@@ -173,6 +182,36 @@ class Solver:
         Time O(pn)
         """
         self.solution.critical_allocation = self.eval_obj_func()
+
+    def reset_alpha(self, new_alpha: int) -> None:
+        """
+        Resets this solver with `new_alpha` as the alpha parameter,
+        keeping the same solution.
+        """
+        self.alpha = new_alpha
+        self.set_alpha_range()
+        self.allocate_all()
+        self.update_obj_func()
+
+    def get_users_per_center_stats(self):
+        n = len(self.solution.allocations)
+
+        min_users = math.inf
+        max_users = -math.inf
+        users_sum = 0
+
+        for center in self.solution.open_facilities:
+            users = sum(
+                self.solution.allocations[user][center] == self.alpha
+                for user in range(n)
+            )
+
+            min_users = min(min_users, users)
+            max_users = max(max_users, users)
+            users_sum += users
+
+        avg_users = users_sum / self.p
+        return MinMaxAvg(min_users, max_users, avg_users)
 
     def construct(self, beta: float = 0) -> Solution:
         """
@@ -228,7 +267,7 @@ class Solver:
 
     def interchange(self, is_first_improvement: bool) -> Solution:
         """
-        Naive Interchange, checks every possible swap.
+        Greedy Interchange, checks every possible swap.
 
         Time O(m**2 pn)
         """
@@ -438,12 +477,12 @@ class Solver:
         Applies the GRASP metaheuristic to the current solver,
         and stops when either `iters` or `time_limit` is reached.
 
-        `iters`: Number of consecutive iterations without improvement to stop the solver.
+        `iters`: Number of consecutive iterations without improvement to stop.
 
         `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
-        Use -1 for a random value.
+        Use -1 to use a random value in each iteration.
 
-        `time_limit`: Time limit in seconds to stop GRASP. Use -1 for no limit.
+        `time_limit`: Time limit in seconds to stop. Use -1 for no limit.
         """
         if time_limit == -1:
             time_limit = math.inf
@@ -485,7 +524,7 @@ class Solver:
 
         return self.solution
 
-    def grasp_iters_detailed(self, max_iters: int, beta: float) -> pd.DataFrame:
+    def _grasp_iters_detailed(self, max_iters: int, beta: float) -> pd.DataFrame:
         """
         Modified method for the experiment of calibrating iterations.
 
@@ -543,111 +582,6 @@ class Solver:
         )
         return dataframe
 
-    def plot(
-        self,
-        with_annotations: bool = True,
-        with_assignments: bool = True,
-        axis: bool = False,
-        dpi: Optional[int] = None,
-        filename: str = "",
-    ) -> None:
-        fig, ax = plt.subplots()
-
-        # plot users
-        ax.scatter(
-            [u.x for u in self.instance.users],
-            [u.y for u in self.instance.users],
-            color="tab:blue",
-            label="Users",
-            linewidths=0.3,
-            alpha=0.8,
-            edgecolors="black",
-        )
-
-        # plot centers (open facilities)
-        if self.solution.open_facilities:
-            ax.scatter(
-                [
-                    f.x
-                    for f in self.instance.facilities
-                    if f.index in self.solution.open_facilities
-                ],
-                [
-                    f.y
-                    for f in self.instance.facilities
-                    if f.index in self.solution.open_facilities
-                ],
-                marker="s",
-                color="red",
-                label="Centers ($S$)",
-                linewidths=0.3,
-                alpha=0.8,
-                edgecolors="black",
-            )
-
-        # plot closed facilities
-        ax.scatter(
-            [
-                f.x
-                for f in self.instance.facilities
-                if f.index in self.solution.closed_facilities
-            ],
-            [
-                f.y
-                for f in self.instance.facilities
-                if f.index in self.solution.closed_facilities
-            ],
-            marker="s",
-            color="gray",
-            label="Closed facilities",
-            linewidths=0.2,
-            alpha=0.8,
-            edgecolors="black",
-        )
-
-        # plot indexes of nodes
-        if with_annotations:
-            for u in self.instance.users:
-                ax.annotate(u.index, (u.x, u.y))
-
-            for f in self.instance.facilities:
-                ax.annotate(f.index, (f.x, f.y))
-
-        # plot assignments
-        if with_assignments:
-            for user in self.instance.users:
-                try:
-                    alphath = self.get_kth_closest(user.index, self.alpha)
-                except NotAllocatedError:
-                    continue
-
-                facility = self.instance.facilities[alphath.index]
-                color = (
-                    "orange"
-                    if alphath.index == self.solution.critical_allocation.index
-                    and alphath.distance == self.solution.get_obj_func()
-                    else "gray"
-                )
-                ax.plot(
-                    (user.x, facility.x),
-                    (user.y, facility.y),
-                    color=color,
-                    linestyle=":",
-                    alpha=0.5,
-                )
-
-        ax.legend(loc=(1.01, 0))
-        if dpi:
-            fig.set_dpi(dpi)
-
-        if not axis:
-            ax.set_axis_off()
-
-        if filename:
-            fig.savefig(filename, bbox_inches="tight")
-
-        plt.show()
-
 
 def generate_solvers(
     instances: Sequence[Instance],
@@ -656,5 +590,7 @@ def generate_solvers(
 ) -> List[Solver]:
     return [
         Solver(instance, int(instance.m * p), alpha)
-        for instance, p, alpha in product(instances, p_percentages, alpha_values)
+        for instance in instances
+        for p in p_percentages
+        for alpha in alpha_values
     ]
