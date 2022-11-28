@@ -84,7 +84,7 @@ def plot_solver(
 
             facility = solver.instance.facilities[alphath.index]
             color = (
-                "orange"
+                "goldenrod"
                 if alphath.index == solver.solution.critical_allocation.index
                 and alphath.distance == solver.solution.get_obj_func()
                 else "darkgray"
@@ -94,7 +94,7 @@ def plot_solver(
                 (user.y, facility.y),
                 color=color,
                 linestyle=":",
-                linewidth=0.5,
+                linewidth=1,
                 alpha=0.9,
             )
 
