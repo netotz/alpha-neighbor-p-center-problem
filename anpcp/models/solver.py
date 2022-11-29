@@ -97,12 +97,14 @@ class Solver:
         k = 0
         # O(m)
         for facility, distance in self.instance.sorted_distances[user]:
-            if facility in self.solution.open_facilities:
-                k += 1
-                if k > self.alpha + 1:
-                    break
+            if facility not in self.solution.open_facilities:
+                continue
 
-                self.allocate(user, facility, k)
+            k += 1
+            if k > self.alpha + 1:
+                break
+
+            self.allocate(user, facility, k)
 
     def deallocate(self, user: int, facility: int) -> None:
         self.allocate(user, facility, 0)
@@ -128,9 +130,12 @@ class Solver:
         """
         # O(p)
         for facility in self.solution.open_facilities:
-            if self.solution.allocations[user][facility] == kth:
-                distance = self.instance.get_distance(user, facility)
-                return AllocatedFacility(facility, user, distance)
+            if self.solution.allocations[user][facility] != kth:
+                continue
+
+            return AllocatedFacility(
+                facility, user, self.instance.get_distance(user, facility)
+            )
 
         raise NotAllocatedError
 
@@ -151,14 +156,17 @@ class Solver:
         # O(p)
         for facility in self.solution.open_facilities:
             k = self.solution.allocations[user][facility]
-            if k in temp_alpha_range:
-                distance = self.instance.get_distance(user, facility)
-                alpha_neighbors[k] = AllocatedFacility(facility, user, distance)
 
-                temp_alpha_range.discard(k)
-                # when all kth positions are found
-                if len(temp_alpha_range) == 0:
-                    break
+            if k not in temp_alpha_range:
+                continue
+
+            distance = self.instance.get_distance(user, facility)
+            alpha_neighbors[k] = AllocatedFacility(facility, user, distance)
+
+            temp_alpha_range.discard(k)
+            # when all kth positions are found
+            if len(temp_alpha_range) == 0:
+                break
 
         return alpha_neighbors
 
