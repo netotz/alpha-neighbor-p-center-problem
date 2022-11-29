@@ -146,18 +146,18 @@ class Solver:
         """
         alpha_neighbors = dict()
         # O(a)
-        alpha_range = set(self.alpha_range)
+        temp_alpha_range = set(self.alpha_range)
 
         # O(p)
         for facility in self.solution.open_facilities:
             k = self.solution.allocations[user][facility]
-            if k in alpha_range:
+            if k in temp_alpha_range:
                 distance = self.instance.get_distance(user, facility)
                 alpha_neighbors[k] = AllocatedFacility(facility, user, distance)
 
-                alpha_range.discard(k)
+                temp_alpha_range.discard(k)
                 # when all kth positions are found
-                if len(alpha_range) == 0:
+                if len(temp_alpha_range) == 0:
                     break
 
         return alpha_neighbors
@@ -389,23 +389,30 @@ class Solver:
 
                 # O(a)
                 for kth, neighbor in neighbors.items():
+                    current_index = neighbor.index
+
                     # TODO: refactor skipping a+1
-                    # a+1 is not part of the alpha-neighbors as it's farther than alpha
-                    if kth == self.alpha + 1:
+                    # a+1 is not part of the alpha-neighbors
+                    # because it's farther than alphath
+                    if kth == self.alpha + 1 or (
+                        # alphath is irrelevant if user is attracted to fi
+                        is_attracted
+                        and current_index == alphath.index
+                    ):
                         continue
 
-                    j = neighbor.index
+                    lost_neighbors[current_index] = max(
+                        lost_neighbors[current_index], lost_arg
+                    )
+                    same_neighbors[current_index] = max(
+                        same_neighbors[current_index], same_arg
+                    )
 
-                    # alphath is irrelevant if user is attracted by fi
-                    if is_attracted and j == alphath.index:
-                        continue
-
-                    lost_neighbors[j] = max(lost_neighbors[j], lost_arg)
-                    same_neighbors[j] = max(same_neighbors[j], same_arg)
-
-                    if same_neighbors[j] > largest.radius:
+                    if same_neighbors[current_index] > largest.radius:
                         second_largest = largest
-                        largest = MovedFacility(j, same_neighbors[j])
+                        largest = MovedFacility(
+                            current_index, same_neighbors[current_index]
+                        )
 
             # O(p)
             best_out = min(
