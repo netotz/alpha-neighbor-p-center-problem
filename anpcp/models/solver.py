@@ -73,13 +73,29 @@ class Solver:
         """
         return cls(solver.instance, solver.p, solver.alpha)
 
+    def get_users_indexes(self) -> Set[int]:
+        """
+        Returns the indexes of closed facilities
+        if users and facilities share the same set of points.
+        Otherwise, returns the indexes of all users.
+        """
+        return (
+            self.solution.closed_facilities
+            if self.instance.is_same_set
+            else self.instance.users_indexes
+        )
+
     def allocate_all(self) -> None:
         """
         Allocates all users to their alpha-neighbors.
 
+        If users and facilities are same set of points,
+        the rows for the centers won't be updated in allocations matrix.
+        This is safe because only closed facilities (users) are accessed.
+
         Time: O(mn)
         """
-        for user in self.instance.users_indexes:
+        for user in self.get_users_indexes():
             self.reallocate_user(user)
 
     def allocate(self, user: int, facility: int, kth: int) -> None:
@@ -96,7 +112,9 @@ class Solver:
 
         k = 0
         # O(m)
-        for facility, distance in self.instance.sorted_distances[user]:
+        for facility in self.instance.next_nearest_facility(user):
+            # this condition should also be true when F an U are same set,
+            # because `user` is a closed facility and therefore `facility` too
             if facility not in self.solution.open_facilities:
                 continue
 
@@ -108,11 +126,6 @@ class Solver:
 
     def deallocate(self, user: int, facility: int) -> None:
         self.allocate(user, facility, 0)
-
-    def deallocate_facility(self, facility: int) -> None:
-        # O(n)
-        for user in self.instance.users_indexes:
-            self.deallocate(user, facility)
 
     def deallocate_user(self, user: int) -> None:
         # O(m)
@@ -182,7 +195,7 @@ class Solver:
         Time complexity: O(pn)
         """
         return max(
-            (self.get_kth_closest(u, self.alpha) for u in self.instance.users_indexes),
+            (self.get_kth_closest(u, self.alpha) for u in self.get_users_indexes()),
             key=lambda af: af.distance,
         )
 
@@ -362,7 +375,7 @@ class Solver:
         lost_neighbors = {fr: 0 for fr in self.solution.open_facilities}
 
         # O(pn)
-        for user in self.instance.users_indexes:
+        for user in self.get_users_indexes():
             fi_distance = self.instance.get_distance(user, facility_in)
 
             # O(p)

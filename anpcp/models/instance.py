@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 import json
+import math
 import os
 from typing import List, Optional, Set, Tuple
 
@@ -13,8 +14,9 @@ from models.vertex import VertexType, Vertex
 class Instance:
     facilities: List[Vertex] = field(repr=False)
     users: List[Vertex] = field(repr=False)
-    name: str = ""
-    index: int = -1
+    is_same_set = False
+    name = ""
+    index = -1
 
     users_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
     facilities_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
@@ -23,7 +25,7 @@ class Instance:
     m: int = field(init=False)
 
     distances: List[List[int]] = field(default_factory=list, repr=False)
-    sorted_distances: List[List[int]] = field(
+    sorted_distances: List[List[Tuple[int, int]]] = field(
         init=False, default_factory=list, repr=False
     )
 
@@ -45,6 +47,7 @@ class Instance:
                 [round(d) for d in row]
                 for row in spatial.distance_matrix(users_coords, facilities_coords)
             ]
+
         self.sorted_distances = [
             sorted(enumerate(row), key=lambda c: c[1]) for row in self.distances
         ]
@@ -148,8 +151,8 @@ class Instance:
         because `Solver` uses a matrix of distances
         whose indexes must be ranges starting at 0.
         """
-        facilities = list()
-        users = list()
+        facilities = []
+        users = []
         i = j = 0
         for _, x, y, t in read_node_coords(filepath):
             if t == VertexType.USER:
@@ -162,7 +165,18 @@ class Instance:
         return cls(facilities, users)
 
     def get_distance(self, from_user: int, to_facility: int) -> int:
-        return self.distances[from_user][to_facility]
+        dist = self.distances[from_user][to_facility]
+
+        # if f and u are same point (d=0), skip fi by returning infinity
+        if self.is_same_set and dist == 0:
+            return math.inf
+
+        return dist
+
+    def next_nearest_facility(self, from_user: int):
+        # O(m)
+        for facility, _ in self.sorted_distances[from_user]:
+            yield facility
 
     def get_farthest_indexes(self) -> Tuple[int, int]:
         """
@@ -185,7 +199,7 @@ def read_node_coords(filepath: str) -> List[List[int]]:
     Returns node coords as list of lists,
     where each node has format [index, x, y, type].
     """
-    lines = list()
+    lines = []
     with open(filepath, "r") as file:
         lines = file.read().split("\n")
 
