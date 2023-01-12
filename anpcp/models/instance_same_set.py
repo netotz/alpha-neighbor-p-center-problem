@@ -9,7 +9,11 @@ from models.instance import Instance, read_node_coords
 class InstanceSameSet(Instance):
     @classmethod
     def read_tsp(cls, filepath: str) -> "InstanceSameSet":
-        """ """
+        """
+        Reads a TSP Lib file (.tsp).
+
+        The same set of nodes is used for both users and facilities.
+        """
         nodes = [Vertex(i - 1, x, y) for i, x, y in read_node_coords(filepath)]
         return cls(nodes, nodes)
 
@@ -18,7 +22,6 @@ class InstanceSameSet(Instance):
 
         # if f and u are same point (d=0), skip fi by returning infinity
         if from_user == to_facility:
-            assert dist == 0
             return math.inf
 
         return dist
