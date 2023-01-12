@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 import json
-import math
 import os
 from typing import List, Optional, Set, Tuple
 
@@ -202,9 +201,16 @@ def read_node_coords(filepath: str) -> List[List[int]]:
         if line.startswith("NODE_COORD_SECTION"):
             break
         i += 1
+    
+    lines = lines[i:]
 
-    # trim last index as it's EOF
-    nodes = lines[i:-1]
+    # trim last indexes that are not nodes
+    while True:
+        if lines[-1].find(" ") > -1:
+            break
+
+        lines.pop()
+
     # each node is a string "i x y t"
     # so split it and convert them to ints
-    return [[int(float(value)) for value in node.split()] for node in nodes]
+    return [[int(float(value)) for value in node.split()] for node in lines]
