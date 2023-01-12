@@ -110,6 +110,7 @@ class Solver:
         self.allocate(user, facility, 0)
 
     def deallocate_facility(self, facility: int) -> None:
+        # O(n)
         for user in self.instance.users_indexes:
             self.deallocate(user, facility)
 
@@ -346,102 +347,101 @@ class Solver:
 
         return self.solution
 
+    def move(self, facility_in: int) -> MovedFacility:
+        """
+        Determines the best facility to remove if `facility_in` is inserted,
+        and the objective function resulting from the swap.
+
+        Time O(pn)
+        """
+        # current objective function
+        curr_obj_func = 0
+        # O(p)
+        same_neighbors = {fr: 0 for fr in self.solution.open_facilities}
+        # O(p)
+        lost_neighbors = {fr: 0 for fr in self.solution.open_facilities}
+
+        # O(pn)
+        for user in self.instance.users_indexes:
+            fi_distance = self.instance.get_distance(user, facility_in)
+
+            # O(p)
+            neighbors = self.get_alpha_neighbors(user)
+            alphath = neighbors[self.alpha]
+
+            is_attracted = fi_distance < alphath.distance
+
+            if is_attracted:
+                lost_arg = alphath.distance
+                # store farther distance between fi and a-1
+                same_arg = max(
+                    fi_distance,
+                    neighbors[self.alpha - 1].distance if self.alpha > 1
+                    # or if it's PCP
+                    else 0,
+                )
+                curr_obj_func = max(curr_obj_func, same_arg)
+            else:
+                # store closer distance between fi and a+1
+                lost_arg = min(fi_distance, neighbors[self.alpha + 1].distance)
+                same_arg = alphath.distance
+
+            largest = MovedFacility(-1, 0)
+            second_largest = MovedFacility(-1, 0)
+
+            # O(a)
+            for kth, neighbor in neighbors.items():
+                current_index = neighbor.index
+
+                # TODO: refactor skipping a+1
+                # a+1 is not part of the alpha-neighbors
+                # because it's farther than alphath
+                if kth == self.alpha + 1 or (
+                    # alphath is irrelevant if user is attracted to fi
+                    is_attracted
+                    and current_index == alphath.index
+                ):
+                    continue
+
+                lost_neighbors[current_index] = max(
+                    lost_neighbors[current_index], lost_arg
+                )
+                same_neighbors[current_index] = max(
+                    same_neighbors[current_index], same_arg
+                )
+
+                if same_neighbors[current_index] > largest.radius:
+                    second_largest = largest
+                    largest = MovedFacility(
+                        current_index, same_neighbors[current_index]
+                    )
+
+        # O(p)
+        best_out = min(
+            (
+                MovedFacility(
+                    fr,
+                    max(
+                        curr_obj_func,
+                        lost_neighbors[fr],
+                        second_largest.radius
+                        if fr == largest.index
+                        else largest.radius,
+                    ),
+                )
+                for fr in self.solution.open_facilities
+            ),
+            key=lambda af: af.radius,
+        )
+
+        return best_out
+
     def fast_vertex_substitution(self, is_first_improvement: bool) -> Solution:
         """
         Alpha Fast Vertex Substitution (ANPCP) local search heuristic.
 
         Time O(mpn)
         """
-
-        def move(facility_in: int) -> MovedFacility:
-            """
-            Determines the best facility to remove if `facility_in` is inserted,
-            and the objective function resulting from the swap.
-
-            Time O(pn)
-            """
-            # current objective function
-            curr_obj_func = 0
-            # O(p)
-            same_neighbors = {fr: 0 for fr in self.solution.open_facilities}
-            # O(p)
-            lost_neighbors = {fr: 0 for fr in self.solution.open_facilities}
-
-            # O(pn)
-            for user in self.instance.users_indexes:
-                fi_distance = self.instance.get_distance(user, facility_in)
-
-                # O(p)
-                neighbors = self.get_alpha_neighbors(user)
-                alphath = neighbors[self.alpha]
-
-                is_attracted = fi_distance < alphath.distance
-
-                if is_attracted:
-                    lost_arg = alphath.distance
-                    # store farther distance between fi and a-1
-                    same_arg = max(
-                        fi_distance,
-                        neighbors[self.alpha - 1].distance if self.alpha > 1
-                        # or if it's PCP
-                        else 0,
-                    )
-                    curr_obj_func = max(curr_obj_func, same_arg)
-                else:
-                    # store closer distance between fi and a+1
-                    lost_arg = min(fi_distance, neighbors[self.alpha + 1].distance)
-                    same_arg = alphath.distance
-
-                largest = MovedFacility(-1, 0)
-                second_largest = MovedFacility(-1, 0)
-
-                # O(a)
-                for kth, neighbor in neighbors.items():
-                    current_index = neighbor.index
-
-                    # TODO: refactor skipping a+1
-                    # a+1 is not part of the alpha-neighbors
-                    # because it's farther than alphath
-                    if kth == self.alpha + 1 or (
-                        # alphath is irrelevant if user is attracted to fi
-                        is_attracted
-                        and current_index == alphath.index
-                    ):
-                        continue
-
-                    lost_neighbors[current_index] = max(
-                        lost_neighbors[current_index], lost_arg
-                    )
-                    same_neighbors[current_index] = max(
-                        same_neighbors[current_index], same_arg
-                    )
-
-                    if same_neighbors[current_index] > largest.radius:
-                        second_largest = largest
-                        largest = MovedFacility(
-                            current_index, same_neighbors[current_index]
-                        )
-
-            # O(p)
-            best_out = min(
-                (
-                    MovedFacility(
-                        fr,
-                        max(
-                            curr_obj_func,
-                            lost_neighbors[fr],
-                            second_largest.radius
-                            if fr == largest.index
-                            else largest.radius,
-                        ),
-                    )
-                    for fr in self.solution.open_facilities
-                ),
-                key=lambda af: af.radius,
-            )
-
-            return best_out
-
         moves = 0
         is_improved = True
         while is_improved:
@@ -460,7 +460,7 @@ class Solver:
                     continue
 
                 # O(pn)
-                best_move = move(fi)
+                best_move = self.move(fi)
 
                 # if the move improves (minimizes) objective function
                 if best_move.radius < best_radius:
