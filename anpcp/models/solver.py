@@ -74,16 +74,7 @@ class Solver:
         return cls(solver.instance, solver.p, solver.alpha)
 
     def get_users_indexes(self) -> Set[int]:
-        """
-        Returns the indexes of closed facilities
-        if users and facilities share the same set of points.
-        Otherwise, returns the indexes of all users.
-        """
-        return (
-            self.solution.closed_facilities
-            if self.instance.is_same_set
-            else self.instance.users_indexes
-        )
+        return self.instance.users_indexes
 
     def allocate_all(self) -> None:
         """
