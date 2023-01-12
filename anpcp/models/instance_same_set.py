@@ -10,7 +10,7 @@ class InstanceSameSet(Instance):
     @classmethod
     def read_tsp(cls, filepath: str) -> "InstanceSameSet":
         """ """
-        nodes = [Vertex(i, x, y) for i, x, y in read_node_coords(filepath)]
+        nodes = [Vertex(i - 1, x, y) for i, x, y in read_node_coords(filepath)]
         return cls(nodes, nodes)
 
     def get_distance(self, from_user: int, to_facility: int) -> int:
