@@ -14,7 +14,6 @@ from models.vertex import VertexType, Vertex
 class Instance:
     facilities: List[Vertex] = field(repr=False)
     users: List[Vertex] = field(repr=False)
-    is_same_set = False
     name = ""
     index = -1
 
@@ -165,13 +164,7 @@ class Instance:
         return cls(facilities, users)
 
     def get_distance(self, from_user: int, to_facility: int) -> int:
-        dist = self.distances[from_user][to_facility]
-
-        # if f and u are same point (d=0), skip fi by returning infinity
-        if self.is_same_set and dist == 0:
-            return math.inf
-
-        return dist
+        return self.distances[from_user][to_facility]
 
     def next_nearest_facility(self, from_user: int):
         # O(m)
