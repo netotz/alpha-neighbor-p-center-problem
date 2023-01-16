@@ -1,11 +1,15 @@
 # %%
 import os
 
+from models.instance_same_set import InstanceSameSet
+from models.solver_same_set import SolverSameSet
 from models.instance import Instance
 from models.solver import Solver
 from models.plotter import plot_solver
 
 DATA_PATH = os.path.join("..", "data")
+
+# %%
 
 names = [
     "pr1002_668_334_4.anpcp.tsp",  # 0
@@ -20,17 +24,22 @@ names = [
     "rl1889_1260_629_0.anpcp.tsp",
     "att48_32_16_0.anpcp.tsp",  # 10
     "pr439_293_146_0.anpcp.tsp",
-    "ch150.tsp",  # 12
     "ch150_100_50_0.anpcp.tsp",
 ]
-filepath = os.path.join(DATA_PATH, names[13])
+filepath = os.path.join(DATA_PATH, names[12])
 instance = Instance.read(filepath)
+solver = Solver(instance, 45, 2)
 
 #%%
 
-solver = Solver(instance, 45, 2)
+names_same = [
+    "att48.tsp",  # 0
+    "ch150.tsp",
+    "pr439.tsp",  # 2
+]
 
-solver = Solver(instance, 20, 3)
+filepath = os.path.join(DATA_PATH, names_same[2])
+instance = InstanceSameSet.read(filepath)
+solver = SolverSameSet(instance, 10, 2)
 
-# solver.grasp_iters_detailed(10, -1)
-# solver.grasp(50)
+# %%
