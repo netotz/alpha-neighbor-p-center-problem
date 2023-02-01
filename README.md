@@ -38,7 +38,9 @@ I've been using interactive programming most of the time, you can notice there a
 Some of them will fail to run now because I've changed the code many times.
 I didn't want to delete them though because this repository is more like a history of the changes made to the codebase used for the research.
 
-The code here is not intended to be a production application ready to be used by anyone, but rather a proof of the experiments and tests conducted for the research.
+The code here is not intended to be a production application ready to be used by anyone, but simply a proof of the experiments and tests conducted for the research.
+
+The `debugger.py` file contains some common lines of code that will run the solver and related classes.
 
 There are some CLI scripts that I used to run long experiments with GRASP, they are the files starting with `anpcp/grasp_*.py`.
 Then I used some Jupyter Notebooks to load the results of the experiments and filter the data to generate LaTeX tables.
@@ -53,7 +55,7 @@ The folder `anpcp/nb_results/` is full of output files, generated from the condu
 | ANPCP   |        $\alpha$-neighbor $p$-center problem |
 | PDP     |                      $p$-dispersion problem |
 | PMP     |                          $p$-median problem |
+| FAGI    |       Fast Algorithm for Greedy Interchange |
 | FVS     |                    Fast Vertex Substitution |
 | A-FVS   |              Alpha Fast Vertex Substitution |
-| FAGI    |       Fast Algorithm for Greedy Interchange |
 | GRASP   | Greedy Randomized Adaptive Search Procedure |
