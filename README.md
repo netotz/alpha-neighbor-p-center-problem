@@ -1,6 +1,6 @@
-# _$\alpha$_-neighbor _p_-center problem (ANPCP)
+# _α_-neighbor _p_-center problem (ANPCP)
 
-The _$\alpha$_-neighbor _p_-center problem (ANPCP) is a location problem in which the goal is to select $p$ centers such that the maximum distance of a user to its $\alpha$-th closest open facility is minimized.
+The _α_-neighbor _p_-center problem (ANPCP) is a location problem in which the goal is to select $p$ centers such that the maximum distance of a user to its $\alpha$-th closest open facility is minimized.
 This is the repository of the source code used for an undergraduate thesis and a future research paper, whose main goal are to design efficient heuristic and metaheuristic procedures to solve the ANPCP.
 
 A heuristic is any approach to problem solving that employs a practical method that is not guaranteed to be optimal, perfect, or rational, but is nevertheless sufficient for reaching an immediate, short-term goal or approximation.
