@@ -358,12 +358,15 @@ class Solver:
 
         Time O(pn)
         """
-        # current objective function
-        curr_obj_func = 0
+        # best objective function so far
+        best_radius = 0
         # O(p)
         same_neighbors = {fr: 0 for fr in self.solution.open_facilities}
         # O(p)
         lost_neighbors = {fr: 0 for fr in self.solution.open_facilities}
+
+        largest = MovedFacility(-1, 0)
+        second_largest = MovedFacility(-1, 0)
 
         ## O(n(p + a)) ~= O(pn) since p > a
         # O(n)
@@ -385,14 +388,11 @@ class Solver:
                     # or if it's PCP
                     else 0,
                 )
-                curr_obj_func = max(curr_obj_func, same_arg)
+                best_radius = max(best_radius, same_arg)
             else:
                 # store closer distance between fi and a+1
                 lost_arg = min(fi_distance, neighbors[self.alpha + 1].distance)
                 same_arg = alphath.distance
-
-            largest = MovedFacility(-1, 0)
-            second_largest = MovedFacility(-1, 0)
 
             # skip a+1 because is not in alpha-neighbors
             neighbors.pop(self.alpha + 1)
@@ -423,7 +423,7 @@ class Solver:
                 MovedFacility(
                     fr,
                     max(
-                        curr_obj_func,
+                        best_radius,
                         lost_neighbors[fr],
                         second_largest.radius
                         if fr == largest.index
