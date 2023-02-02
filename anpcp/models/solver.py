@@ -547,6 +547,10 @@ class Solver:
                 best_fi = fi
                 best_fr = fr
 
+        # if no swaps occured
+        if best_local == math.inf:
+            return False
+        
         # O(mn)
         self.apply_swap(best_fi, best_fr)
         # mark fi as tabu
