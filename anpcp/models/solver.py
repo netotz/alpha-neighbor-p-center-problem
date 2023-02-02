@@ -448,6 +448,18 @@ class Solver:
 
         return best_out
 
+    def does_break_critical(self, facility_in) -> bool:
+        """
+        Returns `True` if `facility_in` would break the critical allocation of
+        the current solution.
+        Otherwise returns `False`.
+        """
+        fi_distance = self.instance.get_distance(
+            self.solution.critical_allocation.user, facility_in
+        )
+
+        return fi_distance < self.solution.get_obj_func()
+
     def try_improve(self, is_first_improvement: bool) -> bool:
         """
         Returns `True` if `self.solution` was improved (objective function was minimized)
@@ -465,11 +477,7 @@ class Solver:
         ## O(mpn)
         # O(m - p) ~= O(m) since m > p
         for fi in self.solution.closed_facilities:
-            fi_distance = self.instance.get_distance(
-                self.solution.critical_allocation.user, fi
-            )
-
-            if fi_distance >= current_radius:
+            if not self.does_break_critical(fi):
                 continue
 
             # O(pn)
@@ -520,11 +528,7 @@ class Solver:
         ## O(mpn)
         # O(m - p) ~= O(m) since m > p
         for fi in self.solution.closed_facilities:
-            fi_distance = self.instance.get_distance(
-                self.solution.critical_allocation.user, fi
-            )
-
-            if fi_distance >= current_radius:
+            if not self.does_break_critical(fi):
                 continue
 
             # O(pn)
