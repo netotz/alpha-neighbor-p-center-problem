@@ -290,7 +290,8 @@ class Solver:
         moves = 0
         is_improved = True
         while is_improved:
-            # O(m**2 pn)
+            ## O(m**2 pn)
+            # O(m - p) ~= O(m)
             for fi in self.solution.closed_facilities:
                 fi_distance = self.instance.get_distance(
                     self.solution.critical_allocation.user, fi
@@ -299,7 +300,8 @@ class Solver:
                 if fi_distance >= current_radius:
                     continue
 
-                # O(mpn) = O(p) * O(mn)
+                ## O(mpn)
+                # O(p)
                 for fr in self.solution.open_facilities:
                     self.solution.swap(fi, fr)
                     # O(mn)
@@ -438,6 +440,14 @@ class Solver:
         return best_out
 
     def try_improve(self, is_first_improvement: bool) -> bool:
+        """
+        Returns `True` if `self.solution` was improved (objective function was minimized)
+        by searching for the best facility to insert and the best to remove.
+        If no possible move improves the current solution, returns `False`.
+
+        Time O(mpn)
+        """
+
         current_radius = self.solution.get_obj_func()
 
         best_radius = current_radius
@@ -483,7 +493,8 @@ class Solver:
         """
         Alpha Fast Vertex Substitution (ANPCP) local search heuristic.
 
-        Time O(mpn)
+        Time O(mpn) * C,
+        where C is the number of attempts to keep improving S.
         """
         moves = 0
         while self.try_improve(is_first_improvement):
@@ -493,9 +504,14 @@ class Solver:
 
         return self.solution
 
-    def tabu_search(self, tenure: int) -> Solution:
-        # TODO: add parameter to support tabu search data structure
-        return self.fast_vertex_substitution(False)
+    def tabu_search(self, tenure: int, iters: int) -> Solution:
+        i = 0
+        while i < iters:
+            # TODO: add parameter to support tabu moves
+            self.try_improve(False)
+            i += 1
+
+        return self.solution
 
     def grasp(self, iters: int, beta: float = 0, time_limit: float = -1) -> Solution:
         """
