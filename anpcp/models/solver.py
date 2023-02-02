@@ -437,6 +437,48 @@ class Solver:
 
         return best_out
 
+    def try_improve(self, is_first_improvement: bool) -> bool:
+        current_radius = self.solution.get_obj_func()
+
+        best_radius = current_radius
+        best_fi = best_fr = -1
+
+        ## O(mpn)
+        # O(m - p) ~= O(m) since m > p
+        for fi in self.solution.closed_facilities:
+            fi_distance = self.instance.get_distance(
+                self.solution.critical_allocation.user, fi
+            )
+
+            if fi_distance >= current_radius:
+                continue
+
+            # O(pn)
+            best_move = self.move(fi)
+
+            # if the move improves (minimizes) objective function
+            if best_move.radius < best_radius:
+                best_radius = best_move.radius
+                best_fi = fi
+                best_fr = best_move.index
+
+                # if is first improvement, apply the swap now
+                if is_first_improvement:
+                    break
+
+        # if didn't improve
+        if best_radius >= current_radius:
+            return False
+
+        # apply the move
+        self.solution.swap(best_fi, best_fr)
+        # O(mn)
+        self.allocate_all()
+        # O(pn)
+        self.update_obj_func()
+
+        return True
+
     def fast_vertex_substitution(self, is_first_improvement: bool) -> Solution:
         """
         Alpha Fast Vertex Substitution (ANPCP) local search heuristic.
@@ -444,50 +486,16 @@ class Solver:
         Time O(mpn)
         """
         moves = 0
-        is_improved = True
-        while is_improved:
-            current_radius = self.solution.get_obj_func()
-
-            best_radius = current_radius
-            best_fi = best_fr = -1
-
-            ## O(mpn)
-            # O(m - p) ~= O(m) since m > p
-            for fi in self.solution.closed_facilities:
-                fi_distance = self.instance.get_distance(
-                    self.solution.critical_allocation.user, fi
-                )
-
-                if fi_distance >= current_radius:
-                    continue
-
-                # O(pn)
-                best_move = self.move(fi)
-
-                # if the move improves (minimizes) objective function
-                if best_move.radius < best_radius:
-                    best_radius = best_move.radius
-                    best_fi = fi
-                    best_fr = best_move.index
-
-                    # if is first improvement, apply the swap now
-                    if is_first_improvement:
-                        break
-
-            is_improved = best_radius < current_radius
-            # apply the move
-            if is_improved:
-                moves += 1
-
-                self.solution.swap(best_fi, best_fr)
-                # O(mn)
-                self.allocate_all()
-                # O(pn)
-                self.update_obj_func()
+        while self.try_improve(is_first_improvement):
+            moves += 1
 
         self.solution.moves = moves
 
         return self.solution
+
+    def tabu_search(self, tenure: int) -> Solution:
+        # TODO: add parameter to support tabu search data structure
+        return self.fast_vertex_substitution(False)
 
     def grasp(self, iters: int, beta: float = 0, time_limit: float = -1) -> Solution:
         """
