@@ -12,6 +12,7 @@ from models.allocated_facility import AllocatedFacility
 from models.instance import Instance
 from models.solution import Solution
 from models.min_max_avg import MinMaxAvg
+from models.tabu_structures import TabuRecency
 
 
 class NotAllocatedError(Exception):
@@ -519,7 +520,7 @@ class Solver:
 
         return self.solution
 
-    def tabu_try_improve(self, best_global: int) -> bool:
+    def tabu_try_improve(self, best_global: int, recency: TabuRecency) -> bool:
         current_radius = self.solution.get_obj_func()
 
         best_local = math.inf
@@ -537,7 +538,7 @@ class Solver:
             radius = best_move.radius
 
             # if is tabu and aspiration criteria not met
-            if is_tabu(fr) and radius >= best_global:
+            if recency.is_tabu(fr) and radius >= best_global:
                 continue
 
             # if not tabu or aspiration criteria met
@@ -546,20 +547,22 @@ class Solver:
                 best_fi = fi
                 best_fr = fr
 
-        # mark attribute as tabu
-
         # O(mn)
         self.apply_swap(best_fi, best_fr)
+        # mark fi as tabu
+        recency.mark(best_fi)
 
         return self.solution.get_obj_func() < current_radius
 
     def tabu_search(self, tenure: int, iters: int) -> Solution:
         best_so_far = self.solution.get_obj_func()
 
+        # TODO: calculate memory size from tenure
+        recency = TabuRecency(tenure)
+
         i = 0
         while i < iters:
-            # TODO: add parameter to support tabu moves
-            self.tabu_try_improve(best_so_far)
+            self.tabu_try_improve(best_so_far, recency)
 
             best_so_far = min(best_so_far, self.solution.get_obj_func())
             i += 1
