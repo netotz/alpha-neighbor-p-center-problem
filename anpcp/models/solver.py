@@ -365,7 +365,8 @@ class Solver:
         # O(p)
         lost_neighbors = {fr: 0 for fr in self.solution.open_facilities}
 
-        # O(pn)
+        ## O(n(p + a)) ~= O(pn)
+        # O(n)
         for user in self.get_users_indexes():
             fi_distance = self.instance.get_distance(user, facility_in)
 
@@ -393,7 +394,7 @@ class Solver:
             largest = MovedFacility(-1, 0)
             second_largest = MovedFacility(-1, 0)
 
-            # O(a)
+            # O(a) ~= O(1) since alpha is usually very small
             for kth, neighbor in neighbors.items():
                 current_index = neighbor.index
 
@@ -454,7 +455,8 @@ class Solver:
             best_radius = current_radius
             best_fi = best_fr = -1
 
-            # O(mpn)
+            ## O(mpn)
+            # O(m - p) ~= O(m)
             for fi in self.solution.closed_facilities:
                 fi_distance = self.instance.get_distance(
                     self.solution.critical_allocation.user, fi
