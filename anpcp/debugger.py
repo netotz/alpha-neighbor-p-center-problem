@@ -24,11 +24,11 @@ names = [
     "rl1889_1260_629_0.anpcp.tsp",
     "att48_32_16_0.anpcp.tsp",  # 10
     "pr439_293_146_0.anpcp.tsp",
-    "ch150_100_50_0.anpcp.tsp",
+    "ch150_100_50_0.anpcp.tsp",  # 12
 ]
-filepath = os.path.join(DATA_PATH, names[12])
+filepath = os.path.join(DATA_PATH, names[11])
 instance = Instance.read(filepath)
-solver = Solver(instance, 45, 2)
+solver = Solver(instance, 21, 2)
 
 #%%
 
