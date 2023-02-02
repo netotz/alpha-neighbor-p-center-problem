@@ -196,6 +196,19 @@ class Solver:
         """
         self.solution.critical_allocation = self.eval_obj_func()
 
+    def apply_swap(self, facility_in, facility_out) -> None:
+        """
+        Inserts `facility_in` into solution, removes `facility_out` from it,
+        and updates allocations and objective function.
+
+        Time O(mn + pn) ~= O(mn) since m > p
+        """
+        self.solution.swap(facility_in, facility_out)
+        # O(mn)
+        self.allocate_all()
+        # O(pn)
+        self.update_obj_func()
+
     def reset_alpha(self, new_alpha: int) -> None:
         """
         Resets this solver with `new_alpha` as the alpha parameter,
@@ -303,11 +316,8 @@ class Solver:
                 ## O(mpn)
                 # O(p)
                 for fr in self.solution.open_facilities:
-                    self.solution.swap(fi, fr)
                     # O(mn)
-                    self.allocate_all()
-                    # O(pn)
-                    self.update_obj_func()
+                    self.apply_swap(fi, fr)
 
                     if self.solution.get_obj_func() < best_radius:
                         best_radius = self.solution.get_obj_func()
@@ -338,9 +348,8 @@ class Solver:
                     # because it's the last one updated
                     continue
 
-                self.solution.swap(best_fi, best_fr)
-                self.allocate_all()
-                self.update_obj_func()
+                # O(mn)
+                self.apply_swap(best_fi, best_fr)
 
                 current_radius = best_radius = self.solution.get_obj_func()
 
@@ -439,7 +448,7 @@ class Solver:
 
         return best_out
 
-    def try_improve(self, is_first_improvement: bool) -> bool:
+    def try_improve(self, is_first_improvement: bool, with_tabu_search: bool) -> bool:
         """
         Returns `True` if `self.solution` was improved (objective function was minimized)
         by searching for the best facility to insert and the best to remove.
@@ -450,7 +459,7 @@ class Solver:
 
         current_radius = self.solution.get_obj_func()
 
-        best_radius = current_radius
+        best_radius = math.inf if with_tabu_search else current_radius
         best_fi = best_fr = -1
 
         ## O(mpn)
@@ -465,27 +474,33 @@ class Solver:
 
             # O(pn)
             best_move = self.move(fi)
+            fr = best_move.index
+            radius = best_move.radius
 
-            # if the move improves (minimizes) objective function
-            if best_move.radius < best_radius:
-                best_radius = best_move.radius
+            # if is tabu and aspiration criteria not met
+            # if is_tabu(fr) and (radius >= best_radius or radius >= current_radius):
+            #     continue
+
+            # if not tabu or aspiration criteria met or
+            # the move improves S (minimizes objective function)
+            if radius < best_radius:
+                best_radius = radius
                 best_fi = fi
-                best_fr = best_move.index
+                best_fr = fr
 
                 # if is first improvement, apply the swap now
                 if is_first_improvement:
                     break
 
+        if with_tabu_search:
+            # mark attribute as tabu
+            pass
         # if didn't improve
-        if best_radius >= current_radius:
+        elif best_radius >= current_radius:
             return False
 
-        # apply the move
-        self.solution.swap(best_fi, best_fr)
         # O(mn)
-        self.allocate_all()
-        # O(pn)
-        self.update_obj_func()
+        self.apply_swap(best_fi, best_fr)
 
         return True
 
