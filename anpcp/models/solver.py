@@ -365,7 +365,7 @@ class Solver:
         # O(p)
         lost_neighbors = {fr: 0 for fr in self.solution.open_facilities}
 
-        ## O(n(p + a)) ~= O(pn)
+        ## O(n(p + a)) ~= O(pn) since p > a
         # O(n)
         for user in self.get_users_indexes():
             fi_distance = self.instance.get_distance(user, facility_in)
@@ -394,18 +394,14 @@ class Solver:
             largest = MovedFacility(-1, 0)
             second_largest = MovedFacility(-1, 0)
 
+            # skip a+1 because is not in alpha-neighbors
+            neighbors.pop(self.alpha + 1)
             # O(a) ~= O(1) since alpha is usually very small
-            for kth, neighbor in neighbors.items():
+            for neighbor in neighbors.values():
                 current_index = neighbor.index
 
-                # TODO: refactor skipping a+1
-                # a+1 is not part of the alpha-neighbors
-                # because it's farther than alphath
-                if kth == self.alpha + 1 or (
-                    # alphath is irrelevant if user is attracted to fi
-                    is_attracted
-                    and current_index == alphath.index
-                ):
+                # alphath is irrelevant if user is attracted to fi
+                if is_attracted and current_index == alphath.index:
                     continue
 
                 lost_neighbors[current_index] = max(
@@ -436,7 +432,7 @@ class Solver:
                 )
                 for fr in self.solution.open_facilities
             ),
-            key=lambda af: af.radius,
+            key=lambda mf: mf.radius,
         )
 
         return best_out
@@ -456,7 +452,7 @@ class Solver:
             best_fi = best_fr = -1
 
             ## O(mpn)
-            # O(m - p) ~= O(m)
+            # O(m - p) ~= O(m) since m > p
             for fi in self.solution.closed_facilities:
                 fi_distance = self.instance.get_distance(
                     self.solution.critical_allocation.user, fi
