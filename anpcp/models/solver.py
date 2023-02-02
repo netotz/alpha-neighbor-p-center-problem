@@ -448,7 +448,7 @@ class Solver:
 
         return best_out
 
-    def try_improve(self, is_first_improvement: bool, with_tabu_search: bool) -> bool:
+    def try_improve(self, is_first_improvement: bool) -> bool:
         """
         Returns `True` if `self.solution` was improved (objective function was minimized)
         by searching for the best facility to insert and the best to remove.
@@ -459,7 +459,7 @@ class Solver:
 
         current_radius = self.solution.get_obj_func()
 
-        best_radius = math.inf if with_tabu_search else current_radius
+        best_radius = current_radius
         best_fi = best_fr = -1
 
         ## O(mpn)
@@ -477,12 +477,7 @@ class Solver:
             fr = best_move.index
             radius = best_move.radius
 
-            # if is tabu and aspiration criteria not met
-            # if is_tabu(fr) and (radius >= best_radius or radius >= current_radius):
-            #     continue
-
-            # if not tabu or aspiration criteria met or
-            # the move improves S (minimizes objective function)
+            # if move improves S (minimizes objective function)
             if radius < best_radius:
                 best_radius = radius
                 best_fi = fi
@@ -492,11 +487,8 @@ class Solver:
                 if is_first_improvement:
                     break
 
-        if with_tabu_search:
-            # mark attribute as tabu
-            pass
         # if didn't improve
-        elif best_radius >= current_radius:
+        if best_radius >= current_radius:
             return False
 
         # O(mn)
@@ -519,11 +511,53 @@ class Solver:
 
         return self.solution
 
+    def tabu_try_improve(self, best_global: int) -> bool:
+        current_radius = self.solution.get_obj_func()
+
+        best_local = math.inf
+        best_fi = best_fr = -1
+
+        ## O(mpn)
+        # O(m - p) ~= O(m) since m > p
+        for fi in self.solution.closed_facilities:
+            fi_distance = self.instance.get_distance(
+                self.solution.critical_allocation.user, fi
+            )
+
+            if fi_distance >= current_radius:
+                continue
+
+            # O(pn)
+            best_move = self.move(fi)
+            fr = best_move.index
+            radius = best_move.radius
+
+            # if is tabu and aspiration criteria not met
+            if is_tabu(fr) and radius >= best_global:
+                continue
+
+            # if not tabu or aspiration criteria met
+            if radius < best_local:
+                best_local = radius
+                best_fi = fi
+                best_fr = fr
+
+        # mark attribute as tabu
+
+        # O(mn)
+        self.apply_swap(best_fi, best_fr)
+
+        return self.solution.get_obj_func() < current_radius
+
     def tabu_search(self, tenure: int, iters: int) -> Solution:
+        best_so_far = self.solution.get_obj_func()
+
         i = 0
         while i < iters:
             # TODO: add parameter to support tabu moves
-            self.try_improve(False)
+            self.tabu_try_improve(best_so_far)
+
+            best_so_far = min(best_so_far, self.solution.get_obj_func())
             i += 1
 
         return self.solution
