@@ -364,7 +364,7 @@ class Solver:
         return self.solution
 
     def __get_largest_2(
-        self, same_neighbors: dict[int, int]
+        self, same_neighbors: Dict[int, int]
     ) -> Tuple[MovedFacility, MovedFacility]:
         """
         Returns the largest 2 facilities in `same_neighbors`.
@@ -383,6 +383,34 @@ class Solver:
                 largest2 = MovedFacility(fj, radius)
 
         return largest1, largest2
+
+    def __get_best_out(
+        self,
+        best_radius: int,
+        lost_neighbors: Dict[int, int],
+        largest1: MovedFacility,
+        largest2: MovedFacility,
+    ) -> MovedFacility:
+        """
+        Returns the best facility to remove given the parameters.
+
+        Time O(p)
+        """
+        return min(
+            (
+                MovedFacility(
+                    fr,
+                    max(
+                        best_radius,
+                        lost_neighbors[fr],
+                        largest2.radius if fr == largest1.index else largest1.radius,
+                    ),
+                )
+                # O(p)
+                for fr in self.solution.open_facilities
+            ),
+            key=lambda mf: mf.radius,
+        )
 
     def move(self, facility_in: int) -> MovedFacility:
         """
@@ -441,22 +469,7 @@ class Solver:
         largest1, largest2 = self.__get_largest_2(same_neighbors)
 
         # O(p)
-        best_out = min(
-            (
-                MovedFacility(
-                    fr,
-                    max(
-                        best_radius,
-                        lost_neighbors[fr],
-                        largest2.radius if fr == largest1.index else largest1.radius,
-                    ),
-                )
-                for fr in self.solution.open_facilities
-            ),
-            key=lambda mf: mf.radius,
-        )
-
-        return best_out
+        return self.__get_best_out(best_radius, lost_neighbors, largest1, largest2)
 
     def does_break_critical(self, facility_in) -> bool:
         """
