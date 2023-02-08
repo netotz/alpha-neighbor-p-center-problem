@@ -15,8 +15,8 @@ class LargestTwo:
 
     def __build(self, facilities: Dict[int, int]) -> None:
         # O(n)
-        for fj, radius in facilities.items():
-            self.try_update(fj, radius)
+        for index, radius in facilities.items():
+            self.try_update(index, radius)
 
     def try_update(self, facility_index: int, radius: int):
         """
