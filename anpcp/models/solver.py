@@ -396,21 +396,21 @@ class Solver:
 
         Time O(p)
         """
-        return min(
-            (
-                MovedFacility(
-                    fr,
-                    max(
-                        best_radius,
-                        lost_neighbors[fr],
-                        largest2.radius if fr == largest1.index else largest1.radius,
-                    ),
-                )
-                # O(p)
-                for fr in self.solution.open_facilities
-            ),
-            key=lambda mf: mf.radius,
-        )
+        min_fr = -1
+        min_radius = math.inf
+
+        # O(p)
+        for fr in self.solution.open_facilities:
+            current = max(
+                best_radius,
+                lost_neighbors[fr],
+                largest2.radius if fr == largest1.index else largest1.radius,
+            )
+            if current < min_radius:
+                min_radius = current
+                min_fr = fr
+
+        return MovedFacility(min_fr, min_radius)
 
     def move(self, facility_in: int) -> MovedFacility:
         """
