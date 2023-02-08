@@ -368,7 +368,7 @@ class Solver:
         Determines the best facility to remove if `facility_in` is inserted,
         and the objective function resulting from the swap.
 
-        Time O(pn)
+        Time O(pn + 4p) ~= O(pn)
         """
         # best objective function so far
         best_radius = 0
@@ -377,10 +377,7 @@ class Solver:
         # O(p)
         lost_neighbors = {fr: 0 for fr in self.solution.open_facilities}
 
-        largest1 = MovedFacility(-1, 0)
-        largest2 = MovedFacility(-1, 0)
-
-        ## O(n(p + a)) ~= O(pn) since p > a
+        ## O(n(p + a)) ~= O(pn) since p > a and/or a ~= 1
         # O(n)
         for user in self.get_users_indexes():
             fi_distance = self.instance.get_distance(user, facility_in)
@@ -419,11 +416,15 @@ class Solver:
                 lost_neighbors[fj] = max(lost_neighbors[fj], lost_arg)
                 same_neighbors[fj] = max(same_neighbors[fj], same_arg)
 
-                if same_neighbors[fj] > largest1.radius:
-                    largest2 = largest1
-                    largest1 = MovedFacility(fj, same_neighbors[fj])
-                elif same_neighbors[fj] > largest2.radius:
-                    largest2 = MovedFacility(fj, same_neighbors[fj])
+        largest1 = MovedFacility(-1, 0)
+        largest2 = MovedFacility(-1, 0)
+        # O(p)
+        for fj, radius in same_neighbors.items():
+            if radius > largest1.radius:
+                largest2 = largest1
+                largest1 = MovedFacility(fj, radius)
+            elif radius > largest2.radius:
+                largest2 = MovedFacility(fj, radius)
 
         # O(p)
         best_out = min(
