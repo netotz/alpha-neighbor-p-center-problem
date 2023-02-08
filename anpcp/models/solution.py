@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Set
 
-from models.wrappers import AllocatedFacility
+from models.wrappers.allocated_facility import AllocatedFacility
 
 
 @dataclass

@@ -1,8 +1,8 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
+from typing import Dict, List, Sequence, Set, Tuple
 import math
 import random
-from typing import Dict, List, Sequence, Set, Tuple
 import timeit
 
 import pandas as pd
@@ -10,7 +10,7 @@ import pandas as pd
 from models.instance import Instance
 from models.solution import Solution
 from models.tabu_structures import TabuRecency
-from models.wrappers import AllocatedFacility, MinMaxAvg, MovedFacility
+from models.wrappers import AllocatedFacility, MinMaxAvg, MovedFacility, LargestTwo
 
 
 class NotAllocatedError(Exception):
@@ -361,33 +361,25 @@ class Solver:
 
         return self.solution
 
-    def __get_largest_2(
-        self, same_neighbors: Dict[int, int]
-    ) -> Tuple[MovedFacility, MovedFacility]:
+    def __get_largest_two(self, same_neighbors: Dict[int, int]) -> LargestTwo:
         """
         Returns the largest 2 facilities in `same_neighbors`.
 
         Time O(p)
         """
-        largest1 = MovedFacility(-1, 0)
-        largest2 = MovedFacility(-1, 0)
+        largest_two = LargestTwo()
 
         # O(p)
         for fj, radius in same_neighbors.items():
-            if radius > largest1.radius:
-                largest2 = largest1
-                largest1 = MovedFacility(fj, radius)
-            elif radius > largest2.radius:
-                largest2 = MovedFacility(fj, radius)
+            largest_two.try_update(fj, radius)
 
-        return largest1, largest2
+        return largest_two
 
     def __get_best_out(
         self,
         best_radius: int,
         lost_neighbors: Dict[int, int],
-        largest1: MovedFacility,
-        largest2: MovedFacility,
+        largest_two: LargestTwo,
     ) -> MovedFacility:
         """
         Returns the best facility to remove given the parameters.
@@ -402,7 +394,9 @@ class Solver:
             current = max(
                 best_radius,
                 lost_neighbors[fr],
-                largest2.radius if fr == largest1.index else largest1.radius,
+                largest_two.second.radius
+                if fr == largest_two.first.index
+                else largest_two.first.radius,
             )
             if current < min_radius:
                 min_radius = current
@@ -464,10 +458,10 @@ class Solver:
                 same_neighbors[fj] = max(same_neighbors[fj], same_arg)
 
         # O(p)
-        largest1, largest2 = self.__get_largest_2(same_neighbors)
+        largest_two = self.__get_largest_two(same_neighbors)
 
         # O(p)
-        return self.__get_best_out(best_radius, lost_neighbors, largest1, largest2)
+        return self.__get_best_out(best_radius, lost_neighbors, largest_two)
 
     def does_break_critical(self, facility_in) -> bool:
         """
