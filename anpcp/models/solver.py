@@ -361,20 +361,6 @@ class Solver:
 
         return self.solution
 
-    def __get_largest_two(self, same_neighbors: Dict[int, int]) -> LargestTwo:
-        """
-        Returns the largest 2 facilities in `same_neighbors`.
-
-        Time O(p)
-        """
-        largest_two = LargestTwo()
-
-        # O(p)
-        for fj, radius in same_neighbors.items():
-            largest_two.try_update(fj, radius)
-
-        return largest_two
-
     def __get_best_out(
         self,
         best_radius: int,
@@ -458,8 +444,7 @@ class Solver:
                 same_neighbors[fj] = max(same_neighbors[fj], same_arg)
 
         # O(p)
-        largest_two = self.__get_largest_two(same_neighbors)
-
+        largest_two = LargestTwo(same_neighbors)
         # O(p)
         return self.__get_best_out(best_radius, lost_neighbors, largest_two)
 
