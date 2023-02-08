@@ -377,8 +377,8 @@ class Solver:
         # O(p)
         lost_neighbors = {fr: 0 for fr in self.solution.open_facilities}
 
-        largest = MovedFacility(-1, 0)
-        second_largest = MovedFacility(-1, 0)
+        largest1 = MovedFacility(-1, 0)
+        largest2 = MovedFacility(-1, 0)
 
         ## O(n(p + a)) ~= O(pn) since p > a
         # O(n)
@@ -410,24 +410,20 @@ class Solver:
             neighbors.pop(self.alpha + 1)
             # O(a) ~= O(1) since alpha is usually very small
             for neighbor in neighbors.values():
-                current_index = neighbor.index
+                fj = neighbor.index
 
                 # alphath is irrelevant if user is attracted to fi
-                if is_attracted and current_index == alphath.index:
+                if is_attracted and fj == alphath.index:
                     continue
 
-                lost_neighbors[current_index] = max(
-                    lost_neighbors[current_index], lost_arg
-                )
-                same_neighbors[current_index] = max(
-                    same_neighbors[current_index], same_arg
-                )
+                lost_neighbors[fj] = max(lost_neighbors[fj], lost_arg)
+                same_neighbors[fj] = max(same_neighbors[fj], same_arg)
 
-                if same_neighbors[current_index] > largest.radius:
-                    second_largest = largest
-                    largest = MovedFacility(
-                        current_index, same_neighbors[current_index]
-                    )
+                if same_neighbors[fj] > largest1.radius:
+                    largest2 = largest1
+                    largest1 = MovedFacility(fj, same_neighbors[fj])
+                elif same_neighbors[fj] > largest2.radius:
+                    largest2 = MovedFacility(fj, same_neighbors[fj])
 
         # O(p)
         best_out = min(
@@ -437,9 +433,7 @@ class Solver:
                     max(
                         best_radius,
                         lost_neighbors[fr],
-                        second_largest.radius
-                        if fr == largest.index
-                        else largest.radius,
+                        largest2.radius if fr == largest1.index else largest1.radius,
                     ),
                 )
                 for fr in self.solution.open_facilities
@@ -550,7 +544,7 @@ class Solver:
         # if no swaps occured
         if best_local == math.inf:
             return False
-        
+
         # O(mn)
         self.apply_swap(best_fi, best_fr)
         # mark fi as tabu
