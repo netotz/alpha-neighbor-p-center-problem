@@ -2,7 +2,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 import math
 import random
-from typing import Dict, List, Sequence, Set
+from typing import Dict, List, Sequence, Set, Tuple
 import timeit
 
 import pandas as pd
@@ -363,6 +363,27 @@ class Solver:
 
         return self.solution
 
+    def __get_largest_2(
+        self, same_neighbors: dict[int, int]
+    ) -> Tuple[MovedFacility, MovedFacility]:
+        """
+        Returns the largest 2 facilities in `same_neighbors`.
+
+        Time O(p)
+        """
+        largest1 = MovedFacility(-1, 0)
+        largest2 = MovedFacility(-1, 0)
+
+        # O(p)
+        for fj, radius in same_neighbors.items():
+            if radius > largest1.radius:
+                largest2 = largest1
+                largest1 = MovedFacility(fj, radius)
+            elif radius > largest2.radius:
+                largest2 = MovedFacility(fj, radius)
+
+        return largest1, largest2
+
     def move(self, facility_in: int) -> MovedFacility:
         """
         Determines the best facility to remove if `facility_in` is inserted,
@@ -416,15 +437,8 @@ class Solver:
                 lost_neighbors[fj] = max(lost_neighbors[fj], lost_arg)
                 same_neighbors[fj] = max(same_neighbors[fj], same_arg)
 
-        largest1 = MovedFacility(-1, 0)
-        largest2 = MovedFacility(-1, 0)
         # O(p)
-        for fj, radius in same_neighbors.items():
-            if radius > largest1.radius:
-                largest2 = largest1
-                largest1 = MovedFacility(fj, radius)
-            elif radius > largest2.radius:
-                largest2 = MovedFacility(fj, radius)
+        largest1, largest2 = self.__get_largest_2(same_neighbors)
 
         # O(p)
         best_out = min(
