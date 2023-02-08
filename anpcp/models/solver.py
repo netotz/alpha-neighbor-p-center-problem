@@ -7,12 +7,10 @@ import timeit
 
 import pandas as pd
 
-from models.moved_facility import MovedFacility
-from models.allocated_facility import AllocatedFacility
 from models.instance import Instance
 from models.solution import Solution
-from models.min_max_avg import MinMaxAvg
 from models.tabu_structures import TabuRecency
+from models.wrappers import AllocatedFacility, MinMaxAvg, MovedFacility
 
 
 class NotAllocatedError(Exception):
