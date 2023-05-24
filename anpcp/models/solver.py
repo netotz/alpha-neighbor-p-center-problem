@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Dict, List, Sequence, Set, Tuple
+from typing import Dict, List, Sequence, Set
 import math
 import random
 import timeit
