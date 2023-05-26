@@ -1,19 +1,15 @@
-from dataclasses import dataclass
-from enum import IntEnum
 from typing import Tuple
 import math
 
-
-class VertexType(IntEnum):
-    USER = 0
-    FACILITY = 1
+USER = 0
+FACILITY = 1
 
 
-@dataclass
 class Vertex:
-    index: int
-    x: int
-    y: int
+    def __init__(self, index: int, x: int, y: int):
+        self.index = index
+        self.x = x
+        self.y = y
 
     def to_tuple(self) -> Tuple[int, int]:
         return self.x, self.y

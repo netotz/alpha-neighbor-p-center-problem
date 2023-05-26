@@ -1,19 +1,16 @@
-from dataclasses import dataclass, field
-from typing import List, Set
-
 from models.wrappers.allocated_facility import AllocatedFacility
 
 
-@dataclass
 class Solution:
-    open_facilities: Set[int] = field(init=False, default_factory=set)
-    closed_facilities: Set[int] = field(init=False, repr=False, default_factory=set)
-    allocations: List[List[int]] = field(init=False, repr=False, default_factory=list)
+    def __init__(self):
+        self.open_facilities: set[int] = set()
+        self.closed_facilities: set[int] = set()
+        self.allocations: list[list[int]] = []
 
-    critical_allocation: AllocatedFacility = field(init=False, default=None)
-    time: float = field(init=False, repr=False, default=-1)
-    moves: int = field(init=False, repr=False, default=-1)
-    last_improvement: int = field(init=False, repr=False, default=-1)
+        self.critical_allocation: AllocatedFacility | None = None
+        self.time = -1.0
+        self.moves = -1
+        self.last_improvement = -1
 
     def get_obj_func(self) -> int:
         """

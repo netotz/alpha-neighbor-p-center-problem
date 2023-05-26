@@ -1,12 +1,16 @@
-from dataclasses import dataclass
 import math
+from typing import List
 
-from models.vertex import Vertex
-from models.instance import Instance, read_node_coords
+from .vertex import Vertex
+from .instance import Instance, read_node_coords
 
 
-@dataclass
 class InstanceSameSet(Instance):
+    def __init__(
+        self, facilities: List[Vertex], users: List[Vertex], name="", index=-1
+    ):
+        super().__init__(facilities, users, name, index)
+
     @classmethod
     def read_tsp(cls, filepath: str) -> "InstanceSameSet":
         """

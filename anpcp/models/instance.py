@@ -1,34 +1,34 @@
-from dataclasses import dataclass, field
 import json
 import os
 from typing import List, Optional, Set, Tuple
 
-from scipy import spatial
+from scipy.spatial import distance_matrix
 import numpy as np
 
-from models.vertex import VertexType, Vertex
+from .vertex import Vertex, USER, FACILITY
 
 
-@dataclass
 class Instance:
-    facilities: List[Vertex] = field(repr=False)
-    users: List[Vertex] = field(repr=False)
-    name = ""
-    index = -1
+    def __init__(
+        self, facilities: List[Vertex], users: List[Vertex], name="", index=-1
+    ):
+        self.facilities = facilities
+        self.users = users
+        self.name = name
+        self.index = index
 
-    users_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
-    facilities_indexes: Set[int] = field(init=False, default_factory=set, repr=False)
+        self.users_indexes: Set[int] = set()
+        self.facilities_indexes: Set[int] = set()
 
-    n: int = field(init=False)
-    m: int = field(init=False)
+        self.n = 0
+        self.m = 0
 
-    distances: List[List[int]] = field(default_factory=list, repr=False)
-    sorted_distances: List[List[Tuple[int, int]]] = field(
-        init=False, default_factory=list, repr=False
-    )
+        self.distances: List[List[int]] = []
+        self.sorted_distances: List[List[Tuple[int, int]]] = []
 
-    facilities_distances: List[List[int]] = field(default_factory=list, repr=False)
-    # farthests: Tuple[int, int] = field(init=False, default_factory=tuple, repr=False)
+        self.facilities_distances: List[List[int]] = []
+
+        self.__post_init__()
 
     def __post_init__(self) -> None:
         self.n = len(self.users)
@@ -43,7 +43,7 @@ class Instance:
         if not self.distances:
             self.distances = [
                 [round(d) for d in row]
-                for row in spatial.distance_matrix(users_coords, facilities_coords)
+                for row in distance_matrix(users_coords, facilities_coords)
             ]
 
         self.sorted_distances = [
@@ -53,9 +53,8 @@ class Instance:
         if not self.facilities_distances:
             self.facilities_distances = [
                 [round(d) for d in row]
-                for row in spatial.distance_matrix(facilities_coords, facilities_coords)
+                for row in distance_matrix(facilities_coords, facilities_coords)
             ]
-        # self.farthests = self.get_farthest_indexes()
 
     @classmethod
     def random(
@@ -153,10 +152,10 @@ class Instance:
         users = []
         i = j = 0
         for _, x, y, t in read_node_coords(filepath):
-            if t == VertexType.USER:
+            if t == USER:
                 users.append(Vertex(i, x, y))
                 i += 1
-            elif t == VertexType.FACILITY:
+            elif t == FACILITY:
                 facilities.append(Vertex(j, x, y))
                 j += 1
 
@@ -169,21 +168,6 @@ class Instance:
         # O(m)
         for facility, _ in self.sorted_distances[from_user]:
             yield facility
-
-    def get_farthest_indexes(self) -> Tuple[int, int]:
-        """
-        Time O(m**2)
-        """
-        _, fi, fj = max(
-            (
-                (self.facilities_distances[i][j], i, j)
-                for i in range(self.m)
-                for j in range(self.m)
-            ),
-            key=lambda t: t[0],
-        )
-
-        return fi, fj
 
 
 def read_node_coords(filepath: str) -> List[List[int]]:
@@ -201,7 +185,7 @@ def read_node_coords(filepath: str) -> List[List[int]]:
         if line.startswith("NODE_COORD_SECTION"):
             break
         i += 1
-    
+
     lines = lines[i:]
 
     # trim last indexes that are not nodes

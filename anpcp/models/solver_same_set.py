@@ -1,12 +1,12 @@
-from dataclasses import dataclass
-
 from models.instance_same_set import InstanceSameSet
 from models.solver import Solver
 
 
-@dataclass
 class SolverSameSet(Solver):
-    instance: InstanceSameSet
+    def __init__(
+        self, instance: InstanceSameSet, p: int, alpha: int, with_random_solution=False
+    ):
+        super().__init__(instance, p, alpha, with_random_solution)
 
     def get_users_indexes(self) -> set[int]:
         """

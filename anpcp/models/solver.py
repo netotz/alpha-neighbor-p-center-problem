@@ -1,5 +1,4 @@
 from copy import deepcopy
-from dataclasses import dataclass, field
 from typing import Dict, List, Sequence, Set
 import math
 import random
@@ -17,20 +16,17 @@ class NotAllocatedError(Exception):
     pass
 
 
-@dataclass
 class Solver:
-    instance: Instance
-    p: int
-    alpha: int
+    def __init__(
+        self, instance: Instance, p: int, alpha: int, with_random_solution=False
+    ):
+        self.instance = instance
+        self.p = p
+        self.alpha = alpha
+        self.with_random_solution = with_random_solution
 
-    alpha_range: Set[int] = field(init=False, repr=False, default_factory=set)
-
-    with_random_solution: bool = field(repr=False, default=False)
-    solution: Solution = field(init=False, default=None)
-    history: List[Solution] = field(init=False, repr=False, default_factory=list)
-
-    def __post_init__(self):
-        self.set_alpha_range()
+        self.history: list[Solution] = []
+        self.alpha_range = set(range(1, self.alpha + 2))
 
         self.init_solution()
         if self.with_random_solution:
@@ -39,9 +35,11 @@ class Solver:
             self.solution.closed_facilities = set(self.instance.facilities_indexes)
 
     def randomize_solution(self) -> Solution:
+        # O(m + p)
         self.solution.open_facilities = set(
-            random.sample(self.instance.facilities_indexes, self.p)
+            random.sample(list(self.instance.facilities_indexes), self.p)
         )
+        # O(m)
         self.solution.closed_facilities = (
             self.instance.facilities_indexes - self.solution.open_facilities
         )
@@ -52,6 +50,9 @@ class Solver:
         return self.solution
 
     def __init_allocations(self) -> None:
+        """
+        Time O(mn)
+        """
         self.solution.allocations = [
             [0 for _ in range(self.instance.m)] for _ in range(self.instance.n)
         ]
@@ -59,9 +60,6 @@ class Solver:
     def init_solution(self):
         self.solution = Solution()
         self.__init_allocations()
-
-    def set_alpha_range(self):
-        self.alpha_range = set(range(1, self.alpha + 2))
 
     @classmethod
     def from_solver(cls, solver: "Solver"):
