@@ -1,6 +1,5 @@
 import json
 import os
-from typing import List, Optional, Set, Tuple
 
 from scipy.spatial import distance_matrix
 import numpy as np
@@ -10,23 +9,23 @@ from .vertex import Vertex, USER, FACILITY
 
 class Instance:
     def __init__(
-        self, facilities: List[Vertex], users: List[Vertex], name="", index=-1
+        self, facilities: list[Vertex], users: list[Vertex], name="", index=-1
     ):
         self.facilities = facilities
         self.users = users
         self.name = name
         self.index = index
 
-        self.users_indexes: Set[int] = set()
-        self.facilities_indexes: Set[int] = set()
+        self.users_indexes: set[int] = set()
+        self.facilities_indexes: set[int] = set()
 
         self.n = 0
         self.m = 0
 
-        self.distances: List[List[int]] = []
-        self.sorted_distances: List[List[Tuple[int, int]]] = []
+        self.distances: list[list[int]] = []
+        self.sorted_distances: list[list[tuple[int, int]]] = []
 
-        self.facilities_distances: List[List[int]] = []
+        self.facilities_distances: list[list[int]] = []
 
         self.__post_init__()
 
@@ -63,7 +62,7 @@ class Instance:
         m: int,
         x_max: int = 1000,
         y_max: int = 1000,
-        seed: Optional[int] = None,
+        seed: int | None = None,
     ) -> "Instance":
         distinct_coords = set()
         total = n + m
@@ -170,7 +169,7 @@ class Instance:
             yield facility
 
 
-def read_node_coords(filepath: str) -> List[List[int]]:
+def read_node_coords(filepath: str) -> list[list[int]]:
     """
     Returns node coords as list of lists,
     where each node has format [index, x, y, type].
