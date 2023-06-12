@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import os
 import pickle
 
@@ -19,16 +19,13 @@ class SolverDto:
     solution: Solution
 
 
-@dataclass
 class SolverIO:
     """
     Handles the input and output of `Solver` class.
     """
 
-    solver: Solver
-    dto: SolverDto = field(init=False)
-
-    def __post_init__(self):
+    def __init__(self, solver: Solver):
+        self.solver = solver
         self.dto = SolverDto(
             self.solver.instance.name,
             self.solver.p,
