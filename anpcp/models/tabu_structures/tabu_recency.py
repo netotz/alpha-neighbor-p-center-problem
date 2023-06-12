@@ -1,8 +1,6 @@
 from collections import deque
-from dataclasses import dataclass
 
 
-@dataclass
 class TabuRecency:
     """
     Short term or recency based memory for intensification in tabu search.
@@ -11,9 +9,8 @@ class TabuRecency:
     and with a set that stores the same facilities to check in O(1) if any of them is tabu.
     """
 
-    size: int
-
-    def __post_init__(self):
+    def __post_init__(self, size: int):
+        self.size = size
         self.__queue = deque[int]()
         self.__set = set[int]()
 
@@ -34,14 +31,14 @@ class TabuRecency:
 
     def __fix_queue(self) -> None:
         """
-        Private method to fix interal queue by dequeing until its size equals `size`.
+        Fixes interal queue by dequeing until its size equals `size`.
         """
         while len(self.__queue) > self.size:
             self.__dequeue()
 
     def __dequeue(self) -> None:
         """
-        Private method to dequeue the oldest facility and remove it from the set.
+        Dequeues the oldest facility and remove it from the set.
         """
         nontabu = self.__queue.popleft()
         self.__set.remove(nontabu)

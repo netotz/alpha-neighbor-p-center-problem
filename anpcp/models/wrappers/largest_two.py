@@ -11,9 +11,6 @@ class LargestTwo:
         self.first = MovedFacility(-1, 0)
         self.second = MovedFacility(-1, 0)
 
-        self.__build(facilities)
-
-    def __build(self, facilities: Dict[int, int]) -> None:
         # O(n)
         for index, radius in facilities.items():
             self.try_update(index, radius)
