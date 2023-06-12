@@ -4,7 +4,7 @@ import os
 from scipy.spatial import distance_matrix
 import numpy as np
 
-from .vertex import Vertex, VertexType
+from .wrappers import Vertex, VertexType
 
 
 class Instance:

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Tuple
 import math
 
 
@@ -20,7 +19,7 @@ class Vertex:
         self.x = x
         self.y = y
 
-    def to_tuple(self) -> Tuple[int, int]:
+    def to_tuple(self) -> tuple[int, int]:
         return self.x, self.y
 
     def distance_to(self, vertex: "Vertex") -> float:

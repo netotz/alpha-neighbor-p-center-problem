@@ -1,7 +1,7 @@
 import math
 from typing import List
 
-from .vertex import Vertex
+from .wrappers import Vertex
 from .instance import Instance, read_node_coords
 
 
