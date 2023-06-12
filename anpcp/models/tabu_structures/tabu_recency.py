@@ -9,7 +9,7 @@ class TabuRecency:
     and with a set that stores the same facilities to check in O(1) if any of them is tabu.
     """
 
-    def __post_init__(self, size: int):
+    def __init__(self, size: int):
         self.size = size
         self.__queue = deque[int]()
         self.__set = set[int]()
