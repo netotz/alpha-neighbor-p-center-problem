@@ -4,7 +4,7 @@ import os
 from scipy.spatial import distance_matrix
 import numpy as np
 
-from .vertex import Vertex, USER, FACILITY
+from .vertex import Vertex, VertexType
 
 
 class Instance:
@@ -151,10 +151,10 @@ class Instance:
         users = []
         i = j = 0
         for _, x, y, t in read_node_coords(filepath):
-            if t == USER:
+            if t == VertexType.USER:
                 users.append(Vertex(i, x, y))
                 i += 1
-            elif t == FACILITY:
+            elif t == VertexType.FACILITY:
                 facilities.append(Vertex(j, x, y))
                 j += 1
 

@@ -3,7 +3,7 @@ import random
 
 import tsplib95
 
-from models.vertex import USER, FACILITY
+from models.vertex import VertexType
 
 
 def split_instance(filename: str, percentage: float):
@@ -26,10 +26,12 @@ def split_instance(filename: str, percentage: float):
     # choose indexes to be facilities
     facilities_indexes = set(random.sample(range(1, instance.dimension + 1), m))
 
-    instance.comment += f". FACILITY = {FACILITY}, USER = {USER}"
+    instance.comment += f". FACILITY = {VertexType.FACILITY}, USER = {VertexType.USER}"
 
     for node in instance.node_coords:
-        node_type = FACILITY if node in facilities_indexes else USER
+        node_type = (
+            VertexType.FACILITY if node in facilities_indexes else VertexType.USER
+        )
         # add type at the end of line
         instance.node_coords[node].append(node_type.value)
 
