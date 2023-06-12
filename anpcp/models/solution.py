@@ -12,6 +12,9 @@ class Solution:
         self.moves = -1
         self.last_improvement = -1
 
+    def __repr__(self) -> str:
+        return f"{Solution.__name__}(critical={self.critical_allocation}, open={self.open_facilities}, time={self.time}, moves={self.moves})"
+
     def get_obj_func(self) -> int:
         """
         Gets the ANPCP objective function of this solution

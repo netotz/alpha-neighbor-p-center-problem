@@ -16,22 +16,13 @@ class Instance:
         self.name = name
         self.index = index
 
-        self.users_indexes: set[int] = set()
-        self.facilities_indexes: set[int] = set()
-
-        self.n = 0
-        self.m = 0
+        self.n = len(self.users)
+        self.m = len(self.facilities)
 
         self.distances: list[list[int]] = []
         self.sorted_distances: list[list[tuple[int, int]]] = []
 
         self.facilities_distances: list[list[int]] = []
-
-        self.__post_init__()
-
-    def __post_init__(self) -> None:
-        self.n = len(self.users)
-        self.m = len(self.facilities)
 
         self.users_indexes = {u.index for u in self.users}
         self.facilities_indexes = {f.index for f in self.facilities}
@@ -54,6 +45,9 @@ class Instance:
                 [round(d) for d in row]
                 for row in distance_matrix(facilities_coords, facilities_coords)
             ]
+
+    def __repr__(self) -> str:
+        return f"{Instance.__name__}(name={self.name}, n={self.n}, m={self.m})"
 
     @classmethod
     def random(

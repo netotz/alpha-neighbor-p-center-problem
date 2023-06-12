@@ -34,6 +34,9 @@ class Solver:
         else:
             self.solution.closed_facilities = set(self.instance.facilities_indexes)
 
+    def __repr__(self) -> str:
+        return f"{Solver.__name__}(instance={self.instance}, p={self.p}, alpha={self.alpha})"
+
     def randomize_solution(self) -> Solution:
         # O(m + p)
         self.solution.open_facilities = set(
