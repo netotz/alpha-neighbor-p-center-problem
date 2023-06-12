@@ -2,9 +2,9 @@ from dataclasses import dataclass
 import os
 import pickle
 
-from models.solution import Solution
-from models.solver import Solver
-from models.instance import Instance
+from .solution import Solution
+from .solver import Solver
+from .instance import Instance
 
 
 @dataclass

@@ -1,5 +1,5 @@
-from models.instance_same_set import InstanceSameSet
-from models.solver import Solver
+from .instance_same_set import InstanceSameSet
+from .solver import Solver
 
 
 class SolverSameSet(Solver):

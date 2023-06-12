@@ -1,4 +1,4 @@
-from models.wrappers.allocated_facility import AllocatedFacility
+from .wrappers import AllocatedFacility
 
 
 class Solution:

@@ -6,10 +6,10 @@ import timeit
 
 import pandas as pd
 
-from models.instance import Instance
-from models.solution import Solution
-from models.tabu_structures import TabuRecency
-from models.wrappers import AllocatedFacility, MinMaxAvg, MovedFacility, LargestTwo
+from .instance import Instance
+from .solution import Solution
+from .tabu_structures import TabuRecency
+from .wrappers import AllocatedFacility, MinMaxAvg, MovedFacility, LargestTwo
 
 
 class NotAllocatedError(Exception):

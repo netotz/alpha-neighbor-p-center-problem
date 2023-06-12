@@ -2,7 +2,7 @@ from typing import Optional
 
 import matplotlib.pyplot as plt
 
-from models.solver import Solver, NotAllocatedError
+from .solver import Solver, NotAllocatedError
 
 
 def plot_solver(
