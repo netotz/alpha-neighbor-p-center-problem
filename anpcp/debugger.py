@@ -30,7 +30,7 @@ names = [
 ]
 filepath = os.path.join(DATA_PATH, names[6])
 instance = Instance.read(filepath)
-solver = Solver(instance, 44, 2, True)
+solver = Solver(instance, 10, 2, True)
 
 # %%
 
