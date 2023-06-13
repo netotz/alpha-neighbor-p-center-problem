@@ -8,14 +8,14 @@ A heuristic is any approach to problem solving that employs a practical method t
 The ANPCP arises in the modeling of the placement of emergency facilities, such as fire stations or hospitals, where the aim is to have a minimum guaranteed response time between a customer or demand point and its center by considering a notion of fault tolerance, i.e., providing backup centers in case one of them fails to respond to an emergency.
 This ensures that even if up to $\alpha - 1$ facilities fail, every customer has an open facility close to it.
 
-In the thesis, a Greedy Randomized Adaptive Search Procedure (GRASP) is proposed to solve the ANPCP.
+# Thesis
+
+A Greedy Randomized Adaptive Search Procedure (GRASP) is proposed to solve the ANPCP.
 The key component of this metaheuristic is a fast local search algorithm, which provides reasonable quality solutions in less time than a greedy interchange due to the use of data structures that store how the assignments between users and centers behave after a swap of facilities, allowing to reuse these expensive computations by accessing them instead of recalculating them.
 This algorithm is referred to as the Alpha Fast Vertex Substitution (A-FVS) method, which is an adaptation from an algorithm with the same name designed for the PCP.
 We experimentally show that the A-FVS is significantly faster than a generic greedy interchange for all the tested cases (750 times faster for the largest instance), as well as the results of using our proposed GRASP to solve instances from the well-known TSPLIB library.
 
-# Thesis
-
-The research concerning the thesis goes up to the development of the A-FVS algorithm and the experimentation with the proposed GRASP, as can be seen in its paper.
+The research concerning this thesis goes up to the development of the A-FVS algorithm and the experimentation with the proposed GRASP without extra components, as can be seen in its paper.
 
 ## Abstract
 
@@ -39,7 +39,7 @@ I've been using interactive programming most of the time, you can notice there a
 Some of them will fail to run now because I've changed the code many times.
 I didn't want to delete them though because this repository is more like a history of the changes made to the codebase used for the research.
 
-The code here is not intended to be a production application ready to be used by anyone, but simply a proof of the experiments and tests conducted for the research.
+The code here is not intended to be a production application ready to be used or a package to be installed, but simply a proof of the experiments and tests conducted for the research.
 
 The `debugger.py` file contains some common lines of code that will run the solver and related classes.
 
