@@ -25,7 +25,8 @@ This intelligent way of exploiting the structure of the objective function led t
 The A-FVS is integrated as a local search phase into a Greedy Randomized Adaptive Search Procedure (GRASP).
 Empirical evidence shows that GRASP outperforms A-FVS.
 
-*Published soon*
+The thesis file is available in PDF at [Releases](https://github.com/netotz/alpha-neighbor-p-center-problem/releases/tag/thesis).
+Or download it directly [here](https://github.com/netotz/alpha-neighbor-p-center-problem/releases/download/thesis/anpcp-thesis.pdf).
 
 # Blog posts
 
