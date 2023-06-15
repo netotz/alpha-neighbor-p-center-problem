@@ -1,4 +1,3 @@
-from typing import Dict
 from .moved_facility import MovedFacility
 
 
@@ -7,7 +6,7 @@ class LargestTwo:
     Wraps the largest two facilities from a data structure by their radius.
     """
 
-    def __init__(self, facilities: Dict[int, int]) -> "LargestTwo":
+    def __init__(self, facilities: dict[int, int]):
         self.first = MovedFacility(-1, 0)
         self.second = MovedFacility(-1, 0)
 

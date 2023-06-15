@@ -1,3 +1,6 @@
+import numpy as np
+import numpy.typing as npt
+
 from .wrappers import AllocatedFacility
 
 
@@ -5,7 +8,7 @@ class Solution:
     def __init__(self):
         self.open_facilities: set[int] = set()
         self.closed_facilities: set[int] = set()
-        self.allocations: list[list[int]] = []
+        self.allocations: npt.NDArray[np.ubyte] | None = None
 
         self.critical_allocation: AllocatedFacility | None = None
         self.time = -1.0

@@ -22,7 +22,7 @@ class InstanceSameSet(Instance):
         return cls(nodes, nodes)
 
     def get_distance(self, from_user: int, to_facility: int) -> int:
-        dist = self.distances[from_user][to_facility]
+        dist = self.distances[from_user, to_facility]
 
         # if f and u are same point (d=0), skip fi by returning infinity
         if from_user == to_facility:

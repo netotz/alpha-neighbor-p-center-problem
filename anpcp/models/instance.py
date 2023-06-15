@@ -19,32 +19,23 @@ class Instance:
         self.n = len(self.users)
         self.m = len(self.facilities)
 
-        self.distances: list[list[int]] = []
-        self.sorted_distances: list[list[tuple[int, int]]] = []
-
-        self.facilities_distances: list[list[int]] = []
-
         self.users_indexes = {u.index for u in self.users}
         self.facilities_indexes = {f.index for f in self.facilities}
 
         users_coords = [[u.x, u.y] for u in self.users]
         facilities_coords = [[f.x, f.y] for f in self.facilities]
 
-        if not self.distances:
-            self.distances = [
-                [round(d) for d in row]
-                for row in distance_matrix(users_coords, facilities_coords)
-            ]
+        self.distances = distance_matrix(
+            users_coords,
+            facilities_coords,
+        ).astype(np.int32)
 
-        self.sorted_distances = [
-            sorted(enumerate(row), key=lambda c: c[1]) for row in self.distances
-        ]
+        self.distances_sorted_indices = np.argsort(self.distances)
 
-        if not self.facilities_distances:
-            self.facilities_distances = [
-                [round(d) for d in row]
-                for row in distance_matrix(facilities_coords, facilities_coords)
-            ]
+        self.facilities_distances = distance_matrix(
+            facilities_coords,
+            facilities_coords,
+        ).astype(np.int32)
 
     def __repr__(self) -> str:
         return f"{Instance.__name__}(name={self.name}, n={self.n}, m={self.m})"
@@ -155,11 +146,11 @@ class Instance:
         return cls(facilities, users)
 
     def get_distance(self, from_user: int, to_facility: int) -> int:
-        return self.distances[from_user][to_facility]
+        return self.distances[from_user, to_facility]
 
     def next_nearest_facility(self, from_user: int):
         # O(m)
-        for facility, _ in self.sorted_distances[from_user]:
+        for facility in self.distances_sorted_indices[from_user]:
             yield facility
 
 

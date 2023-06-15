@@ -4,6 +4,7 @@ import math
 import random
 import timeit
 
+import numpy as np
 import pandas as pd
 
 from .instance import Instance
@@ -26,7 +27,7 @@ class Solver:
         self.with_random_solution = with_random_solution
 
         self.history: list[Solution] = []
-        self.alpha_range = set(range(1, self.alpha + 2))
+        self.__set_alpha_range()
 
         self.init_solution()
         if self.with_random_solution:
@@ -56,9 +57,10 @@ class Solver:
         """
         Time O(mn)
         """
-        self.solution.allocations = [
-            [0 for _ in range(self.instance.m)] for _ in range(self.instance.n)
-        ]
+        self.solution.allocations = np.zeros(
+            (self.instance.n, self.instance.m),
+            np.ubyte,
+        )
 
     def init_solution(self):
         self.solution = Solution()
@@ -73,8 +75,32 @@ class Solver:
         """
         return cls(solver.instance, solver.p, solver.alpha)
 
-    def get_users_indexes(self) -> Set[int]:
+    def get_users_indexes(self) -> set[int]:
         return self.instance.users_indexes
+
+    def reallocate_user(self, user: int) -> None:
+        """
+        Reallocates a user to its alpha-neighbors.
+
+        Time: O(m)
+        """
+        # deallocate user from all facilities
+        # O(m)
+        self.solution.allocations[user, :] = 0
+
+        k = 0
+        # O(m)
+        for facility in self.instance.next_nearest_facility(user):
+            # this condition should also be true when F an U are same set,
+            # because `user` is a closed facility and therefore `facility` too
+            if facility not in self.solution.open_facilities:
+                continue
+
+            k += 1
+            if k > self.alpha + 1:
+                break
+
+            self.solution.allocations[user, facility] = k
 
     def allocate_all(self) -> None:
         """
@@ -89,40 +115,6 @@ class Solver:
         for user in self.get_users_indexes():
             self.reallocate_user(user)
 
-    def allocate(self, user: int, facility: int, kth: int) -> None:
-        self.solution.allocations[user][facility] = kth
-
-    def reallocate_user(self, user: int) -> None:
-        """
-        Completely reallocates a user to its alpha-neighbors.
-
-        Time: O(m)
-        """
-        # O(m)
-        self.deallocate_user(user)
-
-        k = 0
-        # O(m)
-        for facility in self.instance.next_nearest_facility(user):
-            # this condition should also be true when F an U are same set,
-            # because `user` is a closed facility and therefore `facility` too
-            if facility not in self.solution.open_facilities:
-                continue
-
-            k += 1
-            if k > self.alpha + 1:
-                break
-
-            self.allocate(user, facility, k)
-
-    def deallocate(self, user: int, facility: int) -> None:
-        self.allocate(user, facility, 0)
-
-    def deallocate_user(self, user: int) -> None:
-        # O(m)
-        for facility in self.instance.facilities_indexes:
-            self.deallocate(user, facility)
-
     def get_kth_closest(self, user: int, kth: int) -> AllocatedFacility:
         """
         Gets the `kth` closest facility from `user` with its distance.
@@ -135,16 +127,16 @@ class Solver:
         """
         # O(p)
         for facility in self.solution.open_facilities:
-            if self.solution.allocations[user][facility] != kth:
-                continue
-
-            return AllocatedFacility(
-                facility, user, self.instance.get_distance(user, facility)
-            )
+            if self.solution.allocations[user, facility] == kth:
+                return AllocatedFacility(
+                    facility,
+                    user,
+                    self.instance.get_distance(user, facility),
+                )
 
         raise NotAllocatedError
 
-    def get_alpha_neighbors(self, user: int) -> Dict[int, AllocatedFacility]:
+    def get_alpha_neighbors(self, user: int) -> dict[int, AllocatedFacility]:
         """
         Gets the closest facilities from `user` up to its center (including it) with their distances.
 
@@ -154,23 +146,24 @@ class Solver:
 
         Time: O(p)
         """
-        alpha_neighbors = dict()
-        # O(a)
-        temp_alpha_range = set(self.alpha_range)
+        alpha_neighbors: dict[int, AllocatedFacility] = dict()
 
         # O(p)
         for facility in self.solution.open_facilities:
-            k = self.solution.allocations[user][facility]
+            k = self.solution.allocations[user, facility]
 
-            if k not in temp_alpha_range:
+            # if no stored allocation
+            if k == 0:
                 continue
 
-            distance = self.instance.get_distance(user, facility)
-            alpha_neighbors[k] = AllocatedFacility(facility, user, distance)
+            alpha_neighbors[k] = AllocatedFacility(
+                facility,
+                user,
+                self.instance.get_distance(user, facility),
+            )
 
-            temp_alpha_range.discard(k)
             # when all kth positions are found
-            if len(temp_alpha_range) == 0:
+            if len(alpha_neighbors) == self.alpha + 1:
                 break
 
         return alpha_neighbors
@@ -209,27 +202,28 @@ class Solver:
         # O(pn)
         self.update_obj_func()
 
+    def __set_alpha_range(self) -> None:
+        self.alpha_range = set(range(1, self.alpha + 2))
+
     def reset_alpha(self, new_alpha: int) -> None:
         """
         Resets this solver with `new_alpha` as the alpha parameter,
         keeping the same solution.
         """
         self.alpha = new_alpha
-        self.set_alpha_range()
+        self.__set_alpha_range()
         self.allocate_all()
         self.update_obj_func()
 
     def get_users_per_center_stats(self):
-        n = len(self.solution.allocations)
-
         min_users = math.inf
         max_users = -math.inf
         users_sum = 0
 
         for center in self.solution.open_facilities:
             users = sum(
-                self.solution.allocations[user][center] == self.alpha
-                for user in range(n)
+                self.solution.allocations[user, center] == self.alpha
+                for user in range(self.instance.n)
             )
 
             min_users = min(min_users, users)
@@ -237,6 +231,7 @@ class Solver:
             users_sum += users
 
         avg_users = users_sum / self.p
+
         return MinMaxAvg(min_users, max_users, avg_users)
 
     def construct(self, beta: float = 0) -> Solution:
@@ -266,7 +261,7 @@ class Solver:
             # O(m)
             for fi in solution.closed_facilities:
                 s_dists[fi] = min(
-                    s_dists[fi], self.instance.facilities_distances[fi][last_inserted]
+                    s_dists[fi], self.instance.facilities_distances[fi, last_inserted]
                 )
                 facility = MovedFacility(fi, s_dists[fi])
 
