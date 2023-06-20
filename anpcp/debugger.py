@@ -28,9 +28,13 @@ names = [
     "pr439_293_146_0.anpcp.tsp",
     "rat575_384_191_0.anpcp.tsp",  # 12
 ]
-filepath = os.path.join(DATA_PATH, names[6])
+filepath = os.path.join(DATA_PATH, names[10])
 instance = Instance.read(filepath)
-solver = Solver(instance, 10, 2, True)
+solver = Solver(instance, 6, 2, True)
+
+# %%
+instance = Instance.random(500, 500, seed=20230613)
+solver = Solver(instance, 50, 2)
 
 # %%
 
