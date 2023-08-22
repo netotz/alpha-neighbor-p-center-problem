@@ -1,5 +1,6 @@
 from copy import deepcopy
-from typing import Dict, List, Sequence, Set
+import heapq
+from typing import Sequence
 import math
 import random
 import timeit
@@ -9,8 +10,16 @@ import pandas as pd
 
 from .instance import Instance
 from .solution import Solution
+from .solution_set import SolutionSet
 from .tabu_structures import TabuRecency
-from .wrappers import AllocatedFacility, MinMaxAvg, MovedFacility, LargestTwo
+from .wrappers import (
+    AllocatedFacility,
+    MinMaxAvg,
+    MovedFacility,
+    LargestTwo,
+    BestMove,
+    LocalSearchState,
+)
 
 
 class NotAllocatedError(Exception):
@@ -19,21 +28,31 @@ class NotAllocatedError(Exception):
 
 class Solver:
     def __init__(
-        self, instance: Instance, p: int, alpha: int, with_random_solution=False
+        self,
+        instance: Instance,
+        p: int,
+        alpha: int,
+        with_random_solution=False,
+        is_first_improvement=True,
     ):
         self.instance = instance
         self.p = p
         self.alpha = alpha
         self.with_random_solution = with_random_solution
-
-        self.history: list[Solution] = []
         self.__set_alpha_range()
 
         self.init_solution()
         if self.with_random_solution:
             self.randomize_solution()
         else:
-            self.solution.closed_facilities = set(self.instance.facilities_indexes)
+            self.solution.closed_facilities = self.instance.facilities_indexes.copy()
+
+        self.history: list[Solution] = []
+        self.local_search = LocalSearchState(
+            self.solution.open_facilities,
+            self.solution.closed_facilities,
+            is_first_improvement,
+        )
 
     def __repr__(self) -> str:
         return f"{Solver.__name__}(instance={self.instance}, p={self.p}, alpha={self.alpha})"
@@ -48,8 +67,8 @@ class Solver:
             self.instance.facilities_indexes - self.solution.open_facilities
         )
 
-        self.allocate_all()
-        self.update_obj_func()
+        # O(mn)
+        self.update_solution()
 
         return self.solution
 
@@ -65,6 +84,19 @@ class Solver:
     def init_solution(self):
         self.solution = Solution()
         self.__init_allocations()
+
+    def replace_solution(self, solution_set: SolutionSet) -> None:
+        """
+        Time O(mn)
+        """
+        self.solution = Solution()
+        self.solution.open_facilities = solution_set.open_facilities.copy()
+        # O(m)
+        self.solution.closed_facilities = (
+            self.instance.facilities_indexes - self.solution.open_facilities
+        )
+        # O(mn)
+        self.update_solution()
 
     @classmethod
     def from_solver(cls, solver: "Solver"):
@@ -189,6 +221,15 @@ class Solver:
         """
         self.solution.critical_allocation = self.eval_obj_func()
 
+    def update_solution(self) -> None:
+        """
+        Time O(mn)
+        """
+        # O(mn)
+        self.allocate_all()
+        # O(pn)
+        self.update_obj_func()
+
     def apply_swap(self, facility_in, facility_out) -> None:
         """
         Inserts `facility_in` into solution, removes `facility_out` from it,
@@ -197,10 +238,16 @@ class Solver:
         Time O(mn + pn) ~= O(mn) since m > p
         """
         self.solution.swap(facility_in, facility_out)
+
+        if not self.local_search.is_path_relinking:
+            self.local_search.update_candidates(
+                self.solution.open_facilities,
+                self.solution.closed_facilities,
+            )
+        # update for Path Relinking is made in its method
+
         # O(mn)
-        self.allocate_all()
-        # O(pn)
-        self.update_obj_func()
+        self.update_solution()
 
     def __set_alpha_range(self) -> None:
         self.alpha_range = set(range(1, self.alpha + 2))
@@ -212,8 +259,8 @@ class Solver:
         """
         self.alpha = new_alpha
         self.__set_alpha_range()
-        self.allocate_all()
-        self.update_obj_func()
+        # O(mn)
+        self.update_solution()
 
     def get_users_per_center_stats(self):
         min_users = math.inf
@@ -277,16 +324,20 @@ class Solver:
             solution.insert(last_inserted)
 
         self.solution = solution
+        # update for local search
+        self.local_search.update_candidates(
+            self.solution.open_facilities,
+            self.solution.closed_facilities,
+        )
+
         # TODO: delegate this method
         self.__init_allocations()
         # O(mn)
-        self.allocate_all()
-        # O(pn)
-        self.update_obj_func()
+        self.update_solution()
 
         return self.solution
 
-    def interchange(self, is_first_improvement: bool) -> Solution:
+    def interchange(self) -> Solution:
         """
         Greedy Interchange, checks every possible swap.
 
@@ -319,7 +370,7 @@ class Solver:
                         best_fi = fi
                         best_fr = fr
 
-                        if is_first_improvement:
+                        if self.local_search.is_first_improvement:
                             break
 
                     # if it's best improvement, "restore" base solution
@@ -327,7 +378,7 @@ class Solver:
                     self.solution.swap(fr, fi)
 
                 is_improved = best_radius < current_radius
-                if is_improved and is_first_improvement:
+                if is_improved and self.local_search.is_first_improvement:
                     break
                 # if solution hasn't improved or is best improvement,
                 # keep serching (next fi)
@@ -337,7 +388,7 @@ class Solver:
             if is_improved:
                 moves += 1
 
-                if is_first_improvement:
+                if self.local_search.is_first_improvement:
                     current_radius = best_radius
                     # current solution is already best,
                     # because it's the last one updated
@@ -348,23 +399,22 @@ class Solver:
 
                 current_radius = best_radius = self.solution.get_obj_func()
 
-        # when it doesn't improve,
-        # it must be updated because the last swap (the "restored")
-        # didn't update it
-        self.allocate_all()
-        self.update_obj_func()
+        # if S didn't improve,
+        # it must be updated still because the last swap (the "restored")
+        # doesn't update it
+        self.update_solution()
         self.solution.moves = moves
 
         return self.solution
 
-    def __get_best_out(
+    def __get_best_fr(
         self,
         best_radius: int,
-        lost_neighbors: Dict[int, int],
+        lost_neighbors: dict[int, int],
         largest_two: LargestTwo,
     ) -> MovedFacility:
         """
-        Returns the best facility to remove given the parameters.
+        Returns the best facility to remove (fr) given the parameters.
 
         Time O(p)
         """
@@ -372,35 +422,46 @@ class Solver:
         min_radius = math.inf
 
         # O(p)
-        for fr in self.solution.open_facilities:
-            current = max(
+        for fr in lost_neighbors.keys():
+            # only consider facilities that are in Path Relinking subset
+            if (
+                self.local_search.is_path_relinking
+                and fr not in self.local_search.candidates_out
+            ):
+                continue
+
+            current_radius = max(
                 best_radius,
                 lost_neighbors[fr],
                 largest_two.second.radius
                 if fr == largest_two.first.index
                 else largest_two.first.radius,
             )
-            if current < min_radius:
-                min_radius = current
+
+            if current_radius < min_radius:
+                min_radius = current_radius
                 min_fr = fr
 
         return MovedFacility(min_fr, min_radius)
 
-    def move(self, facility_in: int) -> MovedFacility:
+    def get_facility_out(self, facility_in: int) -> MovedFacility:
         """
-        Determines the best facility to remove if `facility_in` is inserted,
+        Determines the best facility to remove if `facility_in` was inserted,
         and the objective function resulting from the swap.
 
         Time O(pn + 4p) ~= O(pn)
         """
         # best objective function so far
         best_radius = 0
+
+        # even if it's Path Relinking, all open facilities must be considered
+        # because the a-neighbors of any user could be outside the candidates_out
         # O(p)
         same_neighbors = {fr: 0 for fr in self.solution.open_facilities}
         # O(p)
-        lost_neighbors = {fr: 0 for fr in self.solution.open_facilities}
+        lost_neighbors = dict(same_neighbors)
 
-        ## O(n(p + a)) ~= O(pn) since p > a and/or a ~= 1
+        ## O(n(p + a)) ~= O(pn) since p > a, a ~= 1
         # O(n)
         for user in self.get_users_indexes():
             fi_distance = self.instance.get_distance(user, facility_in)
@@ -442,7 +503,7 @@ class Solver:
         # O(p)
         largest_two = LargestTwo(same_neighbors)
         # O(p)
-        return self.__get_best_out(best_radius, lost_neighbors, largest_two)
+        return self.__get_best_fr(best_radius, lost_neighbors, largest_two)
 
     def does_break_critical(self, facility_in) -> bool:
         """
@@ -456,59 +517,81 @@ class Solver:
 
         return fi_distance < self.solution.get_obj_func()
 
-    def try_improve(self, is_first_improvement: bool) -> bool:
+    def get_best_move(self) -> BestMove:
         """
-        Returns `True` if `self.solution` was improved (objective function was minimized)
-        by searching for the best facility to insert and the best to remove.
-        If no possible move improves the current solution, returns `False`.
+        Returns the best move for A-FVS algorithm.
 
-        Time O(mpn)
+        Time O(mpn), Path Relinking O(p**2 n)
         """
-
-        current_radius = self.solution.get_obj_func()
-
-        best_radius = current_radius
+        # best radius starts as current radius
+        best_radius = self.solution.get_obj_func()
         best_fi = best_fr = -1
 
-        ## O(mpn)
+        ## O(mpn) / O(p**2 n)
         # O(m - p) ~= O(m) since m > p
-        for fi in self.solution.closed_facilities:
+        # O(p) if Path Relinking
+        for fi in self.local_search.candidates_in:
             if not self.does_break_critical(fi):
                 continue
 
             # O(pn)
-            best_move = self.move(fi)
-            fr = best_move.index
-            radius = best_move.radius
+            facility_out = self.get_facility_out(fi)
 
-            # if move improves S (minimizes objective function)
-            if radius < best_radius:
-                best_radius = radius
+            # if move improves x(S)
+            if facility_out.radius < best_radius:
+                best_radius = facility_out.radius
                 best_fi = fi
-                best_fr = fr
+                best_fr = facility_out.index
 
                 # if is first improvement, apply the swap now
-                if is_first_improvement:
+                if self.local_search.is_first_improvement:
                     break
 
+        return BestMove(best_fi, best_fr, best_radius)
+
+    def try_improve(self) -> bool:
+        """
+        Returns `True` if x(S) was improved by searching for the best facility to insert
+        and the best one to remove.
+        If no possible move improves current S, returns `False`.
+
+        Time O(mpn + mn) ~= O(mpn)
+        """
+        # O(mpn)
+        best_move = self.get_best_move()
+
         # if didn't improve
-        if best_radius >= current_radius:
+        if best_move.radius >= self.solution.get_obj_func():
             return False
 
         # O(mn)
-        self.apply_swap(best_fi, best_fr)
+        self.apply_swap(best_move.fi, best_move.fr)
 
         return True
 
-    def fast_vertex_substitution(self, is_first_improvement: bool) -> Solution:
+    def try_improve_relinking(self):
+        """
+        Tries to improve S by applying Path Relinking, using ANPCP.
+
+        Time O(mn + p**2 n)
+        """
+        # O(p**2 n)
+        best_move = self.get_best_move()
+
+        # O(mn)
+        self.apply_swap(best_move.fi, best_move.fr)
+
+        return best_move.fi, best_move.fr
+
+    def fast_vertex_substitution(self) -> Solution:
         """
         Alpha Fast Vertex Substitution (ANPCP) local search heuristic.
 
-        Time O(mpn) * C,
+        Time O(mpn)*C,
         where C is the number of attempts to keep improving S.
         """
         moves = 0
-        while self.try_improve(is_first_improvement):
+        while self.try_improve():
             moves += 1
 
         self.solution.moves = moves
@@ -528,7 +611,7 @@ class Solver:
                 continue
 
             # O(pn)
-            best_move = self.move(fi)
+            best_move = self.get_facility_out(fi)
             fr = best_move.index
             radius = best_move.radius
 
@@ -568,6 +651,53 @@ class Solver:
 
         return self.solution
 
+    def path_relink(self, starting: Solution, target: Solution) -> Solution:
+        """
+        Time O(mnp + p**3 n)
+        """
+        # O(p), worst case if both solutions are completely different
+        candidates_out = starting.open_facilities - target.open_facilities
+        # O(p)
+        candidates_in = target.open_facilities - starting.open_facilities
+
+        self.local_search.start_path_relinking(candidates_out, candidates_in)
+        self.solution = starting
+
+        # min heap of found solutions
+        minheap: list[tuple[int, SolutionSet]] = []
+
+        ## O(mnp + p**3 n + p log p) ~= O(mnp + p**3 n)
+        # O(p - 1) ~= O(p)
+        while self.local_search.are_there_candidates():
+            # O(mn + p**2 n)
+            best_fi, best_fr = self.try_improve_relinking()
+
+            if best_fi == -1 or best_fr == -1:
+                pass
+
+            self.local_search.remove_applied_candidates(best_fi, best_fr)
+
+            new_obj_func = self.solution.get_obj_func()
+            if new_obj_func > starting.get_obj_func():
+                # * O(p) but not in theory
+                temp_solution = SolutionSet.from_solution(self.solution)
+
+                # O(log p)
+                heapq.heappush(
+                    minheap,
+                    (new_obj_func, temp_solution),
+                )
+
+        self.local_search.end_path_relinking(
+            self.solution.open_facilities, self.solution.closed_facilities
+        )
+
+        best_temp_solution = minheap[0][1]
+        # O(mn)
+        self.replace_solution(best_temp_solution)
+
+        return self.solution
+
     def grasp(self, iters: int, beta: float = 0, time_limit: float = -1) -> Solution:
         """
         Applies the GRASP metaheuristic to the current solver,
@@ -597,7 +727,7 @@ class Solver:
             start = timeit.default_timer()
 
             self.construct(beta_used)
-            self.fast_vertex_substitution(True)
+            self.fast_vertex_substitution()
 
             total_time += timeit.default_timer() - start
 
@@ -643,7 +773,7 @@ class Solver:
             self.construct(beta_used)
             rgd_of = self.solution.get_obj_func()
 
-            self.fast_vertex_substitution(True)
+            self.fast_vertex_substitution()
             afvs_of = self.solution.get_obj_func()
 
             total_time += timeit.default_timer() - start
@@ -683,7 +813,7 @@ def generate_solvers(
     instances: Sequence[Instance],
     p_percentages: Sequence[float],
     alpha_values: Sequence[int],
-) -> List[Solver]:
+) -> list[Solver]:
     return [
         Solver(instance, int(instance.m * p), alpha)
         for instance in instances
