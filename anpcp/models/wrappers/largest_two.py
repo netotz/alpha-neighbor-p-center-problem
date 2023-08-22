@@ -3,14 +3,14 @@ from .moved_facility import MovedFacility
 
 class LargestTwo:
     """
-    Wraps the largest two facilities from a data structure by their radius.
+    Wraps the largest two facilities of a dictionary used in A-FVS, usually of size p.
     """
 
     def __init__(self, facilities: dict[int, int]):
         self.first = MovedFacility(-1, 0)
         self.second = MovedFacility(-1, 0)
 
-        # O(n)
+        # O(p)
         for index, radius in facilities.items():
             self.try_update(index, radius)
 
