@@ -36,7 +36,7 @@ class GraspFinalSolver(Solver):
 
         last_imp = i = iwi = 0
         while iwi < iters and total_time < time_limit:
-            self.init_solution()
+            self.__init_solution()
 
             beta_used = random.random() if beta == -1 else beta
 
@@ -44,14 +44,14 @@ class GraspFinalSolver(Solver):
             self.construct(beta_used)
             total_time += timeit.default_timer() - start
 
-            rgd_of = self.solution.get_obj_func()
+            rgd_of = self.solution.obj_func
             best_rgd_of = min(best_rgd_of, rgd_of)
 
             start = timeit.default_timer()
             self.fast_vertex_substitution(True)
             total_time += timeit.default_timer() - start
 
-            afvs_of = self.solution.get_obj_func()
+            afvs_of = self.solution.obj_func
             afvs_improvement = 100 * abs(afvs_of - rgd_of) / rgd_of
             min_afvs_improvement = min(min_afvs_improvement, afvs_improvement)
             max_afvs_improvement = max(max_afvs_improvement, afvs_improvement)

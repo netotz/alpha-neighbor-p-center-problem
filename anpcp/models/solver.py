@@ -6,6 +6,7 @@ import random
 import timeit
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from .instance import Instance
@@ -41,7 +42,13 @@ class Solver:
         self.with_random_solution = with_random_solution
         self.__set_alpha_range()
 
-        self.init_solution()
+        self.allocations = np.zeros(
+            (self.instance.n, self.instance.m),
+            np.ubyte,
+        )
+        self.critical_allocation: AllocatedFacility | None = None
+
+        self.__init_solution()
         if self.with_random_solution:
             self.randomize_solution()
         else:
@@ -55,7 +62,13 @@ class Solver:
         )
 
     def __repr__(self) -> str:
-        return f"{Solver.__name__}(instance={self.instance}, p={self.p}, alpha={self.alpha})"
+        return f"{Solver.__name__}(I={self.instance}, p={self.p}, a={self.alpha})"
+
+    def __set_alpha_range(self) -> None:
+        self.alpha_range = set(range(1, self.alpha + 2))
+
+    def __init_solution(self):
+        self.solution = Solution()
 
     def randomize_solution(self) -> Solution:
         # O(m + p)
@@ -72,26 +85,13 @@ class Solver:
 
         return self.solution
 
-    def __init_allocations(self) -> None:
-        """
-        Time O(mn)
-        """
-        self.solution.allocations = np.zeros(
-            (self.instance.n, self.instance.m),
-            np.ubyte,
-        )
-
-    def init_solution(self):
-        self.solution = Solution()
-        self.__init_allocations()
-
     def replace_solution(self, set: SolutionSet) -> None:
         """
         Replaces `self.solution` using the data contained in `set` of type `SolutionSet`.
 
         Time O(mn)
         """
-        self.init_solution()
+        self.__init_solution()
         self.solution.open_facilities = set.open_facilities.copy()
         # O(m)
         self.solution.closed_facilities = (
@@ -120,7 +120,7 @@ class Solver:
         """
         # deallocate user from all facilities
         # O(m)
-        self.solution.allocations[user, :] = 0
+        self.allocations[user, :] = 0
 
         k = 0
         # O(m)
@@ -134,7 +134,7 @@ class Solver:
             if k > self.alpha + 1:
                 break
 
-            self.solution.allocations[user, facility] = k
+            self.allocations[user, facility] = k
 
     def allocate_all(self) -> None:
         """
@@ -161,7 +161,7 @@ class Solver:
         """
         # O(p)
         for facility in self.solution.open_facilities:
-            if self.solution.allocations[user, facility] == kth:
+            if self.allocations[user, facility] == kth:
                 return AllocatedFacility(
                     facility,
                     user,
@@ -184,7 +184,7 @@ class Solver:
 
         # O(p)
         for facility in self.solution.open_facilities:
-            k = self.solution.allocations[user, facility]
+            k = self.allocations[user, facility]
 
             # if no stored allocation
             if k == 0:
@@ -221,7 +221,7 @@ class Solver:
         """
         Time O(pn)
         """
-        self.solution.critical_allocation = self.eval_obj_func()
+        self.critical_allocation = self.eval_obj_func()
 
     def update_solution(self) -> None:
         """
@@ -251,9 +251,6 @@ class Solver:
         # O(mn)
         self.update_solution()
 
-    def __set_alpha_range(self) -> None:
-        self.alpha_range = set(range(1, self.alpha + 2))
-
     def reset_alpha(self, new_alpha: int) -> None:
         """
         Resets this solver with `new_alpha` as the alpha parameter,
@@ -271,7 +268,7 @@ class Solver:
 
         for center in self.solution.open_facilities:
             users = sum(
-                self.solution.allocations[user, center] == self.alpha
+                self.allocations[user, center] == self.alpha
                 for user in range(self.instance.n)
             )
 
@@ -345,7 +342,7 @@ class Solver:
 
         Time O(m**2 pn)
         """
-        best_radius = current_radius = self.solution.get_obj_func()
+        best_radius = current_radius = self.solution.obj_func
         best_fi = best_fr = -1
 
         moves = 0
@@ -355,7 +352,7 @@ class Solver:
             # O(m - p) ~= O(m)
             for fi in self.solution.closed_facilities:
                 fi_distance = self.instance.get_distance(
-                    self.solution.critical_allocation.user, fi
+                    self.critical_allocation.user, fi
                 )
 
                 if fi_distance >= current_radius:
@@ -367,8 +364,8 @@ class Solver:
                     # O(mn)
                     self.apply_swap(fi, fr)
 
-                    if self.solution.get_obj_func() < best_radius:
-                        best_radius = self.solution.get_obj_func()
+                    if self.solution.obj_func < best_radius:
+                        best_radius = self.solution.obj_func
                         best_fi = fi
                         best_fr = fr
 
@@ -399,7 +396,7 @@ class Solver:
                 # O(mn)
                 self.apply_swap(best_fi, best_fr)
 
-                current_radius = best_radius = self.solution.get_obj_func()
+                current_radius = best_radius = self.solution.obj_func
 
         # if S didn't improve,
         # it must be updated still because the last swap (the "restored")
@@ -514,10 +511,10 @@ class Solver:
         Otherwise returns `False`.
         """
         fi_distance = self.instance.get_distance(
-            self.solution.critical_allocation.user, facility_in
+            self.critical_allocation.user, facility_in
         )
 
-        return fi_distance < self.solution.get_obj_func()
+        return fi_distance < self.solution.obj_func
 
     def get_best_move(self) -> BestMove:
         """
@@ -526,7 +523,7 @@ class Solver:
         Time O(mpn)
         """
         # best radius starts as current radius
-        best_radius = self.solution.get_obj_func()
+        best_radius = self.solution.obj_func
         best_fi = best_fr = -1
 
         ## O(mpn)
@@ -587,7 +584,7 @@ class Solver:
         best_move = self.get_best_move()
 
         # if didn't improve
-        if best_move.radius >= self.solution.get_obj_func():
+        if best_move.radius >= self.solution.obj_func:
             return False
 
         # O(mn)
@@ -625,7 +622,7 @@ class Solver:
         return self.solution
 
     def tabu_try_improve(self, best_global: int, recency: TabuRecency) -> bool:
-        current_radius = self.solution.get_obj_func()
+        current_radius = self.solution.obj_func
 
         best_local = math.inf
         best_fi = best_fr = -1
@@ -660,10 +657,10 @@ class Solver:
         # mark fi as tabu
         recency.mark(best_fi)
 
-        return self.solution.get_obj_func() < current_radius
+        return self.solution.obj_func < current_radius
 
     def tabu_search(self, tenure: int, iters: int) -> Solution:
-        best_so_far = self.solution.get_obj_func()
+        best_so_far = self.solution.obj_func
 
         # TODO: calculate memory size from tenure
         recency = TabuRecency(tenure)
@@ -672,7 +669,7 @@ class Solver:
         while i < iters:
             self.tabu_try_improve(best_so_far, recency)
 
-            best_so_far = min(best_so_far, self.solution.get_obj_func())
+            best_so_far = min(best_so_far, self.solution.obj_func)
             i += 1
 
         return self.solution
@@ -747,7 +744,7 @@ class Solver:
 
         last_imp = i = iwi = 0
         while iwi < iters and total_time < time_limit:
-            self.init_solution()
+            self.__init_solution()
 
             beta_used = random.random() if beta == -1 else beta
 
@@ -758,7 +755,7 @@ class Solver:
 
             total_time += timeit.default_timer() - start
 
-            current_radius = self.solution.get_obj_func()
+            current_radius = self.solution.obj_func
             if best_solution is None or current_radius < best_radius:
                 best_solution = deepcopy(self.solution)
                 best_radius = current_radius
@@ -792,20 +789,20 @@ class Solver:
 
         i = 0
         while i < max_iters:
-            self.init_solution()
+            self.__init_solution()
 
             start = timeit.default_timer()
 
             beta_used = random.random() if beta == -1 else beta
             self.construct(beta_used)
-            rgd_of = self.solution.get_obj_func()
+            rgd_of = self.solution.obj_func
 
             self.fast_vertex_substitution()
-            afvs_of = self.solution.get_obj_func()
+            afvs_of = self.solution.obj_func
 
             total_time += timeit.default_timer() - start
 
-            current_radius = self.solution.get_obj_func()
+            current_radius = self.solution.obj_func
             is_new_best = best_solution is None or current_radius < best_radius
             if is_new_best:
                 best_solution = deepcopy(self.solution)

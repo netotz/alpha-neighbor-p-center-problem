@@ -21,7 +21,7 @@ class SolutionSet:
 
         Time O(p) to copy the set of open facilities
         """
-        return cls(solution.get_obj_func(), solution.open_facilities.copy())
+        return cls(solution.obj_func, solution.open_facilities.copy())
 
     def __eq__(self, __other: "SolutionSet") -> bool:
         return self.obj_func == __other.obj_func

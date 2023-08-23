@@ -116,7 +116,7 @@ def calibrate(solvers: list[Solver], betas: list[float], iters: int, time_limit:
             times.append(solver.solution.time)
             improvements.append(solver.solution.last_improvement)
 
-            obj_func = solver.solution.get_obj_func()
+            obj_func = solver.solution.obj_func
             obj_funcs.append(obj_func)
 
             best_of = min(best_of, obj_func)

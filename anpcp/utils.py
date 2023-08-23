@@ -58,9 +58,9 @@ def run_local_search(
     solver.solution.time = timeit.default_timer() - start
     fvs = deepcopy(solver.solution)
 
-    initial_of = initial_solution.get_obj_func()
-    ni_of = ni.get_obj_func()
-    fvs_of = fvs.get_obj_func()
+    initial_of = initial_solution.obj_func
+    ni_of = ni.obj_func
+    fvs_of = fvs.obj_func
 
     return (
         solver.instance.n,
