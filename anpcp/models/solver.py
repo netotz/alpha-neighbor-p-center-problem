@@ -85,12 +85,14 @@ class Solver:
         self.solution = Solution()
         self.__init_allocations()
 
-    def replace_solution(self, solution_set: SolutionSet) -> None:
+    def replace_solution(self, set: SolutionSet) -> None:
         """
+        Replaces `self.solution` using the data contained in `set` of type `SolutionSet`.
+
         Time O(mn)
         """
-        self.solution = Solution()
-        self.solution.open_facilities = solution_set.open_facilities.copy()
+        self.init_solution()
+        self.solution.open_facilities = set.open_facilities.copy()
         # O(m)
         self.solution.closed_facilities = (
             self.instance.facilities_indexes - self.solution.open_facilities
@@ -519,18 +521,17 @@ class Solver:
 
     def get_best_move(self) -> BestMove:
         """
-        Returns the best move for A-FVS algorithm.
+        Returns the best move in the A-FVS algorithm.
 
-        Time O(mpn), Path Relinking O(p**2 n)
+        Time O(mpn)
         """
         # best radius starts as current radius
         best_radius = self.solution.get_obj_func()
         best_fi = best_fr = -1
 
-        ## O(mpn) / O(p**2 n)
-        # O(m - p) ~= O(m) since m > p
-        # O(p) if Path Relinking
-        for fi in self.local_search.candidates_in:
+        ## O(mpn)
+        # O(m - p) ~= O(m), m > p
+        for fi in self.solution.closed_facilities:
             if not self.does_break_critical(fi):
                 continue
 
@@ -546,6 +547,31 @@ class Solver:
                 # if is first improvement, apply the swap now
                 if self.local_search.is_first_improvement:
                     break
+
+        return BestMove(best_fi, best_fr, best_radius)
+
+    def get_best_move_relinking(self) -> BestMove:
+        """
+        Returns the best move using A-FVS for Path Relinking,
+        meaning it allows worse moves.
+
+        Time O(p**2 n)
+        """
+        # best radius starts as infinity
+        best_radius = math.inf
+        best_fi = best_fr = -1
+
+        ## O(p**2 n)
+        # O(p)
+        for fi in self.local_search.candidates_in:
+            # O(pn)
+            facility_out = self.get_facility_out(fi)
+
+            # if move improves current x(S)
+            if facility_out.radius < best_radius:
+                best_radius = facility_out.radius
+                best_fi = fi
+                best_fr = facility_out.index
 
         return BestMove(best_fi, best_fr, best_radius)
 
@@ -576,7 +602,7 @@ class Solver:
         Time O(mn + p**2 n)
         """
         # O(p**2 n)
-        best_move = self.get_best_move()
+        best_move = self.get_best_move_relinking()
 
         # O(mn)
         self.apply_swap(best_move.fi, best_move.fr)
@@ -651,8 +677,13 @@ class Solver:
 
         return self.solution
 
-    def path_relink(self, starting: Solution, target: Solution) -> Solution:
+    def path_relink(self, starting: SolutionSet, target: SolutionSet) -> Solution:
         """
+        Performs a Path Relinking strategy between `starting` and `target` solutions
+        using a modified version of A-FVS that allows bad moves.
+        If there is a solution in the path better than `target`, it will become
+        the current solution of this solver.
+
         Time O(mnp + p**3 n)
         """
         # O(p), worst case if both solutions are completely different
@@ -660,14 +691,15 @@ class Solver:
         # O(p)
         candidates_in = target.open_facilities - starting.open_facilities
 
+        # O(mn)
+        self.replace_solution(starting)
         self.local_search.start_path_relinking(candidates_out, candidates_in)
-        self.solution = starting
 
-        # min heap of found solutions
-        minheap: list[tuple[int, SolutionSet]] = []
+        # min heap of solutions better than starting
+        minheap: list[SolutionSet] = []
 
         ## O(mnp + p**3 n + p log p) ~= O(mnp + p**3 n)
-        # O(p - 1) ~= O(p)
+        # O(p)
         while self.local_search.are_there_candidates():
             # O(mn + p**2 n)
             best_fi, best_fr = self.try_improve_relinking()
@@ -677,24 +709,19 @@ class Solver:
 
             self.local_search.remove_applied_candidates(best_fi, best_fr)
 
-            new_obj_func = self.solution.get_obj_func()
-            if new_obj_func > starting.get_obj_func():
-                # * O(p) but not in theory
-                temp_solution = SolutionSet.from_solution(self.solution)
-
-                # O(log p)
-                heapq.heappush(
-                    minheap,
-                    (new_obj_func, temp_solution),
-                )
+            # * O(p) but not in theory
+            temp_solution = SolutionSet.from_solution(self.solution)
+            # O(log p)
+            heapq.heappush(minheap, temp_solution)
 
         self.local_search.end_path_relinking(
             self.solution.open_facilities, self.solution.closed_facilities
         )
 
-        best_temp_solution = minheap[0][1]
+        best_path = minheap[0]
+        best_solution = best_path if best_path < target else target
         # O(mn)
-        self.replace_solution(best_temp_solution)
+        self.replace_solution(best_solution)
 
         return self.solution
 
