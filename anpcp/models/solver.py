@@ -47,12 +47,16 @@ class Solver:
         alpha: int,
         with_random_solution=False,
         is_first_improvement=True,
+        seed: int | None = None,
     ):
         self.instance = instance
         self.p = p
         self.alpha = alpha
         self.with_random_solution = with_random_solution
         self.__set_alpha_range()
+
+        self.seed = seed
+        self.rng = np.random.default_rng(seed)
 
         self.allocations = np.zeros(
             (self.instance.n, self.instance.m),
@@ -85,7 +89,12 @@ class Solver:
     def randomize_solution(self) -> Solution:
         # O(m + p)
         self.solution.open_facilities = set(
-            random.sample(list(self.instance.facilities_indexes), self.p)
+            self.rng.choice(
+                np.fromiter(self.instance.facilities_indexes, int),
+                self.p,
+                replace=False,
+                shuffle=False,
+            )
         )
         # O(m)
         self.solution.closed_facilities = (
@@ -308,7 +317,9 @@ class Solver:
         solution.closed_facilities = set(self.instance.facilities_indexes)
         # choose random facility
         # O(m)
-        last_inserted = random.choice(list(solution.closed_facilities))
+        last_inserted: int = self.rng.choice(
+            np.fromiter(solution.closed_facilities, int), 1
+        )[0]
         solution.insert(last_inserted)
 
         ## O(mp)
@@ -332,9 +343,9 @@ class Solver:
 
             threshold = max_cost - beta * (max_cost - min_cost)
             # O(m)
-            last_inserted = random.choice(
-                [f.index for f in facilities if f.radius >= threshold]
-            )
+            last_inserted = self.rng.choice(
+                [f.index for f in facilities if f.radius >= threshold], 1
+            )[0]
             solution.insert(last_inserted)
 
         self.solution = solution
@@ -785,7 +796,7 @@ class Solver:
 
         `time_limit`: Time limit in seconds to stop.
         """
-        reactive = ReactiveBeta()
+        reactive = ReactiveBeta(seed=self.seed)
 
         best_solution = None
         best_radius = current_radius = math.inf
@@ -856,7 +867,7 @@ class Solver:
 
             start = timeit.default_timer()
 
-            beta_used = random.random() if beta == -1 else beta
+            beta_used = self.rng.random() if beta == -1 else beta
             self.construct(beta_used)
             rgd_of = self.solution.obj_func
 
