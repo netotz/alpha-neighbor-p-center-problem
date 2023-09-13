@@ -1,14 +1,15 @@
 from copy import deepcopy
 from enum import Enum
 import heapq
-from typing import Callable, Sequence
+from typing import Sequence
 import math
 import random
 import timeit
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
+
+from .reactive_beta import ReactiveBeta
 from .instance import Instance
 from .solution import Solution
 from .solution_set import SolutionSet
@@ -233,6 +234,7 @@ class Solver:
         Time O(pn)
         """
         self.critical_allocation = self.eval_obj_func()
+        self.solution.obj_func = self.critical_allocation.distance
 
     def update_solution(self) -> None:
         """
@@ -304,12 +306,13 @@ class Solver:
         solution = Solution()
         # O(m)
         solution.closed_facilities = set(self.instance.facilities_indexes)
-
         # choose random facility
+        # O(m)
         last_inserted = random.choice(list(solution.closed_facilities))
         solution.insert(last_inserted)
 
-        # O(mp)
+        ## O(mp)
+        # O(p)
         while len(solution.open_facilities) < self.p:
             facilities: list[MovedFacility] = []
             min_cost = math.inf
@@ -329,8 +332,9 @@ class Solver:
 
             threshold = max_cost - beta * (max_cost - min_cost)
             # O(m)
-            candidates = [f.index for f in facilities if f.radius >= threshold]
-            last_inserted = random.choice(candidates)
+            last_inserted = random.choice(
+                [f.index for f in facilities if f.radius >= threshold]
+            )
             solution.insert(last_inserted)
 
         self.solution = solution
@@ -769,7 +773,7 @@ class Solver:
         return self.solution
 
     def grasp(
-        self, iters: int, beta: float = 0, time_limit: float = math.inf
+        self, iters: int, beta_period: int = 1, time_limit: float = math.inf
     ) -> Solution:
         """
         Applies the GRASP metaheuristic to the current solver,
@@ -777,11 +781,12 @@ class Solver:
 
         `iters`: Number of consecutive iterations without improvement to stop.
 
-        `beta`: Value between 0 and 1 for the RCL in the constructive heuristic.
-        Use -1 to use a random value in each iteration.
+        `beta_period`: Period of iterations to update the probabilities of beta values.
 
-        `time_limit`: Time limit in seconds to stop. Use -1 for no limit.
+        `time_limit`: Time limit in seconds to stop.
         """
+        reactive = ReactiveBeta()
+
         best_solution = None
         best_radius = current_radius = math.inf
 
@@ -791,18 +796,24 @@ class Solver:
         while iwi < iters and total_time < time_limit:
             self.__init_solution()
 
-            beta_used = random.random() if beta == -1 else beta
+            beta_used = reactive.choose()
 
             start = timeit.default_timer()
 
+            # O(mp)
             self.construct(beta_used)
+            # O(mpn)
             self.fast_vertex_substitution()
 
             total_time += timeit.default_timer() - start
 
             current_radius = self.solution.obj_func
+
+            reactive.increment(beta_used, current_radius)
+
             if best_solution is None or current_radius < best_radius:
-                best_solution = deepcopy(self.solution)
+                # O(p)
+                best_solution = SolutionSet.from_solution(self.solution)
                 best_radius = current_radius
                 moves += 1
 
@@ -810,9 +821,16 @@ class Solver:
                 last_imp = i
             else:
                 iwi += 1
+
+            # don't update reactive beta in first iteration
+            if i > 0 and i % beta_period == 0:
+                reactive.update(best_radius)
+
             i += 1
 
-        self.solution = deepcopy(best_solution)
+        # O(mn)
+        self.replace_solution(best_solution)
+
         self.solution.time = total_time
         self.solution.moves = moves
         self.solution.last_improvement = last_imp
