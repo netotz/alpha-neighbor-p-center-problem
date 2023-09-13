@@ -1,6 +1,7 @@
 from copy import deepcopy
+from enum import Enum
 import heapq
-from typing import Sequence
+from typing import Callable, Sequence
 import math
 import random
 import timeit
@@ -8,7 +9,6 @@ import timeit
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-
 from .instance import Instance
 from .solution import Solution
 from .solution_set import SolutionSet
@@ -25,6 +25,17 @@ from .wrappers import (
 
 class NotAllocatedError(Exception):
     pass
+
+
+class LocalSearchAlgorithm(Enum):
+    GI = 0
+    """
+    Greedy Interchange
+    """
+    AFVS = 1
+    """
+    Alpha Fast Vertex Substitution
+    """
 
 
 class Solver:
@@ -329,8 +340,6 @@ class Solver:
             self.solution.closed_facilities,
         )
 
-        # TODO: delegate this method
-        self.__init_allocations()
         # O(mn)
         self.update_solution()
 
@@ -379,14 +388,12 @@ class Solver:
                 is_improved = best_radius < current_radius
                 if is_improved and self.local_search.is_first_improvement:
                     break
-                # if solution hasn't improved or is best improvement,
-                # keep serching (next fi)
+                # if solution hasn't improved in FI, or strategy is BI,
+                # keep searching (next fi)
 
             is_improved = best_radius < current_radius
             # apply the move
             if is_improved:
-                moves += 1
-
                 if self.local_search.is_first_improvement:
                     current_radius = best_radius
                     # current solution is already best,
@@ -395,6 +402,7 @@ class Solver:
 
                 # O(mn)
                 self.apply_swap(best_fi, best_fr)
+                moves += 1
 
                 current_radius = best_radius = self.solution.obj_func
 
@@ -405,6 +413,37 @@ class Solver:
         self.solution.moves = moves
 
         return self.solution
+
+    def interchange_relinking(self) -> BestMove:
+        """
+        Greedy Interchange for Path Relinking, checks every possible swap.
+
+        Time O(mp**2 n)
+        """
+        best_radius = math.inf
+        best_fi = best_fr = -1
+
+        ## O(mp**2 n)
+        # O(p)
+        for fi in self.local_search.candidates_in:
+            ## O(mpn)
+            # O(p)
+            for fr in self.local_search.candidates_out:
+                # O(mn)
+                self.apply_swap(fi, fr)
+
+                if self.solution.obj_func < best_radius:
+                    best_radius = self.solution.obj_func
+                    best_fi = fi
+                    best_fr = fr
+
+                # "restore" base solution by reverting the swap
+                self.solution.swap(fr, fi)
+
+        # O(mn)
+        self.apply_swap(best_fi, best_fr)
+
+        return BestMove(best_fi, best_fr, self.solution.obj_func)
 
     def __get_best_fr(
         self,
@@ -592,7 +631,7 @@ class Solver:
 
         return True
 
-    def try_improve_relinking(self):
+    def try_improve_relinking(self) -> BestMove:
         """
         Tries to improve S by applying Path Relinking, using ANPCP.
 
@@ -604,7 +643,7 @@ class Solver:
         # O(mn)
         self.apply_swap(best_move.fi, best_move.fr)
 
-        return best_move.fi, best_move.fr
+        return best_move
 
     def fast_vertex_substitution(self) -> Solution:
         """
@@ -674,7 +713,12 @@ class Solver:
 
         return self.solution
 
-    def path_relink(self, starting: SolutionSet, target: SolutionSet) -> Solution:
+    def path_relink(
+        self,
+        starting: SolutionSet,
+        target: SolutionSet,
+        algorithm: LocalSearchAlgorithm,
+    ) -> Solution:
         """
         Performs a Path Relinking strategy between `starting` and `target` solutions
         using a modified version of A-FVS that allows bad moves.
@@ -692,19 +736,21 @@ class Solver:
         self.replace_solution(starting)
         self.local_search.start_path_relinking(candidates_out, candidates_in)
 
-        # min heap of solutions better than starting
         minheap: list[SolutionSet] = []
+
+        methods = {
+            LocalSearchAlgorithm.GI: self.interchange_relinking,
+            LocalSearchAlgorithm.AFVS: self.try_improve_relinking,
+        }
+        best_move_getter = methods[algorithm]
 
         ## O(mnp + p**3 n + p log p) ~= O(mnp + p**3 n)
         # O(p)
         while self.local_search.are_there_candidates():
             # O(mn + p**2 n)
-            best_fi, best_fr = self.try_improve_relinking()
+            best_move = best_move_getter()
 
-            if best_fi == -1 or best_fr == -1:
-                pass
-
-            self.local_search.remove_applied_candidates(best_fi, best_fr)
+            self.local_search.remove_applied_candidates(best_move.fi, best_move.fr)
 
             # * O(p) but not in theory
             temp_solution = SolutionSet.from_solution(self.solution)
@@ -722,7 +768,9 @@ class Solver:
 
         return self.solution
 
-    def grasp(self, iters: int, beta: float = 0, time_limit: float = -1) -> Solution:
+    def grasp(
+        self, iters: int, beta: float = 0, time_limit: float = math.inf
+    ) -> Solution:
         """
         Applies the GRASP metaheuristic to the current solver,
         and stops when either `iters` or `time_limit` is reached.
@@ -734,9 +782,6 @@ class Solver:
 
         `time_limit`: Time limit in seconds to stop. Use -1 for no limit.
         """
-        if time_limit == -1:
-            time_limit = math.inf
-
         best_solution = None
         best_radius = current_radius = math.inf
 
