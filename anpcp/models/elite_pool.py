@@ -1,4 +1,5 @@
 import heapq
+from typing import Iterator
 from .solution_set import SolutionSet
 
 ObjFuncIndexTuple = tuple[int, int]
@@ -62,6 +63,10 @@ class ElitePool:
         worst_i = self.__maxheap[0][1]
 
         return self.__solutions[worst_i]
+
+    def iter_solutions(self) -> Iterator[SolutionSet]:
+        for solution in self.__solutions:
+            yield solution
 
     def __try_update_best(self, candidate: SolutionSet) -> bool:
         if self.__best_i is not None and candidate > self.get_best():

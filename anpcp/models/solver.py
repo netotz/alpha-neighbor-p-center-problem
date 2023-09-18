@@ -1,5 +1,6 @@
 from copy import deepcopy
 from enum import Enum
+import itertools
 from typing import Sequence
 import heapq
 import math
@@ -733,12 +734,10 @@ class Solver:
         starting: SolutionSet,
         target: SolutionSet,
         algorithm: LocalSearchAlgorithm,
-    ) -> Solution:
+    ) -> SolutionSet:
         """
-        Performs a Path Relinking strategy between `starting` and `target` solutions
-        using a modified version of A-FVS that allows bad moves.
-        If there is a solution in the path better than `target`, it will become
-        the current solution of this solver.
+        Performs a Path Relinking between `starting` and `target` solutions.
+        Returns the best of `starting`, `target`, or best relinked found.
 
         Time O(mnp + p**3 n)
         """
@@ -751,7 +750,7 @@ class Solver:
         self.replace_solution(starting)
         self.local_search.start_path_relinking(candidates_out, candidates_in)
 
-        minheap: list[SolutionSet] = []
+        minheap: list[SolutionSet] = [min(starting, target)]
 
         methods = {
             LocalSearchAlgorithm.GI: self.interchange_relinking,
@@ -759,7 +758,7 @@ class Solver:
         }
         best_move_getter = methods[algorithm]
 
-        ## O(mnp + p**3 n + p log p) ~= O(mnp + p**3 n)
+        ## O(mnp + p**3 n + 2p + p log p) ~= O(mnp + p**3 n)
         # O(p)
         while self.local_search.are_there_candidates():
             # O(mn + p**2 n)
@@ -767,23 +766,21 @@ class Solver:
 
             self.local_search.remove_applied_candidates(best_move.fi, best_move.fr)
 
-            # O(log p)
-            heapq.heappush(
-                minheap,
-                # * O(p) but not in theory
-                SolutionSet.from_solution(self.solution),
-            )
+            # O(p)
+            current = SolutionSet.from_solution(self.solution)
+
+            if current < starting or current < target:
+                # O(log p)
+                heapq.heappush(
+                    minheap,
+                    current,
+                )
 
         self.local_search.end_path_relinking(
             self.solution.open_facilities, self.solution.closed_facilities
         )
 
-        best_path = minheap[0]
-        best_solution = best_path if best_path < target else target
-        # O(mn)
-        self.replace_solution(best_solution)
-
-        return self.solution
+        return min(minheap[0], starting, target)
 
     def grasp(
         self,
@@ -849,8 +846,9 @@ class Solver:
 
             i += 1
 
-        # O(mn)
-        self.replace_solution(best_solution)
+        # O(?)
+        self.post_optimize(pool)
+        # self.replace_solution(best_solution)
 
         self.solution.time = total_time
         self.solution.moves = moves
@@ -858,8 +856,24 @@ class Solver:
 
         return self.solution
 
-    def post_optimize(self):
-        pass
+    def post_optimize(self, pool: ElitePool) -> Solution:
+        """
+        Runs Path Relinking for each pair of solutions in `pool` and sets the best found
+        as the current solution of this solver.
+        """
+        best_solution = pool.get_best()
+
+        # O(l**2)
+        for starting, target in itertools.combinations(pool.iter_solutions(), 2):
+            # O(mnp + p**3 n)
+            relinked = self.path_relink(starting, target, LocalSearchAlgorithm.AFVS)
+
+            best_solution = min(relinked, best_solution)
+
+        # O(mn)
+        self.replace_solution(best_solution)
+
+        return self.solution
 
     def _grasp_iters_detailed(self, max_iters: int, beta: float) -> pd.DataFrame:
         """
