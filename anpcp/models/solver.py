@@ -1,26 +1,26 @@
 from copy import deepcopy
 from enum import Enum
-import heapq
 from typing import Sequence
+import heapq
 import math
-import random
 import timeit
 
 import numpy as np
 import pandas as pd
 
-from .reactive_beta import ReactiveBeta
+from .elite_pool import ElitePool
 from .instance import Instance
+from .reactive_beta import ReactiveBeta
 from .solution import Solution
 from .solution_set import SolutionSet
 from .tabu_structures import TabuRecency
 from .wrappers import (
     AllocatedFacility,
+    BestMove,
+    LargestTwo,
+    LocalSearchState,
     MinMaxAvg,
     MovedFacility,
-    LargestTwo,
-    BestMove,
-    LocalSearchState,
 )
 
 
@@ -767,10 +767,12 @@ class Solver:
 
             self.local_search.remove_applied_candidates(best_move.fi, best_move.fr)
 
-            # * O(p) but not in theory
-            temp_solution = SolutionSet.from_solution(self.solution)
             # O(log p)
-            heapq.heappush(minheap, temp_solution)
+            heapq.heappush(
+                minheap,
+                # * O(p) but not in theory
+                SolutionSet.from_solution(self.solution),
+            )
 
         self.local_search.end_path_relinking(
             self.solution.open_facilities, self.solution.closed_facilities
@@ -784,7 +786,11 @@ class Solver:
         return self.solution
 
     def grasp(
-        self, iters: int, beta_period: int = 1, time_limit: float = math.inf
+        self,
+        iters: int,
+        beta_period: int = 1,
+        time_limit: float = math.inf,
+        pool_limit: int = 1,
     ) -> Solution:
         """
         Applies the GRASP metaheuristic to the current solver,
@@ -795,11 +801,14 @@ class Solver:
         `beta_period`: Period of iterations to update the probabilities of beta values.
 
         `time_limit`: Time limit in seconds to stop.
+
+        `pool_limit`: Max amount of solutions in the elites pool.
         """
         reactive = ReactiveBeta(seed=self.seed)
 
-        best_solution = None
-        best_radius = current_radius = math.inf
+        pool = ElitePool(pool_limit)
+
+        best_solution: SolutionSet | None = None
 
         total_time = moves = 0
 
@@ -816,16 +825,17 @@ class Solver:
             # O(mpn)
             self.fast_vertex_substitution()
 
+            # O(p)
+            current_solution = SolutionSet.from_solution(self.solution)
+            # O(log l)
+            pool.try_add(current_solution)
+
             total_time += timeit.default_timer() - start
 
-            current_radius = self.solution.obj_func
+            reactive.increment(beta_used, self.solution.obj_func)
 
-            reactive.increment(beta_used, current_radius)
-
-            if best_solution is None or current_radius < best_radius:
-                # O(p)
-                best_solution = SolutionSet.from_solution(self.solution)
-                best_radius = current_radius
+            if best_solution is None or pool.get_best() < best_solution:
+                best_solution = pool.get_best()
                 moves += 1
 
                 iwi = 0
@@ -835,7 +845,7 @@ class Solver:
 
             # don't update reactive beta in first iteration
             if i > 0 and i % beta_period == 0:
-                reactive.update(best_radius)
+                reactive.update(best_solution.obj_func)
 
             i += 1
 
@@ -847,6 +857,9 @@ class Solver:
         self.solution.last_improvement = last_imp
 
         return self.solution
+
+    def post_optimize(self):
+        pass
 
     def _grasp_iters_detailed(self, max_iters: int, beta: float) -> pd.DataFrame:
         """
