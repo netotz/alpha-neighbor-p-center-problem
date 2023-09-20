@@ -801,21 +801,20 @@ class Solver:
 
         `pool_limit`: Max amount of solutions in the elites pool.
         """
-        reactive = ReactiveBeta(seed=self.seed)
+        start = timeit.default_timer()
 
+        reactive = ReactiveBeta(seed=self.seed)
         pool = ElitePool(pool_limit)
 
         best_solution: SolutionSet | None = None
 
         total_time = moves = 0
-
         last_imp = i = iwi = 0
+
         while iwi < iters and total_time < time_limit:
             self.__init_solution()
 
             beta_used = reactive.choose()
-
-            start = timeit.default_timer()
 
             # O(mp)
             self.construct(beta_used)
@@ -826,8 +825,6 @@ class Solver:
             current_solution = SolutionSet.from_solution(self.solution)
             # O(log l)
             pool.try_add(current_solution)
-
-            total_time += timeit.default_timer() - start
 
             reactive.increment(beta_used, self.solution.obj_func)
 
@@ -848,7 +845,8 @@ class Solver:
 
         # O(?)
         self.post_optimize(pool)
-        # self.replace_solution(best_solution)
+
+        total_time = timeit.default_timer() - start
 
         self.solution.time = total_time
         self.solution.moves = moves
@@ -874,64 +872,6 @@ class Solver:
         self.replace_solution(best_solution)
 
         return self.solution
-
-    def _grasp_iters_detailed(self, max_iters: int, beta: float) -> pd.DataFrame:
-        """
-        Modified method for the experiment of calibrating iterations.
-
-        To use GRASP for other purposes, see `grasp`.
-        """
-        datalist = list()
-
-        best_solution = None
-        best_radius = current_radius = math.inf
-
-        total_time = moves = 0
-
-        i = 0
-        while i < max_iters:
-            self.__init_solution()
-
-            start = timeit.default_timer()
-
-            beta_used = self.rng.random() if beta == -1 else beta
-            self.construct(beta_used)
-            rgd_of = self.solution.obj_func
-
-            self.fast_vertex_substitution()
-            afvs_of = self.solution.obj_func
-
-            total_time += timeit.default_timer() - start
-
-            current_radius = self.solution.obj_func
-            is_new_best = best_solution is None or current_radius < best_radius
-            if is_new_best:
-                best_solution = deepcopy(self.solution)
-                best_radius = current_radius
-                moves += 1
-
-            datalist.append(
-                (
-                    i,
-                    beta_used,
-                    rgd_of,
-                    afvs_of,
-                    total_time,
-                    is_new_best,
-                )
-            )
-
-            i += 1
-
-        self.solution = deepcopy(best_solution)
-        self.solution.time = total_time
-        self.solution.moves = moves
-
-        dataframe = pd.DataFrame(
-            datalist,
-            columns="iter beta RGD_OF AFVS_OF time is_new_best".split(),
-        )
-        return dataframe
 
 
 def generate_solvers(
