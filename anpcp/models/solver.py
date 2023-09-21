@@ -1,13 +1,10 @@
-from copy import deepcopy
 from enum import Enum
 import itertools
-from typing import Sequence
 import heapq
 import math
 import timeit
 
 import numpy as np
-import pandas as pd
 
 from .elite_pool import ElitePool
 from .instance import Instance
@@ -872,16 +869,3 @@ class Solver:
         self.replace_solution(best_solution)
 
         return self.solution
-
-
-def generate_solvers(
-    instances: Sequence[Instance],
-    p_percentages: Sequence[float],
-    alpha_values: Sequence[int],
-) -> list[Solver]:
-    return [
-        Solver(instance, int(instance.m * p), alpha)
-        for instance in instances
-        for p in p_percentages
-        for alpha in alpha_values
-    ]

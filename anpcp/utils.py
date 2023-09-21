@@ -1,16 +1,13 @@
 from copy import deepcopy
 import os
 import timeit
-from typing import (
-    Iterable,
-    Tuple,
-)
+from typing import Iterable, Tuple, Sequence
 
 import pandas as pd
 
 from models.instance import Instance
 from models.solution import Solution
-from models.solver import Solver, generate_solvers
+from models.solver import Solver
 
 
 DATA_PATH = os.path.join("..", "data")
@@ -101,6 +98,19 @@ def create_dataframe_local_search(data: Iterable[Tuple], initial_header: str):
 
 def format_latex_table(dataframe: pd.DataFrame, path: str):
     dataframe.to_latex(path, float_format="%.2f", multirow=True)
+
+
+def generate_solvers(
+    instances: Sequence[Instance],
+    p_percentages: Sequence[float],
+    alpha_values: Sequence[int],
+) -> list[Solver]:
+    return [
+        Solver(instance, int(instance.m * p), alpha)
+        for instance in instances
+        for p in p_percentages
+        for alpha in alpha_values
+    ]
 
 
 def get_solvers(
