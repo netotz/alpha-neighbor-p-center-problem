@@ -745,6 +745,8 @@ class Solver:
 
         Time O(mnp + p**3 n)
         """
+        best_solution = min(starting, target)
+
         # O(p), worst case if both solutions are completely different
         candidates_out = starting.open_facilities - target.open_facilities
         # O(p)
@@ -754,15 +756,13 @@ class Solver:
         self.replace_solution(starting)
         self.local_search.start_path_relinking(candidates_out, candidates_in)
 
-        minheap: list[SolutionSet] = [min(starting, target)]
-
         methods = {
             LocalSearchAlgorithm.GI: self.interchange_relinking,
             LocalSearchAlgorithm.AFVS: self.try_improve_relinking,
         }
         best_move_getter = methods[algorithm]
 
-        ## O(mnp + p**3 n + 2p + p log p) ~= O(mnp + p**3 n)
+        ## O(mnp + p**3 n + 2p) ~= O(mnp + p**3 n)
         # O(p)
         while self.local_search.are_there_candidates():
             # O(mn + p**2 n)
@@ -771,20 +771,14 @@ class Solver:
             self.local_search.remove_applied_candidates(best_move.fi, best_move.fr)
 
             # O(p)
-            current = SolutionSet.from_solution(self.solution)
-
-            if current < starting or current < target:
-                # O(log p)
-                heapq.heappush(
-                    minheap,
-                    current,
-                )
+            current_solution = SolutionSet.from_solution(self.solution)
+            best_solution = min(best_solution, current_solution)
 
         self.local_search.end_path_relinking(
             self.solution.open_facilities, self.solution.closed_facilities
         )
 
-        return min(minheap[0], starting, target)
+        return best_solution
 
     def grasp(
         self,
