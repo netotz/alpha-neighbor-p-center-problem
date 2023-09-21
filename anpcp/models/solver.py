@@ -26,17 +26,6 @@ class NotAllocatedError(Exception):
     pass
 
 
-class LocalSearchAlgorithm(Enum):
-    GI = 0
-    """
-    Greedy Interchange
-    """
-    AFVS = 1
-    """
-    Alpha Fast Vertex Substitution
-    """
-
-
 class Solver:
     def __init__(
         self,
@@ -104,14 +93,14 @@ class Solver:
 
         return self.solution
 
-    def replace_solution(self, set: SolutionSet) -> None:
+    def replace_solution(self, new: SolutionSet) -> None:
         """
         Replaces `self.solution` using the data contained in `set` of type `SolutionSet`.
 
         Time O(mn)
         """
         self.__init_solution()
-        self.solution.open_facilities = set.open_facilities.copy()
+        self.solution.open_facilities = set(new.open_facilities)
         # O(m)
         self.solution.closed_facilities = (
             self.instance.facilities_indexes - self.solution.open_facilities
@@ -653,7 +642,7 @@ class Solver:
 
     def try_improve_relinking(self) -> BestMove:
         """
-        Tries to improve S by applying Path Relinking, using ANPCP.
+        Tries to improve S by applying Path Relinking, using A-FVS.
 
         Time O(mn + p**2 n)
         """
@@ -733,12 +722,7 @@ class Solver:
 
         return self.solution
 
-    def path_relink(
-        self,
-        starting: SolutionSet,
-        target: SolutionSet,
-        algorithm: LocalSearchAlgorithm,
-    ) -> SolutionSet:
+    def path_relink(self, starting: SolutionSet, target: SolutionSet) -> SolutionSet:
         """
         Performs a Path Relinking between `starting` and `target` solutions.
         Returns the best of `starting`, `target`, or best relinked found.
@@ -748,31 +732,25 @@ class Solver:
         best_solution = min(starting, target)
 
         # O(p), worst case if both solutions are completely different
-        candidates_out = starting.open_facilities - target.open_facilities
+        candidates_out = set(starting.open_facilities - target.open_facilities)
         # O(p)
-        candidates_in = target.open_facilities - starting.open_facilities
+        candidates_in = set(target.open_facilities - starting.open_facilities)
 
         # O(mn)
         self.replace_solution(starting)
         self.local_search.start_path_relinking(candidates_out, candidates_in)
 
-        methods = {
-            LocalSearchAlgorithm.GI: self.interchange_relinking,
-            LocalSearchAlgorithm.AFVS: self.try_improve_relinking,
-        }
-        best_move_getter = methods[algorithm]
-
         ## O(mnp + p**3 n + 2p) ~= O(mnp + p**3 n)
         # O(p)
         while self.local_search.are_there_candidates():
             # O(mn + p**2 n)
-            best_move = best_move_getter()
+            best_move = self.try_improve_relinking()
 
             self.local_search.remove_applied_candidates(best_move.fi, best_move.fr)
 
             # O(p)
-            current_solution = SolutionSet.from_solution(self.solution)
-            best_solution = min(best_solution, current_solution)
+            relinked = SolutionSet.from_solution(self.solution)
+            best_solution = min(best_solution, relinked)
 
         self.local_search.end_path_relinking(
             self.solution.open_facilities, self.solution.closed_facilities
@@ -809,6 +787,8 @@ class Solver:
         total_time = moves = 0
         last_imp = i = iwi = 0
 
+        ## O(mpn + log l) * i
+        # O(i)
         while iwi < iters and total_time < time_limit:
             self.__init_solution()
 
@@ -821,7 +801,7 @@ class Solver:
 
             # O(p)
             current_solution = SolutionSet.from_solution(self.solution)
-            # O(log l)
+            # O(p + log l)
             pool.try_add(current_solution)
 
             reactive.increment(beta_used, self.solution.obj_func)
@@ -862,8 +842,7 @@ class Solver:
         # O(l**2)
         for starting, target in itertools.combinations(pool.iter_solutions(), 2):
             # O(mnp + p**3 n)
-            relinked = self.path_relink(starting, target, LocalSearchAlgorithm.AFVS)
-
+            relinked = self.path_relink(starting, target)
             best_solution = min(relinked, best_solution)
 
         # O(mn)
