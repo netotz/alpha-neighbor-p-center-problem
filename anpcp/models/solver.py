@@ -126,7 +126,14 @@ class Solver:
         This method was created to get an instance of a derived solver,
         like `GraspFinalSolver`.
         """
-        return cls(solver.instance, solver.p, solver.alpha)
+        return cls(
+            solver.instance,
+            solver.p,
+            solver.alpha,
+            solver.with_random_solution,
+            solver.local_search.is_first_improvement,
+            solver.seed,
+        )
 
     def get_users_indexes(self) -> set[int]:
         return self.instance.users_indexes
