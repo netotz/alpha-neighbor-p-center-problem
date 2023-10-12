@@ -26,6 +26,15 @@ class SolutionSet:
             frozenset(solution.open_facilities),
         )
 
+    def copy(self) -> "SolutionSet":
+        """
+        Time O(p) to copy the set of open facilities
+        """
+        return SolutionSet(
+            self.obj_func,
+            self.open_facilities.copy(),
+        )
+
     def __eq__(self, __other: "SolutionSet") -> bool:
         return self.obj_func == __other.obj_func
 

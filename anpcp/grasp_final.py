@@ -36,7 +36,7 @@ class GraspFinalSolver(Solver):
 
         last_imp = i = iwi = 0
         while iwi < iters and total_time < time_limit:
-            self.__init_solution()
+            self.init_solution()
 
             beta_used = random.random() if beta == -1 else beta
 

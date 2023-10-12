@@ -51,7 +51,7 @@ class Solver:
         )
         self.critical_allocation: AllocatedFacility | None = None
 
-        self.__init_solution()
+        self.init_solution()
         if self.with_random_solution:
             self.randomize_solution()
         else:
@@ -70,7 +70,7 @@ class Solver:
     def __set_alpha_range(self) -> None:
         self.alpha_range = set(range(1, self.alpha + 2))
 
-    def __init_solution(self):
+    def init_solution(self):
         self.solution = Solution()
 
     def randomize_solution(self) -> Solution:
@@ -99,7 +99,7 @@ class Solver:
 
         Time O(mn)
         """
-        self.__init_solution()
+        self.init_solution()
         self.solution.open_facilities = set(new.open_facilities)
         # O(m)
         self.solution.closed_facilities = (
@@ -499,7 +499,7 @@ class Solver:
         Time O(pn + 4p) ~= O(pn)
         """
         # best objective function so far
-        best_radius = 0
+        best_radius = -math.inf
 
         # even if it's Path Relinking, all open facilities must be considered
         # because the a-neighbors of any user could be outside the candidates_out
@@ -790,7 +790,7 @@ class Solver:
         ## O(mpn + log l) * i
         # O(i)
         while iwi < iters and total_time < time_limit:
-            self.__init_solution()
+            self.init_solution()
 
             beta_used = reactive.choose()
 
