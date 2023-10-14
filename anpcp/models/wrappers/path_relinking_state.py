@@ -1,9 +1,4 @@
 from dataclasses import dataclass
-from warnings import warn
-
-
-class UnexpectedUpdateWarning(UserWarning):
-    pass
 
 
 @dataclass
@@ -40,41 +35,27 @@ class PathRelinkingState:
         """
         return len(self.candidates_in) > 1
 
-    def start_path_relinking(
-        self, candidates_out: set[int], candidates_in: set[int]
-    ) -> None:
-        self.__modify_path_relinking(True, candidates_out, candidates_in)
+    def run(self, candidates_out: set[int], candidates_in: set[int]) -> None:
+        self.__update(True, candidates_out, candidates_in)
 
-    def end_path_relinking(
-        self, open_facilities: set[int], closed_facilities: set[int]
-    ) -> None:
-        self.__modify_path_relinking(False, open_facilities, closed_facilities)
+    def stop(self) -> None:
+        self.__update(False, None, None)
 
-    def update_candidates(
-        self, open_facilities: set[int], closed_facilities: set[int]
-    ) -> None:
+    def update_candidates(self, inserted: int, removed: int) -> None:
         """
-        Updates `self.candidates_out = open_facilities` (S) and `self.candidates_in = closed_facilities` (F - S).
-        This should be called after an applied swap in S.
-        If called during Path Relinking, a `UnexpectedUpdateWarning` is issued.
+        Removes `inserted` from `candidates_in` and `removed` from `candidates_out`.
+
+        Call this method after an applied swap during Path Relinking.
         """
-        if self.is_running:
-            warn(
-                "Candidate facilities are trying to be updated during Path Relinking."
-                + "This could lead to unexpected behaviour and exceptions."
-                + "If you want to end Path Relinking and switch to normal local search, use `end_path_relinking` method instead.",
-                UnexpectedUpdateWarning,
-            )
-
-        self.__modify_path_relinking(False, open_facilities, closed_facilities)
-
-    def remove_applied_candidates(self, inserted: int, removed: int) -> None:
         self.candidates_in.remove(inserted)
         self.candidates_out.remove(removed)
 
-    def __modify_path_relinking(
-        self, is_it: bool, candidates_out: set[int], candidates_in: set[int]
+    def __update(
+        self,
+        is_running: bool,
+        candidates_out: set[int] | None,
+        candidates_in: set[int] | None,
     ) -> None:
-        self.is_running = is_it
+        self.is_running = is_running
         self.candidates_out = candidates_out
         self.candidates_in = candidates_in

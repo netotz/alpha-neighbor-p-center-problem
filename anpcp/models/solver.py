@@ -258,13 +258,6 @@ class Solver:
         """
         self.solution.swap(facility_in, facility_out)
 
-        if not self.path_relinking_state.is_running:
-            self.path_relinking_state.update_candidates(
-                self.solution.open_facilities,
-                self.solution.closed_facilities,
-            )
-        # update for Path Relinking is made in its method
-
         # O(mn)
         self.update_solution()
 
@@ -344,12 +337,6 @@ class Solver:
             solution.insert(last_inserted)
 
         self.solution = solution
-        # update for local search
-        self.path_relinking_state.update_candidates(
-            self.solution.open_facilities,
-            self.solution.closed_facilities,
-        )
-
         # O(mn)
         self.update_solution()
 
@@ -455,6 +442,26 @@ class Solver:
 
         return BestMove(best_fi, best_fr, self.solution.obj_func)
 
+    def __update_neighbors_relinking(
+        self,
+        lost_neighbors: dict[int, int],
+    ) -> dict[int, int]:
+        """
+        If Path Relinking is running, returns a new `lost_neighbors` dictionary
+        by removing those not in `candidates_out`.
+
+        Time O(p)
+        """
+        if not self.path_relinking_state.is_running:
+            return lost_neighbors
+
+        # O(p)
+        return {
+            k: v
+            for k, v in lost_neighbors.items()
+            if k in self.path_relinking_state.candidates_out
+        }
+
     def __get_best_fr(
         self,
         best_radius: int,
@@ -471,13 +478,6 @@ class Solver:
 
         # O(p)
         for fr in lost_neighbors.keys():
-            # only consider facilities that are in Path Relinking subset
-            if (
-                self.path_relinking_state.is_running
-                and fr not in self.path_relinking_state.candidates_out
-            ):
-                continue
-
             current_radius = max(
                 best_radius,
                 lost_neighbors[fr],
@@ -549,7 +549,10 @@ class Solver:
                 same_neighbors[fj] = max(same_neighbors[fj], same_arg)
 
         # O(p)
+        lost_neighbors = self.__update_neighbors_relinking(lost_neighbors)
+        # O(p)
         largest_two = LargestTwo(same_neighbors)
+
         # O(p)
         return self.__get_best_fr(best_radius, lost_neighbors, largest_two)
 
@@ -739,7 +742,7 @@ class Solver:
 
         # O(mn)
         self.replace_solution(starting)
-        self.path_relinking_state.start_path_relinking(candidates_out, candidates_in)
+        self.path_relinking_state.run(candidates_out, candidates_in)
 
         ## O(mnp + p**3 n + 2p) ~= O(mnp + p**3 n)
         # O(p)
@@ -747,15 +750,13 @@ class Solver:
             # O(mn + p**2 n)
             best_move = self.try_improve_relinking()
 
-            self.path_relinking_state.remove_applied_candidates(
-                best_move.fi, best_move.fr
-            )
+            self.path_relinking_state.update_candidates(best_move.fi, best_move.fr)
 
             # O(p)
             relinked = SolutionSet.from_solution(self.solution)
             best_solution = min(best_solution, relinked)
 
-        self.path_relinking_state.end_path_relinking(
+        self.path_relinking_state.stop(
             self.solution.open_facilities, self.solution.closed_facilities
         )
 
