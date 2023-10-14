@@ -111,9 +111,7 @@ class ExperimentalSolver(Solver):
         # O(p)
         candidates_in = set(target.open_facilities - starting.open_facilities)
 
-        # O(mn)
-        self.replace_solution(starting)
-
+        relinked = starting
         self.path_relinking_state.start(candidates_out, candidates_in)
 
         best_move_getter = self.__get_pr_method()
@@ -121,30 +119,36 @@ class ExperimentalSolver(Solver):
         ## O(mpn + p**3 n + mp**2 n + 2p) ~= O(mp**2 n + p**3 n)
         # O(p)
         while self.path_relinking_state.are_there_candidates():
+            # O(mn)
+            self.replace_solution(relinked)
+
             # O(mn + p**2 n)
             best_move = best_move_getter()
             self.path_relinking_state.update_candidates(best_move.fi, best_move.fr)
 
-            prev_of = self.solution.obj_func
+            # O(p)
+            relinked = SolutionSet.from_solution(self.solution)
+            self.current_pr_stats.relinkeds.append(relinked)
 
             self.path_relinking_state.pause()
             start_ls = timeit.default_timer()
             # there's no guarantee that relinked solution is local optimum
             # O(mpn)
-            self.fast_vertex_substitution()
+            local_optimum = self.fast_vertex_substitution()
             self.current_pr_stats.ls_time += timeit.default_timer() - start_ls
             self.path_relinking_state.resume()
 
-            ls_of = self.solution.obj_func
-            self.current_pr_stats.ls_did_improveds.append(ls_of < prev_of)
+            self.current_pr_stats.ls_did_improveds.append(
+                local_optimum.obj_func < relinked.obj_func
+            )
 
-            # O(p)
-            relinked = SolutionSet.from_solution(self.solution)
+            self.current_pr_stats.did_improveds.append(
+                local_optimum.obj_func < original_best.obj_func
+            )
 
-            self.current_pr_stats.relinkeds.append(relinked)
-            self.current_pr_stats.did_improveds.append(relinked < original_best)
-
-            best_solution = min(best_solution, relinked)
+            if local_optimum.obj_func < best_solution.obj_func:
+                # O(p)
+                best_solution = SolutionSet.from_solution(local_optimum)
 
         self.path_relinking_state.end()
 

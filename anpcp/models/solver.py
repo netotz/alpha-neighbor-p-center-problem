@@ -506,8 +506,11 @@ class Solver:
 
         # even if it's Path Relinking, all open facilities must be considered
         # because the a-neighbors of any user could be outside the candidates_out
+
+        # r(.) array in pseudocode
         # O(p)
         same_neighbors = {fr: 0 for fr in self.solution.open_facilities}
+        # z(.) array in pseudocode
         # O(p)
         lost_neighbors = dict(same_neighbors)
 
@@ -523,15 +526,21 @@ class Solver:
             is_attracted = fi_distance < alphath.distance
 
             if is_attracted:
+                # m_z in pseudocode
                 lost_arg = alphath.distance
                 # store farther distance between fi and a-1
+                # m_r in pseudocode
                 same_arg = max(
                     fi_distance,
                     neighbors[self.alpha - 1].distance if self.alpha > 1
                     # or if it's PCP
                     else 0,
                 )
+
                 best_radius = max(best_radius, same_arg)
+
+                # alphath is irrelevant if user is attracted to fi
+                neighbors.pop(self.alpha)
             else:
                 # store closer distance between fi and a+1
                 lost_arg = min(fi_distance, neighbors[self.alpha + 1].distance)
@@ -542,10 +551,6 @@ class Solver:
             # O(a) ~= O(1) since alpha is usually very small
             for neighbor in neighbors.values():
                 fj = neighbor.index
-
-                # alphath is irrelevant if user is attracted to fi
-                if is_attracted and fj == alphath.index:
-                    continue
 
                 lost_neighbors[fj] = max(lost_neighbors[fj], lost_arg)
                 same_neighbors[fj] = max(same_neighbors[fj], same_arg)
@@ -733,7 +738,7 @@ class Solver:
         Performs a Path Relinking between `starting` and `target` solutions.
         Returns the best of `starting`, `target`, or best relinked found.
 
-        Time O(mnp + p**3 n)
+        Time O(mp**2 n)
         """
         best_solution = min(starting, target)
 
@@ -742,26 +747,30 @@ class Solver:
         # O(p)
         candidates_in = set(target.open_facilities - starting.open_facilities)
 
-        # O(mn)
-        self.replace_solution(starting)
-
+        relinked = starting
         self.path_relinking_state.start(candidates_out, candidates_in)
 
-        ## O(mnp + p**3 n + 2p) ~= O(mnp + p**3 n)
+        ## O(mpn + p**3 n + mp**2 n) ~= O(mp**2 n)
         # O(p)
         while self.path_relinking_state.are_there_candidates():
+            # O(mn)
+            self.replace_solution(relinked)
+
             # O(mn + p**2 n)
             best_move = self.try_improve_relinking()
             self.path_relinking_state.update_candidates(best_move.fi, best_move.fr)
 
-            self.path_relinking_state.pause()
-            self.fast_vertex_substitution()
-            self.path_relinking_state.resume()
-
             # O(p)
             relinked = SolutionSet.from_solution(self.solution)
 
-            best_solution = min(best_solution, relinked)
+            self.path_relinking_state.pause()
+            # O(mpn)
+            local_optimum = self.fast_vertex_substitution()
+            self.path_relinking_state.resume()
+
+            if local_optimum.obj_func < best_solution.obj_func:
+                # O(p)
+                best_solution = SolutionSet.from_solution(local_optimum)
 
         self.path_relinking_state.end()
 
