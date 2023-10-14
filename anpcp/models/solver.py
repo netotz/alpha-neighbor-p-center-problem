@@ -58,10 +58,11 @@ class Solver:
             self.solution.closed_facilities = self.instance.facilities_indexes.copy()
 
         self.history: list[Solution] = []
+
+        self.is_first_improvement = is_first_improvement
         self.local_search = LocalSearchState(
             self.solution.open_facilities,
             self.solution.closed_facilities,
-            is_first_improvement,
         )
 
     def __repr__(self) -> str:
@@ -120,7 +121,7 @@ class Solver:
             solver.p,
             solver.alpha,
             solver.with_random_solution,
-            solver.local_search.is_first_improvement,
+            solver.is_first_improvement,
             solver.seed,
         )
 
@@ -387,7 +388,7 @@ class Solver:
                         best_fi = fi
                         best_fr = fr
 
-                        if self.local_search.is_first_improvement:
+                        if self.is_first_improvement:
                             break
 
                     # if it's best improvement, "restore" base solution
@@ -395,7 +396,7 @@ class Solver:
                     self.solution.swap(fr, fi)
 
                 is_improved = best_radius < current_radius
-                if is_improved and self.local_search.is_first_improvement:
+                if is_improved and self.is_first_improvement:
                     break
                 # if solution hasn't improved in FI, or strategy is BI,
                 # keep searching (next fi)
@@ -403,7 +404,7 @@ class Solver:
             is_improved = best_radius < current_radius
             # apply the move
             if is_improved:
-                if self.local_search.is_first_improvement:
+                if self.is_first_improvement:
                     current_radius = best_radius
                     # current solution is already best,
                     # because it's the last one updated
@@ -590,7 +591,7 @@ class Solver:
                 best_fr = facility_out.index
 
                 # if is first improvement, apply the swap now
-                if self.local_search.is_first_improvement:
+                if self.is_first_improvement:
                     break
 
         return BestMove(best_fi, best_fr, best_radius)

@@ -28,12 +28,6 @@ class LocalSearchState:
     Otherwise, it is the whole set of closed facilities, F - S.
     """
 
-    is_first_improvement: bool
-    """
-    `True` if moves are applied on First Improvement,
-    `False` if applied on Best Improvement.
-    """
-
     is_path_relinking: bool = False
     """
     `True` if Path Relinking is currently being applied.
