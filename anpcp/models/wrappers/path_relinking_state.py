@@ -7,7 +7,7 @@ class UnexpectedUpdateWarning(UserWarning):
 
 
 @dataclass
-class LocalSearchState:
+class PathRelinkingState:
     """
     Wraps properties of local search algorithms.
     """

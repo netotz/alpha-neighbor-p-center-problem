@@ -113,17 +113,19 @@ class ExperimentalSolver(Solver):
 
         # O(mn)
         self.replace_solution(starting)
-        self.local_search.start_path_relinking(candidates_out, candidates_in)
+        self.path_relinking_state.start_path_relinking(candidates_out, candidates_in)
 
         best_move_getter = self.__get_pr_method()
 
         ## O(mpn + p**3 n + mp**2 n + 2p) ~= O(mp**2 n + p**3 n)
         # O(p)
-        while self.local_search.are_there_candidates():
+        while self.path_relinking_state.are_there_candidates():
             # O(mn + p**2 n)
             best_move = best_move_getter()
 
-            self.local_search.remove_applied_candidates(best_move.fi, best_move.fr)
+            self.path_relinking_state.remove_applied_candidates(
+                best_move.fi, best_move.fr
+            )
 
             prev_of = self.solution.obj_func
 
@@ -144,7 +146,7 @@ class ExperimentalSolver(Solver):
 
             best_solution = min(best_solution, relinked)
 
-        self.local_search.end_path_relinking(
+        self.path_relinking_state.end_path_relinking(
             self.solution.open_facilities, self.solution.closed_facilities
         )
 

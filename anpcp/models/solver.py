@@ -16,7 +16,7 @@ from .wrappers import (
     AllocatedFacility,
     BestMove,
     LargestTwo,
-    LocalSearchState,
+    PathRelinkingState,
     MinMaxAvg,
     MovedFacility,
 )
@@ -60,7 +60,7 @@ class Solver:
         self.history: list[Solution] = []
 
         self.is_first_improvement = is_first_improvement
-        self.local_search = LocalSearchState(
+        self.path_relinking_state = PathRelinkingState(
             self.solution.open_facilities,
             self.solution.closed_facilities,
         )
@@ -258,8 +258,8 @@ class Solver:
         """
         self.solution.swap(facility_in, facility_out)
 
-        if not self.local_search.is_path_relinking:
-            self.local_search.update_candidates(
+        if not self.path_relinking_state.is_path_relinking:
+            self.path_relinking_state.update_candidates(
                 self.solution.open_facilities,
                 self.solution.closed_facilities,
             )
@@ -345,7 +345,7 @@ class Solver:
 
         self.solution = solution
         # update for local search
-        self.local_search.update_candidates(
+        self.path_relinking_state.update_candidates(
             self.solution.open_facilities,
             self.solution.closed_facilities,
         )
@@ -435,10 +435,10 @@ class Solver:
 
         ## O(mp**2 n)
         # O(p)
-        for fi in self.local_search.candidates_in:
+        for fi in self.path_relinking_state.candidates_in:
             ## O(mpn)
             # O(p)
-            for fr in self.local_search.candidates_out:
+            for fr in self.path_relinking_state.candidates_out:
                 # O(mn)
                 self.apply_swap(fi, fr)
 
@@ -473,8 +473,8 @@ class Solver:
         for fr in lost_neighbors.keys():
             # only consider facilities that are in Path Relinking subset
             if (
-                self.local_search.is_path_relinking
-                and fr not in self.local_search.candidates_out
+                self.path_relinking_state.is_path_relinking
+                and fr not in self.path_relinking_state.candidates_out
             ):
                 continue
 
@@ -609,7 +609,7 @@ class Solver:
 
         ## O(p**2 n)
         # O(p)
-        for fi in self.local_search.candidates_in:
+        for fi in self.path_relinking_state.candidates_in:
             # O(pn)
             facility_out = self.get_facility_out(fi)
 
@@ -739,21 +739,23 @@ class Solver:
 
         # O(mn)
         self.replace_solution(starting)
-        self.local_search.start_path_relinking(candidates_out, candidates_in)
+        self.path_relinking_state.start_path_relinking(candidates_out, candidates_in)
 
         ## O(mnp + p**3 n + 2p) ~= O(mnp + p**3 n)
         # O(p)
-        while self.local_search.are_there_candidates():
+        while self.path_relinking_state.are_there_candidates():
             # O(mn + p**2 n)
             best_move = self.try_improve_relinking()
 
-            self.local_search.remove_applied_candidates(best_move.fi, best_move.fr)
+            self.path_relinking_state.remove_applied_candidates(
+                best_move.fi, best_move.fr
+            )
 
             # O(p)
             relinked = SolutionSet.from_solution(self.solution)
             best_solution = min(best_solution, relinked)
 
-        self.local_search.end_path_relinking(
+        self.path_relinking_state.end_path_relinking(
             self.solution.open_facilities, self.solution.closed_facilities
         )
 
