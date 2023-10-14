@@ -12,7 +12,7 @@ class PathRelinkingState:
     Wraps properties of local search algorithms.
     """
 
-    candidates_out: set[int]
+    candidates_out: set[int] | None = None
     """
     Set of candidate facilities to remove from S.
     If Path Relinking, these are the open facilities in the starting solution
@@ -20,7 +20,7 @@ class PathRelinkingState:
     Otherwise, it is the whole set of open facilities, S.
     """
 
-    candidates_in: set[int]
+    candidates_in: set[int] | None = None
     """
     Set of candidate facilities to insert into S.
     If Path Relinking, these are the open facilities in the target solution
@@ -28,9 +28,9 @@ class PathRelinkingState:
     Otherwise, it is the whole set of closed facilities, F - S.
     """
 
-    is_path_relinking: bool = False
+    is_running: bool = False
     """
-    `True` if Path Relinking is currently being applied.
+    `True` if Path Relinking is currently running.
     Otherwise, `False`.
     """
 
@@ -58,7 +58,7 @@ class PathRelinkingState:
         This should be called after an applied swap in S.
         If called during Path Relinking, a `UnexpectedUpdateWarning` is issued.
         """
-        if self.is_path_relinking:
+        if self.is_running:
             warn(
                 "Candidate facilities are trying to be updated during Path Relinking."
                 + "This could lead to unexpected behaviour and exceptions."
@@ -75,6 +75,6 @@ class PathRelinkingState:
     def __modify_path_relinking(
         self, is_it: bool, candidates_out: set[int], candidates_in: set[int]
     ) -> None:
-        self.is_path_relinking = is_it
+        self.is_running = is_it
         self.candidates_out = candidates_out
         self.candidates_in = candidates_in

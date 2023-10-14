@@ -258,7 +258,7 @@ class Solver:
         """
         self.solution.swap(facility_in, facility_out)
 
-        if not self.path_relinking_state.is_path_relinking:
+        if not self.path_relinking_state.is_running:
             self.path_relinking_state.update_candidates(
                 self.solution.open_facilities,
                 self.solution.closed_facilities,
@@ -473,7 +473,7 @@ class Solver:
         for fr in lost_neighbors.keys():
             # only consider facilities that are in Path Relinking subset
             if (
-                self.path_relinking_state.is_path_relinking
+                self.path_relinking_state.is_running
                 and fr not in self.path_relinking_state.candidates_out
             ):
                 continue
