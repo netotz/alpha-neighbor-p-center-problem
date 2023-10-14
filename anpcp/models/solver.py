@@ -40,10 +40,12 @@ class Solver:
         self.p = p
         self.alpha = alpha
         self.with_random_solution = with_random_solution
-        self.__set_alpha_range()
+        self.is_first_improvement = is_first_improvement
 
         self.seed = seed
         self.rng = np.random.default_rng(seed)
+
+        self.__set_alpha_range()
 
         self.allocations = np.zeros(
             (self.instance.n, self.instance.m),
@@ -59,8 +61,11 @@ class Solver:
 
         self.history: list[Solution] = []
 
-        self.is_first_improvement = is_first_improvement
         self.path_relinking_state = PathRelinkingState()
+        """
+        Current state of Path Relinking.
+        This should be referenced only in methods ending in "_relinking".
+        """
 
     def __repr__(self) -> str:
         return f"{Solver.__name__}(I={self.instance}, p={self.p}, a={self.alpha})"

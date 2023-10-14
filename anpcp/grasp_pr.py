@@ -113,6 +113,7 @@ class ExperimentalSolver(Solver):
 
         # O(mn)
         self.replace_solution(starting)
+
         self.path_relinking_state.start(candidates_out, candidates_in)
 
         best_move_getter = self.__get_pr_method()
@@ -122,16 +123,17 @@ class ExperimentalSolver(Solver):
         while self.path_relinking_state.are_there_candidates():
             # O(mn + p**2 n)
             best_move = best_move_getter()
-
             self.path_relinking_state.update_candidates(best_move.fi, best_move.fr)
 
             prev_of = self.solution.obj_func
 
+            self.path_relinking_state.pause()
             start_ls = timeit.default_timer()
             # there's no guarantee that relinked solution is local optimum
             # O(mpn)
             self.fast_vertex_substitution()
             self.current_pr_stats.ls_time += timeit.default_timer() - start_ls
+            self.path_relinking_state.resume()
 
             ls_of = self.solution.obj_func
             self.current_pr_stats.ls_did_improveds.append(ls_of < prev_of)
@@ -144,9 +146,7 @@ class ExperimentalSolver(Solver):
 
             best_solution = min(best_solution, relinked)
 
-        self.path_relinking_state.pause(
-            self.solution.open_facilities, self.solution.closed_facilities
-        )
+        self.path_relinking_state.end()
 
         self.current_pr_stats.best_solution = best_solution
 
