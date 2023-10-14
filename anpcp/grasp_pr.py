@@ -113,7 +113,7 @@ class ExperimentalSolver(Solver):
 
         # O(mn)
         self.replace_solution(starting)
-        self.path_relinking_state.run(candidates_out, candidates_in)
+        self.path_relinking_state.start(candidates_out, candidates_in)
 
         best_move_getter = self.__get_pr_method()
 
@@ -144,7 +144,7 @@ class ExperimentalSolver(Solver):
 
             best_solution = min(best_solution, relinked)
 
-        self.path_relinking_state.stop(
+        self.path_relinking_state.pause(
             self.solution.open_facilities, self.solution.closed_facilities
         )
 

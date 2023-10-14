@@ -60,10 +60,7 @@ class Solver:
         self.history: list[Solution] = []
 
         self.is_first_improvement = is_first_improvement
-        self.path_relinking_state = PathRelinkingState(
-            self.solution.open_facilities,
-            self.solution.closed_facilities,
-        )
+        self.path_relinking_state = PathRelinkingState()
 
     def __repr__(self) -> str:
         return f"{Solver.__name__}(I={self.instance}, p={self.p}, a={self.alpha})"
@@ -442,7 +439,7 @@ class Solver:
 
         return BestMove(best_fi, best_fr, self.solution.obj_func)
 
-    def __update_neighbors_relinking(
+    def __filter_neighbors_relinking(
         self,
         lost_neighbors: dict[int, int],
     ) -> dict[int, int]:
@@ -549,7 +546,7 @@ class Solver:
                 same_neighbors[fj] = max(same_neighbors[fj], same_arg)
 
         # O(p)
-        lost_neighbors = self.__update_neighbors_relinking(lost_neighbors)
+        lost_neighbors = self.__filter_neighbors_relinking(lost_neighbors)
         # O(p)
         largest_two = LargestTwo(same_neighbors)
 
@@ -742,23 +739,26 @@ class Solver:
 
         # O(mn)
         self.replace_solution(starting)
-        self.path_relinking_state.run(candidates_out, candidates_in)
+
+        self.path_relinking_state.start(candidates_out, candidates_in)
 
         ## O(mnp + p**3 n + 2p) ~= O(mnp + p**3 n)
         # O(p)
         while self.path_relinking_state.are_there_candidates():
             # O(mn + p**2 n)
             best_move = self.try_improve_relinking()
-
             self.path_relinking_state.update_candidates(best_move.fi, best_move.fr)
+
+            self.path_relinking_state.pause()
+            self.fast_vertex_substitution()
+            self.path_relinking_state.resume()
 
             # O(p)
             relinked = SolutionSet.from_solution(self.solution)
+
             best_solution = min(best_solution, relinked)
 
-        self.path_relinking_state.stop(
-            self.solution.open_facilities, self.solution.closed_facilities
-        )
+        self.path_relinking_state.end()
 
         return best_solution
 
