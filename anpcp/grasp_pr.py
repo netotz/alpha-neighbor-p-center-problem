@@ -34,7 +34,7 @@ class BaseStats:
     time: float = 0
 
     def count_improvements(self) -> int:
-        return len(i for i in self.did_improveds if i)
+        return sum(1 if i else 0 for i in self.did_improveds)
 
 
 class PathRelinkingStats(BaseStats):
@@ -46,7 +46,7 @@ class PathRelinkingStats(BaseStats):
         return len(self.relinkeds)
 
     def count_ls_improvements(self) -> int:
-        return len(i for i in self.ls_did_improveds if i)
+        return sum(1 if i else 0 for i in self.ls_did_improveds)
 
 
 class PostOptimizationStats(BaseStats):
