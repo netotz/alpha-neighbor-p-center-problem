@@ -8,7 +8,7 @@ class PathRelinkingState:
     """
 
     def __init__(self) -> None:
-        self.is_running: bool = True
+        self.is_running: bool = False
         """
         `True` if Path Relinking is currently running.
         Otherwise, `False`.
