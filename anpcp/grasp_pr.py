@@ -2,12 +2,14 @@ from enum import Enum
 import itertools
 import math
 import os
+import re
 import timeit
 
 import click
 import numpy as np
 import pandas as pd
 
+from models.instance import Instance
 from models.elite_pool import ElitePool
 from models.reactive_beta import ReactiveBeta
 from models.solution import Solution
@@ -29,18 +31,22 @@ class LocalSearchAlgorithm(Enum):
 
 
 class BaseStats:
-    did_improveds: list[bool] = []
-    best_solution: SolutionSet
-    time: float = 0
+    def __init__(self) -> None:
+        self.did_improveds: list[bool] = []
+        self.best_solution: SolutionSet | None = None
+        self.time: float = 0
 
     def count_improvements(self) -> int:
         return sum(1 if i else 0 for i in self.did_improveds)
 
 
 class PathRelinkingStats(BaseStats):
-    relinkeds: list[SolutionSet] = []
-    ls_time: float = 0
-    ls_did_improveds: list[bool] = []
+    def __init__(self) -> None:
+        self.relinkeds: list[SolutionSet] = []
+        self.ls_time: float = 0
+        self.ls_did_improveds: list[bool] = []
+
+        super().__init__()
 
     def count_paths(self) -> int:
         return len(self.relinkeds)
@@ -50,9 +56,12 @@ class PathRelinkingStats(BaseStats):
 
 
 class PostOptimizationStats(BaseStats):
-    pr_stats: list[PathRelinkingStats] = []
-    total_time: float = 0
-    grasp_best_solution: SolutionSet | None = None
+    def __init__(self) -> None:
+        self.pr_stats: list[PathRelinkingStats] = []
+        self.total_time: float = 0
+        self.grasp_best_solution: SolutionSet | None = None
+
+        super().__init__()
 
     def get_pr_imps_mean(self) -> float:
         return np.array([p.count_improvements() for p in self.pr_stats]).mean()
@@ -83,9 +92,22 @@ class PostOptimizationStats(BaseStats):
 
 
 class ExperimentalSolver(Solver):
-    pr_algorithm: LocalSearchAlgorithm
-    current_pr_stats: PathRelinkingStats | None
-    po_stats = PostOptimizationStats()
+    def __init__(
+        self,
+        instance: Instance,
+        p: int,
+        alpha: int,
+        with_random_solution=False,
+        is_first_improvement=True,
+        seed: int | None = None,
+    ):
+        self.pr_algorithm: LocalSearchAlgorithm | None = None
+        self.current_pr_stats: PathRelinkingStats | None = None
+        self.po_stats = PostOptimizationStats()
+
+        super().__init__(
+            instance, p, alpha, with_random_solution, is_first_improvement, seed
+        )
 
     def __get_pr_method(self):
         methods = {
@@ -345,12 +367,12 @@ def __run(
 ):
     pr_solvers: list[ExperimentalSolver] = []
 
-    for solver in get_solvers(name, variations, p_percents, alpha_values):
+    solvers = get_solvers(name, variations, p_percents, alpha_values)
+
+    for solver in solvers:
         print(
             f"\tCurrent: {solver.instance.name}, p = {solver.p}, alpha = {solver.alpha} ..."
         )
-
-        row = [name, solver.instance.index, solver.p, solver.alpha]
 
         for pr_algorithm in [LocalSearchAlgorithm.GI, LocalSearchAlgorithm.AFVS]:
             print(f"\t\tPath Relinking algorithm: {pr_algorithm} ...")
@@ -369,6 +391,7 @@ def __run(
         "i",
         "p",
         "alpha",
+        "algorithm",
         "best_grasp",
         "best_po",
         "best_diff",
@@ -387,6 +410,7 @@ def __run(
             prs.instance.index,
             prs.p,
             prs.alpha,
+            prs.pr_algorithm,
             prs.po_stats.grasp_best_solution.obj_func,
             prs.po_stats.best_solution.obj_func,
             prs.po_stats.get_obj_func_diff(),
@@ -413,7 +437,38 @@ def read_results(instance_name: str) -> pd.DataFrame:
     return pd.read_pickle(filepath)
 
 
+def get_filenames() -> list[str]:
+    """
+    Searches the directory `FINAL_PATH` and returns a list of
+    the filenames of the experiment results.
+    """
+    EXTENSION = ".pkl"
+
+    filenames = [
+        # remove prefix and extension from filename
+        filename[len(PREFIX) :].split(".")[0]
+        for filename in os.listdir(PR_PATH)
+        # ignore 'solver_' and .tex files
+        if filename.startswith(PREFIX) and filename.endswith(EXTENSION)
+    ]
+    # sort names by number of nodes
+    filenames.sort(key=lambda n: int(re.findall(r"\d+", n)[0]))
+
+    return filenames
+
+
 if __name__ == "__main__":
     print("Running...")
-    __run()
+    __run(
+        [
+            "-n",
+            "ch150_100_50",
+            "-v",
+            "2",
+            "-p",
+            "0.1",
+            "-a",
+            "2",
+        ]
+    )
     print("Finished.")
