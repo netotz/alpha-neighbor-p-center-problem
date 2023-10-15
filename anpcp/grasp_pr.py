@@ -124,7 +124,8 @@ class ExperimentalSolver(Solver):
 
         Time O(mp**2 n + p**3 n)
         """
-        best_solution = min(starting, target)
+        # O(p)
+        best_solution = min(starting, target).copy()
         # O(p)
         original_best = best_solution.copy()
 
@@ -133,7 +134,8 @@ class ExperimentalSolver(Solver):
         # O(p)
         candidates_in = set(target.open_facilities - starting.open_facilities)
 
-        relinked = starting
+        # O(p)
+        relinked = starting.copy()
         self.path_relinking_state.start(candidates_out, candidates_in)
 
         best_move_getter = self.__get_pr_method()
@@ -174,7 +176,8 @@ class ExperimentalSolver(Solver):
 
         self.path_relinking_state.end()
 
-        self.current_pr_stats.best_solution = best_solution
+        # O(p)
+        self.current_pr_stats.best_solution = best_solution.copy()
 
         return best_solution
 
@@ -260,7 +263,8 @@ class ExperimentalSolver(Solver):
         Runs Path Relinking for each pair of solutions in `pool` and sets the best found
         as the current solution of this solver.
         """
-        best_solution = pool.get_best()
+        # O(p)
+        best_solution = pool.get_best().copy()
         # O(p)
         grasp_best = best_solution.copy()
 
@@ -281,7 +285,8 @@ class ExperimentalSolver(Solver):
 
         # O(mn)
         self.replace_solution(best_solution)
-        self.po_stats.best_solution = best_solution
+        # O(p)
+        self.po_stats.best_solution = best_solution.copy()
 
         return self.solution
 
@@ -392,15 +397,19 @@ def __run(
         "p",
         "alpha",
         "algorithm",
+        #
         "best_grasp",
         "best_po",
         "best_diff",
+        #
         "po_imps",
         "pr_avg_imps",
         "pr_ls_avg_imps",
+        #
         "time_total",
         "time_po",
         "time_po_%",
+        #
         "time_pr_avg",
         "time_pr_ls_%_avg",
     ]
@@ -411,15 +420,19 @@ def __run(
             prs.p,
             prs.alpha,
             prs.pr_algorithm,
+            #
             prs.po_stats.grasp_best_solution.obj_func,
             prs.po_stats.best_solution.obj_func,
             prs.po_stats.get_obj_func_diff(),
+            #
             prs.po_stats.count_improvements(),
             prs.po_stats.get_pr_imps_mean(),
             prs.po_stats.get_pr_ls_imps_mean(),
+            #
             prs.solution.time,
             prs.po_stats.time,
             prs.po_stats.get_times_diff(),
+            #
             prs.po_stats.get_pr_times_mean(),
             prs.po_stats.get_pr_ls_times_percents_mean(),
         ]
@@ -459,16 +472,5 @@ def get_filenames() -> list[str]:
 
 if __name__ == "__main__":
     print("Running...")
-    __run(
-        [
-            "-n",
-            "ch150_100_50",
-            "-v",
-            "2",
-            "-p",
-            "0.1",
-            "-a",
-            "2",
-        ]
-    )
+    __run()
     print("Finished.")
