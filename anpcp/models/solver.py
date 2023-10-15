@@ -305,6 +305,7 @@ class Solver:
         solution = Solution()
         # O(m)
         solution.closed_facilities = set(self.instance.facilities_indexes)
+
         # choose random facility
         # O(m)
         last_inserted: int = self.rng.choice(
@@ -322,8 +323,10 @@ class Solver:
             # O(m)
             for fi in solution.closed_facilities:
                 s_dists[fi] = min(
-                    s_dists[fi], self.instance.facilities_distances[fi, last_inserted]
+                    s_dists[fi],
+                    self.instance.facilities_distances[fi, last_inserted],
                 )
+
                 facility = MovedFacility(fi, s_dists[fi])
 
                 max_cost = max(max_cost, s_dists[fi])
@@ -332,6 +335,7 @@ class Solver:
                 facilities.append(facility)
 
             threshold = max_cost - beta * (max_cost - min_cost)
+
             # O(m)
             last_inserted = self.rng.choice(
                 [f.index for f in facilities if f.radius >= threshold], 1
