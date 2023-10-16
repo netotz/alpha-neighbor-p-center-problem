@@ -360,6 +360,14 @@ PREFIX = "pr_"
     show_default=True,
     help="Time limit in seconds before stopping. Use -1 for no limit.",
 )
+@click.option(
+    "-s",
+    "--seed",
+    type=int | None,
+    default=None,
+    show_default=True,
+    help="Seed for the random number generator.",
+)
 def __run(
     name: str,
     variations: int,
@@ -369,10 +377,11 @@ def __run(
     beta_period: int,
     pool_limit: int,
     time: float,
+    seed: int | None,
 ):
     pr_solvers: list[ExperimentalSolver] = []
 
-    solvers = get_solvers(name, variations, p_percents, alpha_values)
+    solvers = get_solvers(name, variations, p_percents, alpha_values, seed)
 
     for solver in solvers:
         print(

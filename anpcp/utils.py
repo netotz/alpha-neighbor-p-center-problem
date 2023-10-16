@@ -104,9 +104,10 @@ def generate_solvers(
     instances: Sequence[Instance],
     p_percentages: Sequence[float],
     alpha_values: Sequence[int],
+    seed: int | None = None,
 ) -> list[Solver]:
     return [
-        Solver(instance, int(instance.m * p), alpha)
+        Solver(instance, int(instance.m * p), alpha, seed=seed)
         for instance in instances
         for p in p_percentages
         for alpha in alpha_values
@@ -114,7 +115,11 @@ def generate_solvers(
 
 
 def get_solvers(
-    name: str, amount: int, p_percents: list[float], alpha_values: list[int]
+    name: str,
+    amount: int,
+    p_percents: list[float],
+    alpha_values: list[int],
+    seed: int | None = None,
 ) -> list[Solver]:
     if name.startswith("anpcp_"):
         extension = ".json"
@@ -130,4 +135,4 @@ def get_solvers(
 
         instances.append(Instance.read(filepath))
 
-    return generate_solvers(instances, p_percents, alpha_values)
+    return generate_solvers(instances, p_percents, alpha_values, seed)
