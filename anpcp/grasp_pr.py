@@ -419,7 +419,7 @@ def __run(
             prs.instance.index,
             prs.p,
             prs.alpha,
-            prs.pr_algorithm,
+            prs.pr_algorithm.name,
             #
             prs.po_stats.grasp_best_solution.obj_func,
             prs.po_stats.best_solution.obj_func,
