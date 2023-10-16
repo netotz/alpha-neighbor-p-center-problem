@@ -203,7 +203,7 @@ class ExperimentalSolver(Solver):
         start = timeit.default_timer()
 
         reactive = ReactiveBeta(seed=self.seed)
-        pool = ElitePool(pool_limit)
+        self.pool = ElitePool(pool_limit)
 
         best_solution: SolutionSet | None = None
 
@@ -223,12 +223,12 @@ class ExperimentalSolver(Solver):
             # O(p)
             current_solution = SolutionSet.from_solution(self.solution)
             # O(log l)
-            pool.try_add(current_solution)
+            self.pool.try_add(current_solution)
 
             reactive.increment(beta_used, self.solution.obj_func)
 
-            if best_solution is None or pool.get_best() < best_solution:
-                best_solution = pool.get_best()
+            if best_solution is None or self.pool.get_best() < best_solution:
+                best_solution = self.pool.get_best()
                 moves += 1
 
                 iwi = 0
@@ -246,7 +246,7 @@ class ExperimentalSolver(Solver):
 
         start_po = timeit.default_timer()
         # O(?)
-        self.post_optimize(pool)
+        self.post_optimize(self.pool)
         self.po_stats.time = timeit.default_timer() - start_po
 
         total_time = timeit.default_timer() - start
@@ -258,18 +258,18 @@ class ExperimentalSolver(Solver):
 
         return self.solution
 
-    def post_optimize(self, pool: ElitePool) -> Solution:
+    def post_optimize(self) -> Solution:
         """
         Runs Path Relinking for each pair of solutions in `pool` and sets the best found
         as the current solution of this solver.
         """
         # O(p)
-        best_solution = pool.get_best().copy()
+        best_solution = self.pool.get_best().copy()
         # O(p)
         grasp_best = best_solution.copy()
 
         # O(l**2)
-        for starting, target in itertools.combinations(pool.iter_solutions(), 2):
+        for starting, target in itertools.combinations(self.pool.iter_solutions(), 2):
             self.current_pr_stats = PathRelinkingStats()
             start_pr = timeit.default_timer()
 
@@ -315,7 +315,7 @@ PREFIX = "pr_"
     "--p-percents",
     multiple=True,
     type=float,
-    default=[0.05, 0.1, 0.15],
+    default=[0.05, 0.1, 0.2],
     show_default=True,
     help="Decimal percentages for p where 1 = 100%.",
 )
@@ -348,7 +348,7 @@ PREFIX = "pr_"
     "-l",
     "--pool-limit",
     type=int,
-    default=20,
+    default=[5, 10, 20],
     show_default=True,
     help="Limit size of elite pool.",
 )
@@ -356,7 +356,7 @@ PREFIX = "pr_"
     "-t",
     "--time",
     type=float,
-    default=1800,
+    default=3600,
     show_default=True,
     help="Time limit in seconds before stopping. Use -1 for no limit.",
 )

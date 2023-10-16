@@ -61,6 +61,11 @@ class Solver:
 
         self.history: list[Solution] = []
 
+        self.pool: ElitePool | None = None
+        """
+        Pool of elite solutions found during GRASP.
+        """
+
         self.path_relinking_state = PathRelinkingState()
         """
         Current state of Path Relinking.
@@ -802,7 +807,7 @@ class Solver:
         start = timeit.default_timer()
 
         reactive = ReactiveBeta(seed=self.seed)
-        pool = ElitePool(pool_limit)
+        self.pool = ElitePool(pool_limit)
 
         best_solution: SolutionSet | None = None
 
@@ -824,12 +829,12 @@ class Solver:
             # O(p)
             current_solution = SolutionSet.from_solution(self.solution)
             # O(p + log l)
-            pool.try_add(current_solution)
+            self.pool.try_add(current_solution)
 
             reactive.increment(beta_used, self.solution.obj_func)
 
-            if best_solution is None or pool.get_best() < best_solution:
-                best_solution = pool.get_best()
+            if best_solution is None or self.pool.get_best() < best_solution:
+                best_solution = self.pool.get_best()
                 moves += 1
 
                 iwi = 0
@@ -844,7 +849,7 @@ class Solver:
             i += 1
 
         # O(?)
-        self.post_optimize(pool)
+        self.post_optimize(self.pool)
 
         total_time = timeit.default_timer() - start
 
@@ -854,15 +859,15 @@ class Solver:
 
         return self.solution
 
-    def post_optimize(self, pool: ElitePool) -> Solution:
+    def post_optimize(self) -> Solution:
         """
         Runs Path Relinking for each pair of solutions in `pool` and sets the best found
         as the current solution of this solver.
         """
-        best_solution = pool.get_best()
+        best_solution = self.pool.get_best()
 
         # O(l**2)
-        for starting, target in itertools.combinations(pool.iter_solutions(), 2):
+        for starting, target in itertools.combinations(self.pool.iter_solutions(), 2):
             # O(mnp + p**3 n)
             relinked = self.path_relink(starting, target)
             best_solution = min(relinked, best_solution)
