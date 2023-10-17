@@ -880,7 +880,11 @@ class Solver:
                 # O(pl)
                 new_pool.try_add(relinked)
 
-            is_better = new_pool.get_best() < self.pool.get_best()
+            is_better = (
+                new_pool.has_best()
+                and self.pool.has_best()
+                and new_pool.get_best() < self.pool.get_best()
+            )
             if is_better:
                 self.pool = new_pool
 

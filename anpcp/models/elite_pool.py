@@ -79,11 +79,17 @@ class ElitePool:
 
         return is_added
 
+    def has_best(self) -> bool:
+        return self.__best_i is not None
+
     def get_best(self) -> SolutionSet | None:
-        return None if self.__best_i is None else self.__solutions[self.__best_i]
+        return self.__solutions[self.__best_i] if self.has_best() else None
+
+    def has_worst(self) -> bool:
+        return self.__worst_i is not None
 
     def get_worst(self) -> SolutionSet | None:
-        return None if self.__worst_i is None else self.__solutions[self.__worst_i]
+        return self.__solutions[self.__worst_i] if self.has_worst() else None
 
     def iter_solutions(self) -> Iterator[SolutionSet]:
         for solution in self.__solutions:
