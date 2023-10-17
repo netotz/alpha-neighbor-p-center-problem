@@ -44,7 +44,7 @@ class SolverIO:
             else "".join(f"_{k}{v}" for k, v in extra_params.items())
         )
 
-        filename = f"solver_{self.solver.instance.name}_p{self.solver.p}_a{self.solver.alpha}{extra_params}.pkl"
+        filename = f"solver_{self.solver.instance.name}_p{self.solver.p}_a{self.solver.alpha}{params_str}.pkl"
         filepath = os.path.join(directory, filename)
 
         # write binary
