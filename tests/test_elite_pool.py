@@ -1,3 +1,7 @@
+"""
+These tests are currently out of date and won't pass.
+"""
+
 import pytest
 
 from anpcp.models.elite_pool import ElitePool
@@ -6,42 +10,60 @@ from anpcp.models.solution_set import SolutionSet
 
 
 @pytest.mark.parametrize("limit", [0, -1])
-def test_init_invalidLimits_raisesValueError(limit: int):
+def test_init_invalidLimit_raisesValueError(limit: int):
     with pytest.raises(ValueError):
         ElitePool(limit)
 
 
-@pytest.mark.parametrize("limit", [1, 20])
-def test_init_validLimits_returnsInstance(limit: int):
-    pool = ElitePool(limit)
-    assert isinstance(pool, ElitePool)
+@pytest.mark.parametrize("min_sym_diff", [-1, -2])
+def test_init_invalidMinSymmetricDiff_raisesValueError(min_sym_diff: int):
+    with pytest.raises(ValueError):
+        ElitePool(1, min_sym_diff)
+
+
+@pytest.mark.parametrize(
+    ("limit", "min_sym_diff"),
+    [
+        [1, 1],
+        [2, 4],
+    ],
+)
+def test_init_validArgs_returnsInstance(limit: int, min_sym_diff: int):
+    mock_pool = ElitePool(limit, min_sym_diff)
+
+    assert isinstance(mock_pool, ElitePool)
 
 
 @pytest.mark.parametrize("limit", [1, 2])
 def test_len_fullPool_equalsLimit(limit: int):
-    pool = ElitePool(limit)
+    mock_pool = ElitePool(limit)
 
     for _ in range(limit):
-        pool.try_add(SolutionSet(1))
+        stub_solution = SolutionSet(1)
 
-    assert len(pool) == limit
+        mock_pool.try_add(stub_solution)
+
+    assert mock_pool.is_full()
 
 
 def test_tryAdd_underLimit_returnsTrue():
-    pool = ElitePool(1)
+    mock_pool = ElitePool(1)
 
-    assert pool.try_add(SolutionSet(1))
+    stub_solution = SolutionSet(1)
+
+    assert mock_pool.try_add(stub_solution)
 
 
 def test_tryAdd_underLimitAndBetterThanBest_returnsTrueAndUpdatesBest():
-    pool = ElitePool(2)
+    mock_pool = ElitePool(2)
 
-    best = SolutionSet(2)
-    pool.try_add(best)
+    stub_best_solution = SolutionSet(2)
+    mock_pool.try_add(stub_best_solution)
 
-    better = SolutionSet(1)
-    assert pool.try_add(better)
-    assert pool.get_best() == better
+    stub_better_solution = SolutionSet(1)
+
+    assert mock_pool.try_add(stub_better_solution)
+    assert mock_pool.get_best() == stub_better_solution
 
 
 @pytest.mark.parametrize(
