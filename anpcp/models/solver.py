@@ -849,7 +849,7 @@ class Solver:
             i += 1
 
         # O(?)
-        self.post_optimize(self.pool)
+        self.post_optimize()
 
         total_time = timeit.default_timer() - start
 
