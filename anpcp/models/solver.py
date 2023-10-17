@@ -744,12 +744,12 @@ class Solver:
 
     def path_relink(self, starting: SolutionSet, target: SolutionSet) -> SolutionSet:
         """
-        Performs a Path Relinking between `starting` and `target` solutions.
-        Returns the best of `starting`, `target`, or best relinked found.
+        Performs a Path Relinking between `starting` and `target` solutions
+        and returns the best among the explored paths.
 
         Time O(mp**2 n)
         """
-        best_solution = min(starting, target)
+        best_solution: SolutionSet | None = None
 
         # O(p), worst case if both solutions are completely different
         candidates_out = set(starting.open_facilities - target.open_facilities)
@@ -777,7 +777,7 @@ class Solver:
             local_optimum = self.fast_vertex_substitution()
             self.path_relinking_state.resume()
 
-            if local_optimum.obj_func < best_solution.obj_func:
+            if best_solution is None or local_optimum.obj_func < best_solution.obj_func:
                 # O(p)
                 best_solution = SolutionSet.from_solution(local_optimum)
 
@@ -828,7 +828,7 @@ class Solver:
 
             # O(p)
             current_solution = SolutionSet.from_solution(self.solution)
-            # O(p + log l)
+            # O(pl)
             self.pool.try_add(current_solution)
 
             reactive.increment(beta_used, self.solution.obj_func)
@@ -864,13 +864,27 @@ class Solver:
         Runs Path Relinking for each pair of solutions in `pool` and sets the best found
         as the current solution of this solver.
         """
-        best_solution = self.pool.get_best()
+        is_better = True
 
-        # O(l**2)
-        for starting, target in itertools.combinations(self.pool.iter_solutions(), 2):
-            # O(mnp + p**3 n)
-            relinked = self.path_relink(starting, target)
-            best_solution = min(relinked, best_solution)
+        while is_better:
+            new_pool = ElitePool(self.pool.limit)
+
+            ## O(mp**2 nl**2 + pl**3)
+            # O(l**2)
+            for starting, target in itertools.combinations(
+                self.pool.iter_solutions(), 2
+            ):
+                # O(mp**2 n)
+                relinked = self.path_relink(starting, target)
+
+                # O(pl)
+                new_pool.try_add(relinked)
+
+            is_better = new_pool.get_best() < self.pool.get_best()
+            if is_better:
+                self.pool = new_pool
+
+        best_solution = self.pool.get_best()
 
         # O(mn)
         self.replace_solution(best_solution)

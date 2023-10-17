@@ -33,8 +33,18 @@ class SolverIO:
             self.solver.solution,
         )
 
-    def write_pickle(self, directory: str = os.path.curdir) -> None:
-        filename = f"solver_{self.solver.instance.name}_p{self.solver.p}_a{self.solver.alpha}.pkl"
+    def write_pickle(
+        self,
+        directory: str = os.path.curdir,
+        extra_params: dict[str, str] | None = None,
+    ) -> None:
+        params_str = (
+            ""
+            if extra_params is None
+            else "".join(f"_{k}{v}" for k, v in extra_params.items())
+        )
+
+        filename = f"solver_{self.solver.instance.name}_p{self.solver.p}_a{self.solver.alpha}{extra_params}.pkl"
         filepath = os.path.join(directory, filename)
 
         # write binary
@@ -42,11 +52,15 @@ class SolverIO:
             pickle.dump(self.dto, file)
 
 
-def write_solver_pickle(solver: Solver, directory: str = os.path.curdir) -> None:
+def write_solver_pickle(
+    solver: Solver,
+    directory: str = os.path.curdir,
+    extra_params: dict[str, str] | None = None,
+) -> None:
     """
     Writes `Solver` to a picke file (.pkl) inside "directory/".
     """
-    SolverIO(solver).write_pickle(directory)
+    SolverIO(solver).write_pickle(directory, extra_params)
 
 
 def read_solver_pickle(instance: Instance, filepath: str) -> Solver:

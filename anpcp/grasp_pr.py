@@ -1,6 +1,7 @@
 from enum import Enum
 import itertools
 import math
+from operator import is_
 import os
 import re
 import timeit
@@ -55,11 +56,9 @@ class PathRelinkingStats(BaseStats):
         return sum(1 if i else 0 for i in self.ls_did_improveds)
 
 
-class PostOptimizationStats(BaseStats):
+class GenerationStats(BaseStats):
     def __init__(self) -> None:
         self.pr_stats: list[PathRelinkingStats] = []
-        self.total_time: float = 0
-        self.grasp_best_solution: SolutionSet | None = None
 
         super().__init__()
 
@@ -79,6 +78,15 @@ class PostOptimizationStats(BaseStats):
         percents = (100 * ls_times) / times
 
         return percents.mean()
+
+
+class PostOptimizationStats(BaseStats):
+    def __init__(self) -> None:
+        self.generations: list[GenerationStats] = []
+        self.total_time: float = 0
+        self.grasp_best_solution: SolutionSet | None = None
+
+        super().__init__()
 
     def get_obj_func_diff(self) -> float:
         return (
@@ -119,15 +127,13 @@ class ExperimentalSolver(Solver):
 
     def path_relink(self, starting: SolutionSet, target: SolutionSet) -> SolutionSet:
         """
-        Performs a Path Relinking between `starting` and `target` solutions.
-        Returns the best of `starting`, `target`, or best relinked found.
+        Performs a Path Relinking between `starting` and `target` solutions
+        and returns the best among the explored paths.
 
         Time O(mp**2 n + p**3 n)
         """
-        # O(p)
-        best_solution = min(starting, target).copy()
-        # O(p)
-        original_best = best_solution.copy()
+        best_solution: SolutionSet | None = None
+        original_best: SolutionSet | None = None
 
         # O(p), worst case if both solutions are completely different
         candidates_out = set(starting.open_facilities - target.open_facilities)
@@ -166,13 +172,14 @@ class ExperimentalSolver(Solver):
                 local_optimum.obj_func < relinked.obj_func
             )
 
+            if best_solution is None or local_optimum.obj_func < best_solution.obj_func:
+                # O(p)
+                best_solution = SolutionSet.from_solution(local_optimum)
+                original_best = best_solution.copy()
+
             self.current_pr_stats.did_improveds.append(
                 local_optimum.obj_func < original_best.obj_func
             )
-
-            if local_optimum.obj_func < best_solution.obj_func:
-                # O(p)
-                best_solution = SolutionSet.from_solution(local_optimum)
 
         self.path_relinking_state.end()
 
@@ -246,7 +253,7 @@ class ExperimentalSolver(Solver):
 
         start_po = timeit.default_timer()
         # O(?)
-        self.post_optimize(self.pool)
+        self.post_optimize()
         self.po_stats.time = timeit.default_timer() - start_po
 
         total_time = timeit.default_timer() - start
@@ -264,29 +271,49 @@ class ExperimentalSolver(Solver):
         as the current solution of this solver.
         """
         # O(p)
-        best_solution = self.pool.get_best().copy()
+        grasp_best = self.pool.get_best().copy()
+
+        is_better = True
+
+        while is_better:
+            current_gen_stats = GenerationStats()
+            start_gen_time = timeit.default_timer()
+
+            new_pool = ElitePool(self.pool.limit)
+
+            ## O(mp**2 nl**2 + pl**3)
+            # O(l**2)
+            for starting, target in itertools.combinations(
+                self.pool.iter_solutions(), 2
+            ):
+                self.current_pr_stats = PathRelinkingStats()
+                start_pr = timeit.default_timer()
+                # O(mp**2 n)
+                relinked = self.path_relink(starting, target)
+                self.current_pr_stats.time = timeit.default_timer() - start_pr
+
+                current_gen_stats.pr_stats.append(self.current_pr_stats)
+                current_gen_stats.did_improveds.append(relinked < grasp_best)
+
+                # O(pl)
+                new_pool.try_add(relinked)
+
+            is_better = new_pool.get_best() < self.pool.get_best()
+
+            current_gen_stats.time = timeit.default_timer() - start_gen_time
+
+            self.po_stats.did_improveds.append(is_better)
+            self.po_stats.generations.append(current_gen_stats)
+
+            if is_better:
+                self.pool = new_pool
+
+        best_solution = self.pool.get_best()
         # O(p)
-        grasp_best = best_solution.copy()
-
-        # O(l**2)
-        for starting, target in itertools.combinations(self.pool.iter_solutions(), 2):
-            self.current_pr_stats = PathRelinkingStats()
-            start_pr = timeit.default_timer()
-
-            # O(mnp + p**3 n)
-            best_relinked = self.path_relink(starting, target)
-
-            self.current_pr_stats.time = timeit.default_timer() - start_pr
-
-            self.po_stats.pr_stats.append(self.current_pr_stats)
-            self.po_stats.did_improveds.append(best_relinked < grasp_best)
-
-            best_solution = min(best_solution, best_relinked)
+        self.po_stats.best_solution = best_solution.copy()
 
         # O(mn)
         self.replace_solution(best_solution)
-        # O(p)
-        self.po_stats.best_solution = best_solution.copy()
 
         return self.solution
 
@@ -375,7 +402,7 @@ def __run(
     alpha_values: list[int],
     iters: int,
     beta_period: int,
-    pool_limit: int,
+    pool_limits: list[int],
     time: float,
     seed: int | None,
 ):
@@ -391,14 +418,21 @@ def __run(
         for pr_algorithm in [LocalSearchAlgorithm.GI, LocalSearchAlgorithm.AFVS]:
             print(f"\t\tPath Relinking algorithm: {pr_algorithm} ...")
 
-            prs = ExperimentalSolver.from_solver(solver)
-            prs.pr_algorithm = pr_algorithm
+            for pool_limit in pool_limits:
+                print(f"\t\tPool limit: {pool_limit} ...")
 
-            write_solver_pickle(prs, PR_PATH)
+                prs = ExperimentalSolver.from_solver(solver)
+                prs.pr_algorithm = pr_algorithm
 
-            prs.grasp(iters, beta_period, time, pool_limit)
+                prs.grasp(iters, beta_period, time, pool_limit)
 
-            pr_solvers.append(prs)
+                extra_params = {
+                    "ls": pr_algorithm.value,
+                    "pl": pool_limit,
+                }
+                write_solver_pickle(prs, PR_PATH, extra_params)
+
+                pr_solvers.append(prs)
 
     headers = [
         "instance",
@@ -406,21 +440,18 @@ def __run(
         "p",
         "alpha",
         "algorithm",
+        "pool_limit",
         #
         "best_grasp",
         "best_po",
-        "best_diff",
+        "of_diff",
         #
+        "#gens",
         "po_imps",
-        "pr_avg_imps",
-        "pr_ls_avg_imps",
         #
         "time_total",
         "time_po",
         "time_po_%",
-        #
-        "time_pr_avg",
-        "time_pr_ls_%_avg",
     ]
     datalist = [
         [
@@ -429,21 +460,18 @@ def __run(
             prs.p,
             prs.alpha,
             prs.pr_algorithm.name,
+            prs.pool.limit,
             #
             prs.po_stats.grasp_best_solution.obj_func,
             prs.po_stats.best_solution.obj_func,
             prs.po_stats.get_obj_func_diff(),
             #
+            len(prs.po_stats.generations),
             prs.po_stats.count_improvements(),
-            prs.po_stats.get_pr_imps_mean(),
-            prs.po_stats.get_pr_ls_imps_mean(),
             #
             prs.solution.time,
             prs.po_stats.time,
             prs.po_stats.get_times_diff(),
-            #
-            prs.po_stats.get_pr_times_mean(),
-            prs.po_stats.get_pr_ls_times_percents_mean(),
         ]
         for prs in pr_solvers
     ]
