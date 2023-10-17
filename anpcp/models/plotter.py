@@ -1,8 +1,33 @@
-from typing import Optional
+from enum import Enum
 
 import matplotlib.pyplot as plt
 
 from .solver import Solver, NotAllocatedError
+
+
+class Label(Enum):
+    CLOSED_FACILITIES = 0
+    USERS = 1
+    CENTERS = 2
+
+
+class Language(Enum):
+    ENGLISH = 0
+    SPANISH = 1
+
+
+LANGS_DICT = {
+    Language.ENGLISH: {
+        Label.CLOSED_FACILITIES: "Closed facilities",
+        Label.USERS: "Users",
+        Label.CENTERS: "Centers",
+    },
+    Language.SPANISH: {
+        Label.CLOSED_FACILITIES: "Instalaciones cerradas",
+        Label.USERS: "Usuarios",
+        Label.CENTERS: "Centros",
+    },
+}
 
 
 def plot_solver(
@@ -10,8 +35,9 @@ def plot_solver(
     with_annotations: bool = True,
     with_assignments: bool = True,
     axis: bool = False,
-    dpi: Optional[int] = None,
+    dpi: int | None = None,
     filename: str = "",
+    language=Language.ENGLISH,
 ) -> None:
     fig, ax = plt.subplots()
     # plot closed facilities
@@ -28,7 +54,7 @@ def plot_solver(
         ],
         marker="s",
         color="gray",
-        label="Closed facilities",
+        label=LANGS_DICT[language][Label.CLOSED_FACILITIES],
         linewidths=0.2,
         alpha=0.8,
         edgecolors="black",
@@ -39,7 +65,7 @@ def plot_solver(
         [u.x for u in solver.instance.users],
         [u.y for u in solver.instance.users],
         color="tab:blue",
-        label="Users",
+        label=LANGS_DICT[language][Label.USERS],
         linewidths=0.3,
         alpha=0.8,
         edgecolors="black",
@@ -60,7 +86,7 @@ def plot_solver(
             ],
             marker="s",
             color="red",
-            label="Centers ($S$)",
+            label=f"{LANGS_DICT[language][Label.CENTERS]} ($S$)",
             linewidths=0.3,
             alpha=0.8,
             edgecolors="black",
