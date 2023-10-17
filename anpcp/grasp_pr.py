@@ -373,7 +373,8 @@ PREFIX = "pr_"
 )
 @click.option(
     "-l",
-    "--pool-limit",
+    "--pool-limits",
+    multiple=True,
     type=int,
     default=[5, 10, 20],
     show_default=True,
@@ -390,7 +391,7 @@ PREFIX = "pr_"
 @click.option(
     "-s",
     "--seed",
-    type=int | None,
+    type=int,
     default=None,
     show_default=True,
     help="Seed for the random number generator.",
