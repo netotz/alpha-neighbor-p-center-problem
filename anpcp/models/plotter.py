@@ -40,6 +40,32 @@ def plot_solver(
     language=Language.ENGLISH,
 ) -> None:
     fig, ax = plt.subplots()
+
+    # plot assignments
+    if with_assignments:
+        for user in solver.instance.users:
+            try:
+                alphath = solver.get_kth_closest(user.index, solver.alpha)
+            except NotAllocatedError:
+                continue
+
+            facility = solver.instance.facilities[alphath.index]
+
+            is_critical = (
+                alphath.index == solver.critical_allocation.index
+                and alphath.distance == solver.solution.obj_func
+            )
+
+            ax.plot(
+                (user.x, facility.x),
+                (user.y, facility.y),
+                color="goldenrod" if is_critical else "seagreen",
+                linestyle="--" if is_critical else ":",
+                linewidth=2,
+                alpha=0.8,
+                zorder=5,
+            )
+
     # plot closed facilities
     ax.scatter(
         [
@@ -53,11 +79,12 @@ def plot_solver(
             if f.index in solver.solution.closed_facilities
         ],
         marker="s",
-        color="gray",
+        color="lightgray",
         label=LANGS_DICT[language][Label.CLOSED_FACILITIES],
-        linewidths=0.2,
-        alpha=0.8,
+        linewidths=0.3,
+        alpha=0.99,
         edgecolors="black",
+        zorder=0,
     )
 
     # plot users
@@ -67,8 +94,9 @@ def plot_solver(
         color="tab:blue",
         label=LANGS_DICT[language][Label.USERS],
         linewidths=0.3,
-        alpha=0.8,
+        alpha=0.99,
         edgecolors="black",
+        zorder=15,
     )
 
     # plot centers (open facilities)
@@ -88,8 +116,9 @@ def plot_solver(
             color="red",
             label=f"{LANGS_DICT[language][Label.CENTERS]} ($S$)",
             linewidths=0.3,
-            alpha=0.8,
+            alpha=0.99,
             edgecolors="black",
+            zorder=10,
         )
 
     # plot indexes of nodes
@@ -100,31 +129,8 @@ def plot_solver(
         for f in solver.instance.facilities:
             ax.annotate(f.index, (f.x, f.y))
 
-    # plot assignments
-    if with_assignments:
-        for user in solver.instance.users:
-            try:
-                alphath = solver.get_kth_closest(user.index, solver.alpha)
-            except NotAllocatedError:
-                continue
-
-            facility = solver.instance.facilities[alphath.index]
-            color = (
-                "goldenrod"
-                if alphath.index == solver.critical_allocation.index
-                and alphath.distance == solver.solution.obj_func
-                else "darkgray"
-            )
-            ax.plot(
-                (user.x, facility.x),
-                (user.y, facility.y),
-                color=color,
-                linestyle=":",
-                linewidth=1,
-                alpha=0.9,
-            )
-
     ax.legend(loc=(1.01, 0))
+
     if dpi:
         fig.set_dpi(dpi)
 
