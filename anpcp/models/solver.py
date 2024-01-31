@@ -790,6 +790,7 @@ class Solver:
         iters: int,
         beta_period: int = 1,
         time_limit: float = math.inf,
+        do_path_relinking: bool = True,
         pool_limit: int = 1,
     ) -> Solution:
         """
@@ -802,8 +803,14 @@ class Solver:
 
         `time_limit`: Time limit in seconds to stop.
 
-        `pool_limit`: Max amount of solutions in the elites pool.
+        `do_path_relinking`: Whether to run Path Relinking (post optimization) or not.
+
+        `pool_limit`: Max amount of solutions in the elites pool for Path Relinking.
+        Set to `1` if `do_path_relinking` is `False`.
         """
+        if not do_path_relinking:
+            pool_limit = 1
+        
         start = timeit.default_timer()
 
         reactive = ReactiveBeta(seed=self.seed)
@@ -848,8 +855,9 @@ class Solver:
 
             i += 1
 
-        # O(?)
-        self.post_optimize()
+        if do_path_relinking:
+            # O(?)
+            self.post_optimize()
 
         total_time = timeit.default_timer() - start
 
