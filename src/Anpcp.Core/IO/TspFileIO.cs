@@ -28,12 +28,19 @@ public static class TspFileIO
         {
             line.Trim();
 
-            // each line has format "i x y t"
+            // each line has format "i x y t?"
             var items = line.Split();
             var parsedItems = items.Select(int.Parse).ToArray();
 
+            var type = VertexType.Both;
+            // if file includes vertex type
+            if (parsedItems.Length == 4)
+            {
+                type = (VertexType)parsedItems[3];
+            }
+
             vertices.Add(
-                new(parsedItems[0], parsedItems[1], parsedItems[2], (VertexType)parsedItems[3]));
+                new(parsedItems[0], parsedItems[1], parsedItems[2], type));
 
             line = streamReader.ReadLine() ?? "";
         }

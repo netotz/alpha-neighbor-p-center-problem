@@ -6,21 +6,32 @@ using Anpcp.Core.Wrappers;
 namespace Anpcp.Core;
 
 /// <summary>
-/// An instance of the ANPCP.
+/// An instance of the ANPCP with two sets of nodes for users and facilities.
 /// </summary>
 public class Instance
 {
-    public Vertex[] Facilities { get; }
-    public Vertex[] Users { get; }
+    public Vertex[] Facilities { get; protected set; }
+    public Vertex[] Users { get; protected set; }
     /// <summary>
     /// Matrix of distances between users and facilities.
     /// </summary>
-    public DistancesMatrix DistancesUF { get; }
+    public DistancesMatrix DistancesUF { get; private set; }
     /// <summary>
     /// Matrix of distances between facilities.
     /// </summary>
-    public DistancesMatrix DistancesFF { get; }
+    public DistancesMatrix DistancesFF { get; private set; }
 
+    /// <summary>
+    /// Dummy constructor for child class <see cref="InstanceSameSet"/>.
+    /// </summary>
+    protected Instance() { }
+
+    /// <summary>
+    /// Creates an instance from a ANPCP TSPLIB file, our custom variation.
+    /// </summary>
+    /// <remarks>
+    /// The extension must be <c>*.anpcp.tsp</c>
+    /// </remarks>
     public Instance(string tspFilePath)
     {
         var vertices = TspFileIO.ReadNodes(tspFilePath);
@@ -28,14 +39,11 @@ public class Instance
         Facilities = vertices
             .Where(v => v.Type is VertexType.Facility)
             .ToArray();
-
-        DistancesFF = new(Facilities, Facilities);
-
         Users = vertices
             .Where(v => v.Type is VertexType.User)
             .ToArray();
 
-        DistancesUF = new(Users, Facilities);
+        InitDistancesMatrices();
     }
 
     /// <summary>
@@ -65,9 +73,6 @@ public class Instance
             .Take(m)
             .Select((c, i) => new Vertex(i, c.x, c.y))
             .ToArray();
-
-        DistancesFF = new(Facilities, Facilities);
-
         // O(n + m)
         Users = distinctCoords
             .Skip(m)
@@ -75,6 +80,12 @@ public class Instance
             .Select((c, i) => new Vertex(i, c.x, c.y))
             .ToArray();
 
+        InitDistancesMatrices();
+    }
+
+    protected void InitDistancesMatrices()
+    {
+        DistancesFF = new(Facilities, Facilities);
         DistancesUF = new(Users, Facilities);
     }
 }

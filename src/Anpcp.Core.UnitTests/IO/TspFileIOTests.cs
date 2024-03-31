@@ -22,6 +22,13 @@ public class TspFileIOTests
                 new(4, 4, 4, VertexType.Facility),
             }
         ],
+        [
+            GetAbsolutePath(@"Data\test3.tsp"),
+            new List<Vertex> {
+                new(1, 1, 1),
+                new(2, 2, 2),
+            }
+        ],
     ];
 
     [Theory]
