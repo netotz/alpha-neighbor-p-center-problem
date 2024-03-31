@@ -1,4 +1,6 @@
-﻿using Anpcp.Core.Models;
+﻿using Anpcp.Core.Enums;
+using Anpcp.Core.IO;
+using Anpcp.Core.Models;
 using Anpcp.Core.Wrappers;
 
 namespace Anpcp.Core;
@@ -21,7 +23,19 @@ public class Instance
 
     public Instance(string tspFilePath)
     {
-        throw new NotImplementedException();
+        var vertices = TspFileIO.ReadNodes(tspFilePath);
+
+        Facilities = vertices
+            .Where(v => v.Type is VertexType.Facility)
+            .ToArray();
+
+        DistancesFF = new(Facilities, Facilities);
+
+        Users = vertices
+            .Where(v => v.Type is VertexType.User)
+            .ToArray();
+
+        DistancesUF = new(Users, Facilities);
     }
 
     /// <summary>
