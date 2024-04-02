@@ -16,7 +16,6 @@ public class FgdConstructive(Instance instance, int p, int? seed = null)
 
     /// <summary>
     /// Greedily constructs a solution for the PDP.
-    /// of the PDP.
     /// </summary>
     /// <remarks>Time O(mp)</remarks>
     public Solution Construct()
