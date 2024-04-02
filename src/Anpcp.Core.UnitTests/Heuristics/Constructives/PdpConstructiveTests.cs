@@ -2,7 +2,11 @@
 
 namespace Anpcp.Core.UnitTests.Heuristics.Constructives;
 
-public class FgdConstructiveTests
+/// <summary>
+/// Tests of constructive heuristics that solve the PDP:
+/// <see cref="FgdConstructive"/> and <see cref="OgdConstructive"/>.
+/// </summary>
+public class PdpConstructiveTests
 {
     public static int? TestSeed { get; } = 20240402;
     public static Instance RandomInstance_m5 { get; } = new(0, 5, 100, 100, TestSeed);
@@ -14,13 +18,29 @@ public class FgdConstructiveTests
 
     [Theory]
     [MemberData(nameof(Data))]
-    public void Construct_ReturnsSolutionWithPFacilities(
+    public void Fgd_Construct_ReturnsSolutionWithPFacilities(
         Instance instance,
         int p,
         int expectedP,
         int expectedCloseds)
     {
         var stubConstructive = new FgdConstructive(instance, p, TestSeed);
+
+        var mockSolution = stubConstructive.Construct();
+
+        Assert.Equal(mockSolution.OpenFacilities.Count, expectedP);
+        Assert.Equal(mockSolution.ClosedFacilities.Count, expectedCloseds);
+    }
+
+    [Theory]
+    [MemberData(nameof(Data))]
+    public void Ogd_Construct_ReturnsSolutionWithPFacilities(
+    Instance instance,
+    int p,
+    int expectedP,
+    int expectedCloseds)
+    {
+        var stubConstructive = new OgdConstructive(instance, p, TestSeed);
 
         var mockSolution = stubConstructive.Construct();
 
