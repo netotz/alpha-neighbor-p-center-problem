@@ -1,12 +1,13 @@
 ﻿namespace Anpcp.Core.Heuristics.Constructives;
 
 /// <summary>
-/// Constructive heuristic to solve the p-dispersion problem (PDP).
+/// Fast Greedy Dispersion (FGD) constructive heuristic.
+/// Solves the p-dispersion problem (PDP).
 /// </summary>
 /// <remarks>
 /// This algorithm reduces the time complexity from O(mp**2) to O(mp).
 /// </remarks>
-public class PdpConstructive(Instance instance, int p, int? seed = null)
+public class FgdConstructive(Instance instance, int p, int? seed = null)
     : IConstructive
 {
     public int PSize { get; } = p;
@@ -51,9 +52,11 @@ public class PdpConstructive(Instance instance, int p, int? seed = null)
         {
             // O(m)
             foreach (var fi in solution.ClosedFacilities)
+            {
                 distancesMemory[fi] = Math.Min(
                     distancesMemory[fi],
                     Instance.DistancesFF[fi, lastInserted]);
+            }
 
             // O(m)
             lastInserted = distancesMemory

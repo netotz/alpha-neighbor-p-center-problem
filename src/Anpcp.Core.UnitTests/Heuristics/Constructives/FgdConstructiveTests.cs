@@ -2,7 +2,7 @@
 
 namespace Anpcp.Core.UnitTests.Heuristics.Constructives;
 
-public class PdpConstructiveTests
+public class FgdConstructiveTests
 {
     public static int? TestSeed { get; } = 20240402;
     public static Instance RandomInstance_m5 { get; } = new(0, 5, 100, 100, TestSeed);
@@ -20,7 +20,7 @@ public class PdpConstructiveTests
         int expectedP,
         int expectedCloseds)
     {
-        var stubConstructive = new PdpConstructive(instance, p, TestSeed);
+        var stubConstructive = new FgdConstructive(instance, p, TestSeed);
 
         var mockSolution = stubConstructive.Construct();
 
