@@ -11,7 +11,9 @@ namespace Anpcp.Core;
 public class Instance
 {
     public Vertex[] Facilities { get; protected set; }
+    public IEnumerable<int> FacilitiesIndices => Facilities.Select(f => f.Index);
     public Vertex[] Users { get; protected set; }
+    public IEnumerable<int> UsersIndices => Users.Select(u => u.Index);
     /// <summary>
     /// Matrix of distances between users and facilities.
     /// </summary>
