@@ -15,7 +15,7 @@ public class PdpSolution(HashSet<int> closedFacilities)
 
         var minDistance = 0;
 
-        //// O(p)
+        //// O(p**2)
         // O(p)
         for (var i = 0; i < openFacilitiesArray.Length; i++)
         {
