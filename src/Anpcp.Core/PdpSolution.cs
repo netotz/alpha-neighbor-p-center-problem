@@ -1,14 +1,17 @@
-﻿namespace Anpcp.Core;
+﻿using Anpcp.Core.Wrappers;
+
+namespace Anpcp.Core;
 
 public class PdpSolution(HashSet<int> closedFacilities)
-    : BaseSolution<InstanceSameSet>(closedFacilities)
+    : BaseSolution(closedFacilities)
 {
     /// <summary>
     /// <inheritdoc/>
     /// Finds the minimum distance among all pairs of centers.
     /// </summary>
+    /// <param name="distancesFF">Distances matrix of facilities.</param>
     /// <remarks>Time O(p**2)</remarks>
-    public override int UpdateObjectiveFunctionValue(InstanceSameSet instance)
+    public override int UpdateObjectiveFunctionValue(DistancesMatrix distancesFF)
     {
         // O(p)
         var openFacilitiesArray = OpenFacilities.ToArray();
@@ -25,7 +28,7 @@ public class PdpSolution(HashSet<int> closedFacilities)
             {
                 var center2 = openFacilitiesArray[j];
 
-                var distance = instance.DistancesFF[center1, center2];
+                var distance = distancesFF[center1, center2];
                 minDistance = Math.Min(minDistance, distance);
             }
         }

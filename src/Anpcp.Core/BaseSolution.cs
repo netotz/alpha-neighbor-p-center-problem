@@ -1,7 +1,8 @@
-﻿namespace Anpcp.Core;
+﻿using Anpcp.Core.Wrappers;
 
-public abstract class BaseSolution<TInstance>(HashSet<int> closedFacilities)
-    where TInstance : BaseInstance
+namespace Anpcp.Core;
+
+public abstract class BaseSolution(HashSet<int> closedFacilities)
 {
     public int ObjectiveFunctionValue { get; set; }
     public HashSet<int> OpenFacilities { get; } = [];
@@ -29,5 +30,5 @@ public abstract class BaseSolution<TInstance>(HashSet<int> closedFacilities)
     /// Updates property <see cref="ObjectiveFunctionValue"/>
     /// and returns it.
     /// </summary>
-    public abstract int UpdateObjectiveFunctionValue(TInstance instance);
+    public abstract int UpdateObjectiveFunctionValue(DistancesMatrix distances);
 }

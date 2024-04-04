@@ -34,7 +34,7 @@ public class PdpConstructiveTests
         var stubFgd = new FgdConstructive(instance, p, TestSeed);
 
         var mockOgdSolution = stubOgd.Construct();
-        mockOgdSolution.UpdateObjectiveFunctionValue(instance);
+        mockOgdSolution.UpdateObjectiveFunctionValue(instance.DistancesFF);
 
         var mockFgdSolution = stubFgd.Construct();
 

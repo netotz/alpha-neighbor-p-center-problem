@@ -5,7 +5,7 @@
 /// </summary>
 public interface IConstructive<TInstance, TSolution> : IHeuristic<TInstance>
     where TInstance : BaseInstance
-    where TSolution : BaseSolution<TInstance>
+    where TSolution : BaseSolution
 {
     TSolution Construct();
 }

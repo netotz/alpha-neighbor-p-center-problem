@@ -43,7 +43,7 @@ public class PdpSolutionTests
         PdpSolution solution,
         int expected)
     {
-        var actual = solution.UpdateObjectiveFunctionValue(instance);
+        var actual = solution.UpdateObjectiveFunctionValue(instance.DistancesFF);
 
         Assert.Equal(expected, actual);
     }
