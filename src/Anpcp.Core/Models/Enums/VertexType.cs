@@ -1,4 +1,4 @@
-﻿namespace Anpcp.Core.Enums;
+﻿namespace Anpcp.Core.Models.Enums;
 
 public enum VertexType
 {

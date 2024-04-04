@@ -1,4 +1,4 @@
-﻿using Anpcp.Core.Enums;
+﻿using Anpcp.Core.Models.Enums;
 
 namespace Anpcp.Core.Models;
 

@@ -1,6 +1,6 @@
 ﻿using Anpcp.Core.Wrappers;
 
-namespace Anpcp.Core;
+namespace Anpcp.Core.Solutions;
 
 public class PdpSolution(HashSet<int> closedFacilities)
     : BaseSolution(closedFacilities)

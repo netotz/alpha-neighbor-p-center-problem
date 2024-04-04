@@ -1,4 +1,6 @@
-﻿namespace Anpcp.Core.UnitTests;
+﻿using Anpcp.Core.Instances;
+
+namespace Anpcp.Core.UnitTests.Instances;
 
 public class InstanceTwoSetsTests
 {

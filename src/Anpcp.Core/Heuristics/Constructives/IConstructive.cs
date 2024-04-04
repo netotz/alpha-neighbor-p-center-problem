@@ -1,4 +1,7 @@
-﻿namespace Anpcp.Core.Heuristics.Constructives;
+﻿using Anpcp.Core.Instances;
+using Anpcp.Core.Solutions;
+
+namespace Anpcp.Core.Heuristics.Constructives;
 
 /// <summary>
 /// Constructive heuristic contract.

@@ -1,4 +1,5 @@
 ﻿using Anpcp.Core.Heuristics.Constructives;
+using Anpcp.Core.Instances;
 
 namespace Anpcp.Core.UnitTests.Heuristics.Constructives;
 

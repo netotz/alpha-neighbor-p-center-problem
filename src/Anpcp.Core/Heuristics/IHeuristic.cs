@@ -1,4 +1,6 @@
-﻿namespace Anpcp.Core.Heuristics;
+﻿using Anpcp.Core.Instances;
+
+namespace Anpcp.Core.Heuristics;
 
 /// <summary>
 /// Heuristic algorithm contract.

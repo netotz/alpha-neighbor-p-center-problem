@@ -1,8 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 
-using Anpcp.Core.Enums;
 using Anpcp.Core.IO;
 using Anpcp.Core.Models;
+using Anpcp.Core.Models.Enums;
 
 namespace Anpcp.Core.UnitTests.IO;
 

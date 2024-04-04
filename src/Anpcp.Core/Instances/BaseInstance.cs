@@ -1,7 +1,7 @@
 ﻿using Anpcp.Core.Models;
 using Anpcp.Core.Wrappers;
 
-namespace Anpcp.Core;
+namespace Anpcp.Core.Instances;
 
 public abstract class BaseInstance
 {

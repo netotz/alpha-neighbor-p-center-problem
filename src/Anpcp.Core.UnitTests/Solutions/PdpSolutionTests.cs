@@ -1,4 +1,7 @@
-﻿namespace Anpcp.Core.UnitTests;
+﻿using Anpcp.Core.Instances;
+using Anpcp.Core.Solutions;
+
+namespace Anpcp.Core.UnitTests.Solutions;
 
 public class PdpSolutionTests
 {
@@ -59,9 +62,7 @@ public class PdpSolutionTests
         var solution = new PdpSolution(closedFacilities);
 
         foreach (var fi in openFacilities)
-        {
             solution.Insert(fi);
-        }
 
         return solution;
     }

@@ -1,8 +1,8 @@
-﻿using Anpcp.Core.Enums;
-using Anpcp.Core.IO;
+﻿using Anpcp.Core.IO;
 using Anpcp.Core.Models;
+using Anpcp.Core.Models.Enums;
 
-namespace Anpcp.Core;
+namespace Anpcp.Core.Instances;
 
 /// <summary>
 /// An instance of the ANPCP with two sets of nodes for users and facilities.

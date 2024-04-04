@@ -1,7 +1,7 @@
 ﻿using Anpcp.Core.IO;
 using Anpcp.Core.Models;
 
-namespace Anpcp.Core;
+namespace Anpcp.Core.Instances;
 
 /// <summary>
 /// An instance of the ANPCP with one set of nodes for both users and facilities.
