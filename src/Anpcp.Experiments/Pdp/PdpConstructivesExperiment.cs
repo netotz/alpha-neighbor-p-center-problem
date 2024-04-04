@@ -19,7 +19,7 @@ public class PdpConstructivesExperiment
         "usa13509.tsp",
     ];
     private static int Seed => 20240403;
-    private static double[] PFractions { get; } = [0.1];
+    private static double[] PFractions { get; } = [0.05, 0.1, 0.2];
 
     public IEnumerable<InstanceSameSet> Instances { get; } = TspFileNames
             .Select(n => new InstanceSameSet(GetTspFilePath(n)));
