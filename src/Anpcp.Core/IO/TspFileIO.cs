@@ -23,8 +23,9 @@ public static class TspFileIO
 
         var vertices = new List<Vertex>();
 
-        var line = streamReader.ReadLine() ?? "";
-        while (line != Eof)
+        var line = streamReader.ReadLine()?.Trim() ?? "";
+
+        while (line != "" && !line.Contains(Eof))
         {
             // each line has format "i x y t?"
             var items = line.Trim().Split();
