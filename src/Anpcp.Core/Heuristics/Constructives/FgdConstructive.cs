@@ -18,6 +18,9 @@ public class FgdConstructive(InstanceSameSet instance, int p, int? seed = null)
     /// Greedily constructs a solution for the PDP.
     /// </summary>
     /// <remarks>Time O(mp)</remarks>
+    /// <returns>
+    /// A solution with updated objective function value in O(1).
+    /// </returns>
     public PdpSolution Construct()
     {
         // memory dictionary of minimum distances to S
