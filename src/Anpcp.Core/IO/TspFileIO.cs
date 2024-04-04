@@ -26,21 +26,24 @@ public static class TspFileIO
         var line = streamReader.ReadLine() ?? "";
         while (line != Eof)
         {
-            line.Trim();
-
             // each line has format "i x y t?"
-            var items = line.Split();
-            var parsedItems = items.Select(int.Parse).ToArray();
+            var items = line.Trim().Split();
+            // parse as double since some instances have
+            // decimal (1.1) or scientific (1e+3) format
+            var parsedItems = items.Select(double.Parse).ToArray();
 
-            var type = VertexType.Both;
-            // if file includes vertex type
-            if (parsedItems.Length == 4)
-            {
-                type = (VertexType)parsedItems[3];
-            }
+            // subtract 1 since TSP instances start with 1,
+            // so first element is 0
+            var index = ((int)parsedItems[0]) - 1;
+            var xCoord = (int)parsedItems[1];
+            var yCoord = (int)parsedItems[2];
+            var type = parsedItems.Length == 4
+                // if file includes vertex type
+                ? (VertexType)parsedItems[3]
+                : VertexType.Both;
 
             vertices.Add(
-                new(parsedItems[0], parsedItems[1], parsedItems[2], type));
+                new(index, xCoord, yCoord, type));
 
             line = streamReader.ReadLine() ?? "";
         }
