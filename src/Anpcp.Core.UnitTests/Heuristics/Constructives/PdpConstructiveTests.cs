@@ -9,42 +9,40 @@ namespace Anpcp.Core.UnitTests.Heuristics.Constructives;
 public class PdpConstructiveTests
 {
     public static int? TestSeed { get; } = 20240402;
-    public static InstanceSameSet RandomInstance_m5 { get; } = new(5, 100, 100, TestSeed);
+    public static InstanceSameSet SeededInstance_m5 { get; } = new(5, 100, 100, TestSeed);
+    public static InstanceSameSet SeededInstance_m10 { get; } = new(10, 100, 100, TestSeed);
 
     public static object[][] Data { get; } = [
-        [RandomInstance_m5, 2, 2, 3],
-        [RandomInstance_m5, 4, 4, 1],
+        [SeededInstance_m5, 2, 3],
+        [SeededInstance_m5, 4, 1],
+        [SeededInstance_m10, 5, 5],
+        [SeededInstance_m10, 9, 1],
     ];
 
+    /// <summary>
+    /// Both heuristics should return the same solution:
+    /// same set of open facilities and same objective function value.
+    /// </summary>
     [Theory]
     [MemberData(nameof(Data))]
-    public void Fgd_Construct_ReturnsSolutionWithPFacilities(
+    public void OgdAndFgd_Construct_ReturnSameSolution(
         InstanceSameSet instance,
         int p,
-        int expectedP,
         int expectedCloseds)
     {
-        var stubConstructive = new FgdConstructive(instance, p, TestSeed);
+        var stubOgd = new OgdConstructive(instance, p, TestSeed);
+        var stubFgd = new FgdConstructive(instance, p, TestSeed);
 
-        var mockSolution = stubConstructive.Construct();
+        var mockOgdSolution = stubOgd.Construct();
+        mockOgdSolution.UpdateObjectiveFunctionValue(instance);
 
-        Assert.Equal(mockSolution.OpenFacilities.Count, expectedP);
-        Assert.Equal(mockSolution.ClosedFacilities.Count, expectedCloseds);
-    }
+        var mockFgdSolution = stubFgd.Construct();
 
-    [Theory]
-    [MemberData(nameof(Data))]
-    public void Ogd_Construct_ReturnsSolutionWithPFacilities(
-    InstanceSameSet instance,
-    int p,
-    int expectedP,
-    int expectedCloseds)
-    {
-        var stubConstructive = new OgdConstructive(instance, p, TestSeed);
+        Assert.Equal(mockOgdSolution.OpenFacilities, mockFgdSolution.OpenFacilities);
 
-        var mockSolution = stubConstructive.Construct();
+        Assert.Equal(mockOgdSolution.ObjectiveFunctionValue, mockFgdSolution.ObjectiveFunctionValue);
 
-        Assert.Equal(mockSolution.OpenFacilities.Count, expectedP);
-        Assert.Equal(mockSolution.ClosedFacilities.Count, expectedCloseds);
+        Assert.Equal(expectedCloseds, mockOgdSolution.ClosedFacilities.Count);
+        Assert.Equal(expectedCloseds, mockFgdSolution.ClosedFacilities.Count);
     }
 }
