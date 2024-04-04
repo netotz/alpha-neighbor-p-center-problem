@@ -1,6 +1,6 @@
 ﻿namespace Anpcp.Core;
 
-public class Solution(HashSet<int> closedFacilities)
+public abstract class BaseSolution(HashSet<int> closedFacilities)
 {
     public int ObjectiveFunctionValue { get; set; }
     public HashSet<int> OpenFacilities { get; } = [];
@@ -23,4 +23,10 @@ public class Solution(HashSet<int> closedFacilities)
         Insert(facilityInId);
         Remove(facilityOutId);
     }
+
+    /// <summary>
+    /// Updates property <see cref="ObjectiveFunctionValue"/>
+    /// and returns it.
+    /// </summary>
+    public abstract int UpdateObjectiveFunctionValue(Instance instance);
 }
