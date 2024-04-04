@@ -1,6 +1,6 @@
 ﻿namespace Anpcp.Core.UnitTests;
 
-public class InstanceTests
+public class InstanceTwoSetsTests
 {
     public static object[][] Data { get; } = [
         [1, 1, 0, 1, 1],
