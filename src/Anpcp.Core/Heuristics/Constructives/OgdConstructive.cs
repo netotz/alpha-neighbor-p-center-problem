@@ -15,6 +15,11 @@ public class OgdConstructive(InstanceSameSet instance, int p, int? seed = null)
     /// Greedily constructs a solution for the PDP.
     /// </summary>
     /// <remarks>Time O(mp**2)</remarks>
+    /// <returns>
+    /// A solution without the objective function value updated,
+    /// since that takes O(p**2) extra time.
+    /// To update it call <see cref="PdpSolution.UpdateObjectiveFunctionValue"/>.
+    /// </returns>
     public PdpSolution Construct()
     {
         // O(m)
