@@ -13,7 +13,7 @@ public class PdpSolution(HashSet<int> closedFacilities)
         // O(p)
         var openFacilitiesArray = OpenFacilities.ToArray();
 
-        var minDistance = 0;
+        var minDistance = int.MaxValue;
 
         //// O(p**2)
         // O(p)
