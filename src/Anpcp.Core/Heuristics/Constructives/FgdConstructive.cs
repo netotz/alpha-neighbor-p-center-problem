@@ -18,9 +18,10 @@ public class FgdConstructive(Instance instance, int p, int? seed = null)
     /// Greedily constructs a solution for the PDP.
     /// </summary>
     /// <remarks>Time O(mp)</remarks>
-    public Solution Construct()
+    public PdpSolution Construct()
     {
-        // memory dictionary, O(m)
+        // memory dictionary of minimum distances to S
+        // O(m)
         var distancesMemory = Enumerable
             .Repeat(int.MaxValue, Instance.Facilities.Length)
             .Select((v, i) => new
@@ -33,12 +34,16 @@ public class FgdConstructive(Instance instance, int p, int? seed = null)
                 s => s.Value);
 
         // O(m)
-        var solution = new Solution(Instance.FacilitiesIndices.ToHashSet());
+        var solution = new PdpSolution(Instance.FacilitiesIndices.ToHashSet());
+
+        // current objective function value x(S)
+        var currentOfv = int.MaxValue;
 
         var random = Seed is null
             ? new Random()
             : new Random(Seed.Value);
 
+        // start with random center
         var lastInserted = random.GetItems(
             solution.ClosedFacilities.ToArray(), 1)[0];
 
@@ -49,7 +54,8 @@ public class FgdConstructive(Instance instance, int p, int? seed = null)
         // O(p)
         while (solution.OpenFacilities.Count < PSize)
         {
-            // O(m)
+            // update memory
+            // O(m - p) ~= O(m)
             foreach (var fi in solution.ClosedFacilities)
             {
                 distancesMemory[fi] = Math.Min(
@@ -57,14 +63,23 @@ public class FgdConstructive(Instance instance, int p, int? seed = null)
                     Instance.DistancesFF[fi, lastInserted]);
             }
 
-            // O(m)
+            // get farthest facility to S
+            // O(m - p) ~= O(m)
             lastInserted = distancesMemory
                 .MaxBy(p => p.Value)
                 .Key;
 
             solution.Insert(lastInserted);
+
+            // update x(S)
+            currentOfv = Math.Min(
+                currentOfv,
+                distancesMemory[lastInserted]);
+
             distancesMemory.Remove(lastInserted);
         }
+
+        solution.ObjectiveFunctionValue = currentOfv;
 
         return solution;
     }
