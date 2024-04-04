@@ -8,7 +8,7 @@
 /// This algorithm reduces the time complexity from O(mp**2) to O(mp).
 /// </remarks>
 public class FgdConstructive(Instance instance, int p, int? seed = null)
-    : IConstructive
+    : IConstructive<PdpSolution>
 {
     public int PSize { get; } = p;
     public Instance Instance { get; } = instance;

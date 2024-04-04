@@ -3,7 +3,8 @@
 /// <summary>
 /// Constructive heuristic contract.
 /// </summary>
-public interface IConstructive : IHeuristic
+public interface IConstructive<TSolution> : IHeuristic
+    where TSolution : BaseSolution
 {
-    Solution Construct();
+    TSolution Construct();
 }

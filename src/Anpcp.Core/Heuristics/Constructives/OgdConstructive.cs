@@ -5,7 +5,7 @@
 /// Solves the p-dispersion problem (PDP).
 /// </summary>
 public class OgdConstructive(Instance instance, int p, int? seed = null)
-    : IConstructive
+    : IConstructive<PdpSolution>
 {
     public int PSize { get; } = p;
     public Instance Instance { get; } = instance;
