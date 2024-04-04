@@ -15,15 +15,16 @@ public class OgdConstructive(Instance instance, int p, int? seed = null)
     /// Greedily constructs a solution for the PDP.
     /// </summary>
     /// <remarks>Time O(mp**2)</remarks>
-    public Solution Construct()
+    public PdpSolution Construct()
     {
         // O(m)
-        var solution = new Solution(Instance.FacilitiesIndices.ToHashSet());
+        var solution = new PdpSolution(Instance.FacilitiesIndices.ToHashSet());
 
         var random = Seed is null
             ? new Random()
             : new Random(Seed.Value);
 
+        // start with random center
         var lastInserted = random.GetItems(
             solution.ClosedFacilities.ToArray(), 1)[0];
 
@@ -36,7 +37,7 @@ public class OgdConstructive(Instance instance, int p, int? seed = null)
             var distancesToSolution = new Dictionary<int, int>();
 
             //// O(mp)
-            // O(m)
+            // O(m - p) ~= O(m)
             foreach (var fi in solution.ClosedFacilities)
             {
                 // O(p)
@@ -47,7 +48,8 @@ public class OgdConstructive(Instance instance, int p, int? seed = null)
                 distancesToSolution[fi] = distance;
             }
 
-            // O(m)
+            // get farthest facility to S
+            // O(m - p) ~= O(m)
             lastInserted = distancesToSolution
                 .MaxBy(p => p.Value)
                 .Key;
