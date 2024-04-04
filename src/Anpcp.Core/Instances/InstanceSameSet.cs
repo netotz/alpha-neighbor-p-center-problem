@@ -16,6 +16,8 @@ public class InstanceSameSet : BaseInstance
     /// </remarks>
     public InstanceSameSet(string tspFilePath)
     {
+        Name = Path.GetFileNameWithoutExtension(tspFilePath);
+
         var vertices = TspFileIO.ReadNodes(tspFilePath).ToArray();
 
         Facilities = vertices;

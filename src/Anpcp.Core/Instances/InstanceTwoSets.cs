@@ -17,6 +17,8 @@ public class InstanceTwoSets : BaseInstance
     /// </remarks>
     public InstanceTwoSets(string tspFilePath)
     {
+        Name = Path.GetFileNameWithoutExtension(tspFilePath);
+
         var vertices = TspFileIO.ReadNodes(tspFilePath);
 
         Facilities = vertices

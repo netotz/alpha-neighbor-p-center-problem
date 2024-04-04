@@ -5,6 +5,7 @@ namespace Anpcp.Core.Instances;
 
 public abstract class BaseInstance
 {
+    public string Name { get; protected set; } = "";
     public Vertex[] Facilities { get; protected set; } = [];
     public IEnumerable<int> FacilitiesIndices => Facilities.Select(f => f.Index);
     public Vertex[] Users { get; protected set; } = [];
