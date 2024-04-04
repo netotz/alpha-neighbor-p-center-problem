@@ -8,7 +8,7 @@ namespace Anpcp.Core.UnitTests.Heuristics.Constructives;
 /// </summary>
 public class PdpConstructiveTests
 {
-    public static int? TestSeed { get; } = 20240402;
+    public static int? TestSeed => 20240402;
     public static InstanceSameSet SeededInstance_m5 { get; } = new(5, 100, 100, TestSeed);
     public static InstanceSameSet SeededInstance_m10 { get; } = new(10, 100, 100, TestSeed);
 
