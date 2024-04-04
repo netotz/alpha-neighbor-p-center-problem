@@ -13,8 +13,6 @@ AppSettings.AppPaths = config
 
 var pdpExperiment = new PdpConstructivesExperiment();
 
-Console.WriteLine("Running PDP experiment...");
 pdpExperiment.Run();
-Console.WriteLine("Done.");
 
 pdpExperiment.WriteCsvResults();

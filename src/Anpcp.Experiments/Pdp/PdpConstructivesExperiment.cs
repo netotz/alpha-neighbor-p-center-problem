@@ -21,8 +21,7 @@ public class PdpConstructivesExperiment
     private static int Seed => 20240403;
     private static double[] PFractions { get; } = [0.05, 0.1, 0.2];
 
-    public IEnumerable<InstanceSameSet> Instances { get; } = TspFileNames
-            .Select(n => new InstanceSameSet(GetTspFilePath(n)));
+    public InstanceSameSet[] Instances { get; private set; } = [];
     /// <summary>
     /// Results of Original Greedy Dispersion (OGD).
     /// </summary>
@@ -34,13 +33,23 @@ public class PdpConstructivesExperiment
 
     public void Run()
     {
+        ReadTspFiles();
+
+        Console.WriteLine("Running PDP experiment...");
+
         foreach (var instance in Instances)
         {
+            Console.WriteLine($"\tSolving instance {instance.Name}...");
+
             foreach (var pFrac in PFractions)
             {
                 var p = (int)(instance.Facilities.Length * pFrac);
 
+                Console.WriteLine($"\t\tUsing p {p}...");
+
                 var fgd = new FgdConstructive(instance, p, Seed);
+
+                Console.WriteLine("\t\tRunning FGD...");
 
                 var stopwatch = Stopwatch.StartNew();
                 // O(mp)
@@ -52,6 +61,8 @@ public class PdpConstructivesExperiment
                 FgdResults.Add(new(instance.Name, fgd, fgdSolution, stopwatch.Elapsed));
 
                 var ogd = new OgdConstructive(instance, p, Seed);
+
+                Console.WriteLine("\t\tRunning OGD...");
 
                 stopwatch = Stopwatch.StartNew();
                 // O(mp**2)
@@ -66,10 +77,25 @@ public class PdpConstructivesExperiment
                 OgdResults.Add(new(instance.Name, ogd, ogdSolution, stopwatch.Elapsed, ofvStopwatch.Elapsed));
             }
         }
+
+        Console.WriteLine("Done." + Environment.NewLine);
+    }
+
+    private void ReadTspFiles()
+    {
+        Console.WriteLine("Reading TSPLIB files...");
+
+        Instances = TspFileNames
+            .Select(n => new InstanceSameSet(GetTspFilePath(n)))
+            .ToArray();
+
+        Console.WriteLine("Done." + Environment.NewLine);
     }
 
     public void WriteCsvResults()
     {
+        Console.WriteLine("Creating data frame of results...");
+
         var ogdColumns = GetCommonColumns(OgdResults);
         var ofvTime = DataFrameColumn.Create(
             "ofv time",
@@ -102,7 +128,11 @@ public class PdpConstructivesExperiment
 
         var csvPath = Path.Combine(AppSettings.AppPaths.Out, OutFolder, "both1.csv");
 
+        Console.WriteLine("Saving CSV...");
+
         DataFrame.SaveCsv(bothDataFrame, csvPath);
+
+        Console.WriteLine("Done." + Environment.NewLine);
     }
 
     private static DataFrameColumn[] GetCommonColumns<TConstructive>(List<PdpResult<TConstructive>> results)
