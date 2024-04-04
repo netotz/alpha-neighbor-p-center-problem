@@ -11,12 +11,20 @@ public class PdpConstructiveTests
     public static int? TestSeed => 20240402;
     public static InstanceSameSet SeededInstance_m5 { get; } = new(5, 100, 100, TestSeed);
     public static InstanceSameSet SeededInstance_m10 { get; } = new(10, 100, 100, TestSeed);
+    public static InstanceSameSet SeededInstance_m50 { get; } = new(50, seed: TestSeed);
 
     public static object[][] Data { get; } = [
         [SeededInstance_m5, 2, 3],
         [SeededInstance_m5, 4, 1],
+
+        [SeededInstance_m10, 2, 8],
         [SeededInstance_m10, 5, 5],
         [SeededInstance_m10, 9, 1],
+
+        [SeededInstance_m50, 5, 45],
+        [SeededInstance_m50, 10, 40],
+        [SeededInstance_m50, 20, 30],
+        [SeededInstance_m50, 40, 10],
     ];
 
     /// <summary>
