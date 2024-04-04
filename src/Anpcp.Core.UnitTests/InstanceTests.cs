@@ -12,7 +12,7 @@ public class InstanceTests
     public void Constructor_CreatesInstance(
         int n, int m, int? seed, int expectedN, int expectedM)
     {
-        var actual = new Instance(n, m, seed: seed);
+        var actual = new InstanceTwoSets(n, m, seed: seed);
 
         Assert.Equal(actual.Users.Length, expectedN);
         Assert.Equal(actual.Facilities.Length, expectedM);

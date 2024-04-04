@@ -1,6 +1,7 @@
 ﻿namespace Anpcp.Core;
 
-public abstract class BaseSolution(HashSet<int> closedFacilities)
+public abstract class BaseSolution<TInstance>(HashSet<int> closedFacilities)
+    where TInstance : BaseInstance
 {
     public int ObjectiveFunctionValue { get; set; }
     public HashSet<int> OpenFacilities { get; } = [];
@@ -28,5 +29,5 @@ public abstract class BaseSolution(HashSet<int> closedFacilities)
     /// Updates property <see cref="ObjectiveFunctionValue"/>
     /// and returns it.
     /// </summary>
-    public abstract int UpdateObjectiveFunctionValue(Instance instance);
+    public abstract int UpdateObjectiveFunctionValue(TInstance instance);
 }

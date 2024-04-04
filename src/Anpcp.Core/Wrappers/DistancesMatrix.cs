@@ -9,7 +9,12 @@ public class DistancesMatrix
     public int this[int fromIndex, int toIndex]
         => _distances[fromIndex, toIndex];
 
-    public bool IsInitialized => _distances.Length > 0;
+    public bool IsInitialized => _distances?.Length > 0;
+
+    public DistancesMatrix()
+    {
+        _distances = new int[0, 0];
+    }
 
     public DistancesMatrix(Vertex[] vertices1, Vertex[] vertices2)
     {
