@@ -1,4 +1,4 @@
-instance,p,x(S) ogd,time ogd,ofv time,x(S) rgd,time rgd,faster x
+instance,p,x(S) ogd,time ogd,ofv time,x(S) fgd,time fgd,faster x
 dsj1000,50,104409,0.022,0.,104409,0.002,9.0596926480464575
 dsj1000,100,65057,0.072,0.,65057,0.002,24.603051111186279
 dsj1000,200,39266,0.231,0.,39266,0.004,51.346803137046393
