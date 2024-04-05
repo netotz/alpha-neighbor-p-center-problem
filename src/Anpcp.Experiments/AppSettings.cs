@@ -1,11 +1,8 @@
 ﻿namespace Anpcp.Experiments;
 
-public record AppPaths(string TspLib, string Out)
-{
-    public AppPaths() : this("", "") { }
-}
-
 public static class AppSettings
 {
-    public static AppPaths AppPaths { get; set; } = new();
+    public static string AnpcpRepoPath { get; set; } = "";
+    public static string TspLibPath => Path.Combine(AnpcpRepoPath, "data", "tsplib");
+    public static string OutPath => Path.Combine(AnpcpRepoPath, "out");
 }

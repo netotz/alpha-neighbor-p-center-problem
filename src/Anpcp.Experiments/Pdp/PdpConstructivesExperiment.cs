@@ -14,9 +14,9 @@ public class PdpConstructivesExperiment
     private static string[] TspFileNames { get; } = [
         "dsj1000.tsp",
         "fl3795.tsp",
-        "rl5934.tsp",
-        "pla7397.tsp",
-        "usa13509.tsp",
+         "rl5934.tsp",
+         "pla7397.tsp",
+         "usa13509.tsp",
     ];
     private static int Seed => 20240403;
     private static double[] PFractions { get; } = [0.05, 0.1, 0.2];
@@ -39,13 +39,13 @@ public class PdpConstructivesExperiment
 
         foreach (var instance in Instances)
         {
-            Console.WriteLine($"\tSolving instance {instance.Name}...");
+            Console.WriteLine($"\tSolving instance: {instance.Name}...");
 
             foreach (var pFrac in PFractions)
             {
                 var p = (int)(instance.Facilities.Length * pFrac);
 
-                Console.WriteLine($"\t\tUsing p {p}...");
+                Console.WriteLine($"\n\t\tUsing p={p}...");
 
                 var fgd = new FgdConstructive(instance, p, Seed);
 
@@ -126,7 +126,7 @@ public class PdpConstructivesExperiment
         bothDataFrame.Columns.Insert(0, pColumn);
         bothDataFrame.Columns.Insert(0, instancesColumn);
 
-        var csvPath = Path.Combine(AppSettings.AppPaths.Out, OutFolder, "both1.csv");
+        var csvPath = Path.Combine(AppSettings.OutPath, OutFolder, "both1.csv");
 
         Console.WriteLine("Saving CSV...");
 
@@ -150,6 +150,6 @@ public class PdpConstructivesExperiment
 
     private static string GetTspFilePath(string tspFileName)
     {
-        return Path.Combine(AppSettings.AppPaths.TspLib, tspFileName);
+        return Path.Combine(AppSettings.TspLibPath, tspFileName);
     }
 }

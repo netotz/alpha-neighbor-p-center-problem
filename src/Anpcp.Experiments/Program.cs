@@ -1,15 +1,10 @@
 ﻿using Anpcp.Experiments;
 using Anpcp.Experiments.Pdp;
 
-using Microsoft.Extensions.Configuration;
-
-var config = new ConfigurationBuilder()
-    .AddJsonFile("appSettings.json", false, true)
-    .Build();
-
-AppSettings.AppPaths = config
-    .GetSection(nameof(AppPaths))
-    .Get<AppPaths>();
+// get repo path from environment variable, should be set by script
+AppSettings.AnpcpRepoPath = new(
+    Environment.GetEnvironmentVariable(
+        nameof(AppSettings.AnpcpRepoPath)) ?? "");
 
 var pdpExperiment = new PdpConstructivesExperiment();
 
