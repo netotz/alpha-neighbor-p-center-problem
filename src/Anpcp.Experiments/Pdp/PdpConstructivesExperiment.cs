@@ -14,9 +14,9 @@ public class PdpConstructivesExperiment
     private static string[] TspFileNames { get; } = [
         "dsj1000.tsp",
         "fl3795.tsp",
-         "rl5934.tsp",
-         "pla7397.tsp",
-         "usa13509.tsp",
+        "rl5934.tsp",
+        "pla7397.tsp",
+        "usa13509.tsp",
     ];
     private static int Seed => 20240403;
     private static double[] PFractions { get; } = [0.05, 0.1, 0.2];
