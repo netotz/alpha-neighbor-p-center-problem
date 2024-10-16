@@ -147,19 +147,19 @@ public class FgdInteractive
         // closed facilities
         var cfVertices = Instance.Facilities
             .Where(f => Solution.ClosedFacilities.Contains(f.Index));
-        var cfPoints = plotter.Add.ScatterPoints(
+        var cfMarkers = plotter.Add.Markers(
             cfVertices.Select(v => (double)v.XCoord).ToArray(),
             cfVertices.Select(v => (double)v.YCoord).ToArray());
-        SetScatterProps(ref cfPoints, PlotConfig.CfColor);
+        SetScatterProps(ref cfMarkers, PlotConfig.CfColor);
 
         // centers
         var sVertices = Instance.Facilities
             .Where(f => Solution.OpenFacilities.Contains(f.Index)
                 && f.Index != LastInserted);
-        var sPoints = plotter.Add.ScatterPoints(
+        var sMarkers = plotter.Add.Markers(
             sVertices.Select(v => (double)v.XCoord).ToArray(),
             sVertices.Select(v => (double)v.YCoord).ToArray());
-        SetScatterProps(ref sPoints, PlotConfig.SColor);
+        SetScatterProps(ref sMarkers, PlotConfig.SColor);
 
         var fiVertex = Instance.Facilities[fi];
         var fiCoords = new Coordinates(fiVertex.XCoord, fiVertex.YCoord);
@@ -183,27 +183,27 @@ public class FgdInteractive
             : ccLine;
         minLine.Color = new(ColorName.Goldenrod);
 
-        var fiPoint = plotter.Add.ScatterPoints(
+        var fiMarker = plotter.Add.Markers(
             (Coordinates[])[fiCoords]);
-        SetScatterProps(ref fiPoint, PlotConfig.FiColor);
+        SetScatterProps(ref fiMarker, PlotConfig.FiColor);
 
-        var liPoint = plotter.Add.ScatterPoints(
+        var liMarker = plotter.Add.Markers(
             (Coordinates[])[liCoords]);
-        SetScatterProps(ref liPoint, PlotConfig.LiColor);
+        SetScatterProps(ref liMarker, PlotConfig.LiColor);
 
-        var ccPoint = plotter.Add.ScatterPoints(
+        var ccMarker = plotter.Add.Markers(
             (Coordinates[])[ccCoords]);
-        SetScatterProps(ref ccPoint, PlotConfig.CcColor);
+        SetScatterProps(ref ccMarker, PlotConfig.CcColor);
 
         return plotter;
     }
 
-    private void SetScatterProps(ref Scatter scatter, ColorName fillColor)
+    private void SetScatterProps(ref Markers markers, ColorName fillColor)
     {
-        scatter.MarkerLineWidth = PlotConfig.MarkerLineWidth;
-        scatter.MarkerLineColor = new(ColorName.Black);
-        scatter.MarkerFillColor = new(fillColor);
-        scatter.MarkerSize = PlotConfig.MarkerSize;
+        markers.MarkerStyle.OutlineWidth = PlotConfig.MarkerOutlineWidth;
+        markers.MarkerStyle.OutlineColor = new(ColorName.Black);
+        markers.MarkerStyle.FillColor = new(fillColor);
+        markers.MarkerStyle.Size = PlotConfig.MarkerSize;
     }
 
     /// <summary>
