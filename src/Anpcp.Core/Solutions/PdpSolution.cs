@@ -29,7 +29,12 @@ public class PdpSolution(HashSet<int> closedFacilities)
                 var center2 = openFacilitiesArray[j];
 
                 var distance = distancesFF[center1, center2];
-                minDistance = Math.Min(minDistance, distance);
+
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    CriticalPair = (center1, center2);
+                }
             }
         }
 
