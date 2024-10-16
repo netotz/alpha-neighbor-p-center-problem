@@ -4,6 +4,7 @@ using Anpcp.Core.Solutions;
 using Anpcp.Interactive.Pdp.Models;
 
 using ScottPlot;
+using ScottPlot.Plottables;
 
 namespace Anpcp.Interactive.Pdp;
 
@@ -137,47 +138,72 @@ public class FgdInteractive
             return null;
         }
 
-        var plot = new Plot
+        var plotter = new Plot
         {
             ScaleFactor = PlotConfig.ScaleFactor
         };
+        plotter.HideAxesAndGrid();
 
         // closed facilities
         var cfVertices = Instance.Facilities
             .Where(f => Solution.ClosedFacilities.Contains(f.Index));
-        plot.Add.ScatterPoints(
+        var cfPoints = plotter.Add.ScatterPoints(
             cfVertices.Select(v => (double)v.XCoord).ToArray(),
-            cfVertices.Select(v => (double)v.YCoord).ToArray(),
-            new(PlotConfig.CfColor));
+            cfVertices.Select(v => (double)v.YCoord).ToArray());
+        SetScatterProps(ref cfPoints, PlotConfig.CfColor);
 
         // centers
         var sVertices = Instance.Facilities
             .Where(f => Solution.OpenFacilities.Contains(f.Index)
                 && f.Index != LastInserted);
-        plot.Add.ScatterPoints(
+        var sPoints = plotter.Add.ScatterPoints(
             sVertices.Select(v => (double)v.XCoord).ToArray(),
-            sVertices.Select(v => (double)v.YCoord).ToArray(),
-            new(PlotConfig.SColor));
+            sVertices.Select(v => (double)v.YCoord).ToArray());
+        SetScatterProps(ref sPoints, PlotConfig.SColor);
 
         var fiVertex = Instance.Facilities[fi];
-        plot.Add.ScatterPoints(
-            (double[])[fiVertex.XCoord],
-            (double[])[fiVertex.YCoord],
-            new(PlotConfig.FiColor));
+        var fiCoords = new Coordinates(fiVertex.XCoord, fiVertex.YCoord);
 
         var liVertex = Instance.Facilities[LastInserted];
-        plot.Add.ScatterPoints(
-            (double[])[liVertex.XCoord],
-            (double[])[liVertex.YCoord],
-            new(PlotConfig.LiColor));
+        var liCoords = new Coordinates(liVertex.XCoord, liVertex.YCoord);
 
         var ccVertex = Instance.Facilities[closestCenter.Index];
-        plot.Add.ScatterPoints(
-            (double[])[ccVertex.XCoord],
-            (double[])[ccVertex.YCoord],
-            new(PlotConfig.CcColor));
+        var ccCoords = new Coordinates(ccVertex.XCoord, ccVertex.YCoord);
 
-        return plot;
+        var liLine = plotter.Add.Line(fiCoords, liCoords);
+        liLine.LinePattern = LinePattern.Dotted;
+        liLine.Color = new(ColorName.Black);
+
+        var ccLine = plotter.Add.Line(fiCoords, ccCoords);
+        ccLine.LinePattern = LinePattern.Dotted;
+        ccLine.Color = new(ColorName.Black);
+
+        var minLine = minDistance == liDistance
+            ? liLine
+            : ccLine;
+        minLine.Color = new(ColorName.Goldenrod);
+
+        var fiPoint = plotter.Add.ScatterPoints(
+            (Coordinates[])[fiCoords]);
+        SetScatterProps(ref fiPoint, PlotConfig.FiColor);
+
+        var liPoint = plotter.Add.ScatterPoints(
+            (Coordinates[])[liCoords]);
+        SetScatterProps(ref liPoint, PlotConfig.LiColor);
+
+        var ccPoint = plotter.Add.ScatterPoints(
+            (Coordinates[])[ccCoords]);
+        SetScatterProps(ref ccPoint, PlotConfig.CcColor);
+
+        return plotter;
+    }
+
+    private void SetScatterProps(ref Scatter scatter, ColorName fillColor)
+    {
+        scatter.MarkerLineWidth = PlotConfig.MarkerLineWidth;
+        scatter.MarkerLineColor = new(ColorName.Black);
+        scatter.MarkerFillColor = new(fillColor);
+        scatter.MarkerSize = PlotConfig.MarkerSize;
     }
 
     /// <summary>
