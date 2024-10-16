@@ -1,18 +1,11 @@
 ﻿using Anpcp.Core.Heuristics.Constructives;
 using Anpcp.Core.Instances;
 using Anpcp.Core.Solutions;
+using Anpcp.Interactive.Pdp.Models;
 
 using ScottPlot;
 
-using ColorName = System.Drawing.Color;
-
 namespace Anpcp.Interactive.Pdp;
-
-/// <summary>
-/// Distance from fi to the closest center from S.
-/// Type meant as the value of distances memory dictionary.
-/// </summary>
-public record ClosestCenter(int Distance, int Index = -1);
 
 /// <summary>
 /// Interactive version of <see cref="FgdConstructive"/> to generate visualizations.
@@ -32,7 +25,7 @@ public class FgdInteractive
     /// </summary>
     public int CurrentOfv { get; set; } = int.MaxValue;
     private Queue<int> ClosedFacilitiesQueue { get; set; }
-    private int DequeuedFi { get; set; }
+    public PlotConfig PlotConfig { get; set; } = new();
 
     public FgdInteractive(int pSize, InstanceSameSet instance, int? seed)
     {
@@ -74,7 +67,7 @@ public class FgdInteractive
         ResetClosedFacilitiesQueue();
     }
 
-    private void ResetClosedFacilitiesQueue()
+    public void ResetClosedFacilitiesQueue()
     {
         ClosedFacilitiesQueue = new Queue<int>(Solution.ClosedFacilities);
     }
@@ -82,7 +75,7 @@ public class FgdInteractive
     /// <summary>
     /// Tries to do an iteration of the main `while` loop of the algorithm.
     /// </summary>
-    /// <returns>`false` if |S| = p</returns>
+    /// <returns>`false` if |S| = p or memory isn't fully updated</returns>
     public bool TryIterateMain()
     {
         // S already has p centers
@@ -100,7 +93,7 @@ public class FgdInteractive
         // get farthest facility to S
         // O(m - p) ~= O(m)
         LastInserted = DistancesMemory
-            .MaxBy(p => p.Value)
+            .MaxBy(p => p.Value.Distance)
             .Key;
 
         Solution.Insert(LastInserted);
@@ -144,7 +137,10 @@ public class FgdInteractive
             return null;
         }
 
-        var plot = new Plot();
+        var plot = new Plot
+        {
+            ScaleFactor = PlotConfig.ScaleFactor
+        };
 
         // closed facilities
         var cfVertices = Instance.Facilities
@@ -152,7 +148,7 @@ public class FgdInteractive
         plot.Add.ScatterPoints(
             cfVertices.Select(v => (double)v.XCoord).ToArray(),
             cfVertices.Select(v => (double)v.YCoord).ToArray(),
-            new(ColorName.LightGray));
+            new(PlotConfig.CfColor));
 
         // centers
         var sVertices = Instance.Facilities
@@ -161,25 +157,25 @@ public class FgdInteractive
         plot.Add.ScatterPoints(
             sVertices.Select(v => (double)v.XCoord).ToArray(),
             sVertices.Select(v => (double)v.YCoord).ToArray(),
-            new(ColorName.Red));
+            new(PlotConfig.SColor));
 
         var fiVertex = Instance.Facilities[fi];
         plot.Add.ScatterPoints(
             (double[])[fiVertex.XCoord],
             (double[])[fiVertex.YCoord],
-            new Color(ColorName.Yellow));
+            new(PlotConfig.FiColor));
 
         var liVertex = Instance.Facilities[LastInserted];
         plot.Add.ScatterPoints(
             (double[])[liVertex.XCoord],
             (double[])[liVertex.YCoord],
-            new(ColorName.LightBlue));
+            new(PlotConfig.LiColor));
 
         var ccVertex = Instance.Facilities[closestCenter.Index];
         plot.Add.ScatterPoints(
             (double[])[ccVertex.XCoord],
             (double[])[ccVertex.YCoord],
-            new(ColorName.LightGreen));
+            new(PlotConfig.CcColor));
 
         return plot;
     }
@@ -193,8 +189,6 @@ public class FgdInteractive
         {
             TryPlotForMemoryIteration(true);
         }
-
-        ResetClosedFacilitiesQueue();
     }
 
     /// <summary>
