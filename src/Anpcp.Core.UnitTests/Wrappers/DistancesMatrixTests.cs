@@ -10,7 +10,8 @@ public class DistancesMatrixTests
         [
             new Vertex[] { new(0, 0, 0) },
             new Vertex[] { new(0, 0, 0) },
-            new int[,] { { 0 } }
+            new int[,] { { 0 } },
+            (0, 0)
         ],
         // 2 x 2, different sets
         [
@@ -19,17 +20,23 @@ public class DistancesMatrixTests
             new int[,] {
                 { 5, 13 },
                 { 4, 12 },
-            }
+            },
+            (0, 1)
         ],
     ];
 
     [Theory]
     [MemberData(nameof(Data))]
-    public void Constructor_InstantiatesDistancesMatrixCorrectly(Vertex[] v1, Vertex[] v2, int[,] expectedDistances)
+    public void Constructor_InstantiatesDistancesMatrixCorrectly(
+        Vertex[] v1,
+        Vertex[] v2,
+        int[,] expectedDistances,
+        (int, int) expectedMaxPair)
     {
         var mockMatrix = new DistancesMatrix(v1, v2);
 
         Assert.True(mockMatrix.IsInitialized);
+        Assert.Equal(mockMatrix.MaxPair, expectedMaxPair);
 
         var areEquals = new List<bool>();
         for (var i = 0; i < v1.Length; i++)
