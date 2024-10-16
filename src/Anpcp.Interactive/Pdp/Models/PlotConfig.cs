@@ -5,13 +5,13 @@
 /// </summary>
 public record PlotConfig
 {
-    public double ScaleFactor { get; init; } = 1;
-    public float MarkerSize { get; init; } = 1;
-    public float MarkerOutlineWidth { get; init; } = 1;
+    public double ScaleFactor { get; init; } = 2;
+    public float MarkerSize { get; init; } = 10;
+    public float MarkerOutlineWidth { get; init; } = 0.7f;
     /// <summary>
     /// Color for closed facilities markers.
     /// </summary>
-    public ColorName CfColor { get; init; } = ColorName.Gray;
+    public ColorName CfColor { get; init; } = ColorName.LightGray;
     /// <summary>
     /// Color for solution markers.
     /// </summary>
@@ -23,10 +23,10 @@ public record PlotConfig
     /// <summary>
     /// Color for last inserted (li) facility marker.
     /// </summary>
-    public ColorName LiColor { get; init; } = ColorName.Blue;
+    public ColorName LiColor { get; init; } = ColorName.Red;
     /// <summary>
     /// Color for closest center (cc) marker to fi.
     /// </summary>
-    public ColorName CcColor { get; init; } = ColorName.Green;
+    public ColorName CcColor { get; init; } = ColorName.Red;
 }
 
