@@ -25,7 +25,7 @@ public class FgdInteractive
     /// Current objective function value x(S).
     /// </summary>
     public int CurrentOfv { get; set; } = int.MaxValue;
-    private Queue<int> ClosedFacilitiesQueue { get; set; }
+    public Queue<int> ClosedFacilitiesQueue { get; private set; }
     public PlotConfig PlotConfig { get; set; } = new();
 
     public FgdInteractive(int pSize, InstanceSameSet instance, int? seed)
@@ -53,19 +53,25 @@ public class FgdInteractive
         Solution = new PdpSolution(Instance.FacilitiesIndices.ToHashSet());
 
         Start();
-        HurryForMemory();
     }
 
     private void Start()
     {
-        // start with random center
-        LastInserted = Random.GetItems(
-            Solution.ClosedFacilities.ToArray(), 1)[0];
+        // start solution with 2 farthest facilities
+        var f1 = Instance.DistancesFF.MaxPair.Item1;
+        var f2 = Instance.DistancesFF.MaxPair.Item2;
 
-        Solution.Insert(LastInserted);
-        DistancesMemory.Remove(LastInserted);
+        foreach (var f in (int[])[f1, f2])
+        {
+            LastInserted = f;
+            Solution.Insert(f);
+            DistancesMemory.Remove(LastInserted);
 
-        ResetClosedFacilitiesQueue();
+            Solution.UpdateObjectiveFunctionValue(Instance.DistancesFF);
+
+            ResetClosedFacilitiesQueue();
+            HurryForMemory();
+        }
     }
 
     public void ResetClosedFacilitiesQueue()
@@ -77,18 +83,18 @@ public class FgdInteractive
     /// Tries to do an iteration of the main `while` loop of the algorithm.
     /// </summary>
     /// <returns>`false` if |S| = p or memory isn't fully updated</returns>
-    public bool TryIterateMain()
+    public Plot? TryPlotMainIteration()
     {
         // S already has p centers
         if (Solution.OpenFacilities.Count == PSize)
         {
-            return false;
+            return null;
         }
 
         // if memory isn't fully updated
         if (ClosedFacilitiesQueue.Count > 0)
         {
-            return false;
+            return null;
         }
 
         // get farthest facility to S
@@ -97,18 +103,62 @@ public class FgdInteractive
             .MaxBy(p => p.Value.Distance)
             .Key;
 
+        var closestCenter = DistancesMemory[LastInserted];
+
+        var prevOfv = CurrentOfv;
+        var prevCriticalPair = Solution.CriticalPair;
+
         Solution.Insert(LastInserted);
 
         // update x(S)
         CurrentOfv = Math.Min(
             CurrentOfv,
-            DistancesMemory[LastInserted].Distance);
+            closestCenter.Distance);
+        Solution.UpdateObjectiveFunctionValue(Instance.DistancesFF);
 
         DistancesMemory.Remove(LastInserted);
 
         ResetClosedFacilitiesQueue();
 
-        return true;
+        var plotter = GetCommonPlotter();
+
+        // critical pairs
+        var cp1Vertex = Instance.Facilities[prevCriticalPair.Item1];
+        var cp1Coords = new Coordinates(cp1Vertex.XCoord, cp1Vertex.YCoord);
+
+        var cp2Vertex = Instance.Facilities[prevCriticalPair.Item2];
+        var cp2Coords = new Coordinates(cp2Vertex.XCoord, cp2Vertex.YCoord);
+
+        var cpLine = plotter.Add.Line(cp1Coords, cp2Coords);
+        cpLine.LinePattern = LinePattern.Dotted;
+        cpLine.Color = new(ColorName.Black);
+
+        var liVertex = Instance.Facilities[LastInserted];
+        var liCoords = new Coordinates(liVertex.XCoord, liVertex.YCoord);
+
+        var ccVertex = Instance.Facilities[closestCenter.Index];
+        var ccCoords = new Coordinates(ccVertex.XCoord, ccVertex.YCoord);
+
+        var liLine = plotter.Add.Line(liCoords, ccCoords);
+        liLine.LinePattern = LinePattern.Dotted;
+        liLine.Color = new(ColorName.Black);
+
+        var minLine = prevOfv == CurrentOfv
+            ? cpLine
+            : liLine;
+        minLine.Color = new(ColorName.Goldenrod);
+
+        var liMarker = plotter.Add.Markers(
+            (Coordinates[])[liCoords]);
+        liMarker.LegendText = "Last inserted";
+        SetScatterProps(ref liMarker, PlotConfig.LiColor, MarkerShape.FilledTriangleDown);
+
+        var ccMarker = plotter.Add.Markers(
+            (Coordinates[])[ccCoords]);
+        ccMarker.LegendText = "Closest center";
+        SetScatterProps(ref ccMarker, PlotConfig.CcColor, MarkerShape.FilledSquare);
+
+        return plotter;
     }
 
     /// <summary>
@@ -130,36 +180,21 @@ public class FgdInteractive
         // only update if necessary (li < cc)
         if (minDistance == liDistance)
         {
+            Console.WriteLine("min: li");
             DistancesMemory[fi] = new(minDistance, LastInserted);
         }
+
+        var memoryPrinted = string.Join(
+            ", ",
+            DistancesMemory.Select(p => $"{p.Key}: {p.Value.Distance}"));
+        Console.WriteLine($"{{{memoryPrinted}}}");
 
         if (isHurrying)
         {
             return null;
         }
 
-        var plotter = new Plot
-        {
-            ScaleFactor = PlotConfig.ScaleFactor
-        };
-        plotter.HideAxesAndGrid();
-
-        // closed facilities
-        var cfVertices = Instance.Facilities
-            .Where(f => Solution.ClosedFacilities.Contains(f.Index));
-        var cfMarkers = plotter.Add.Markers(
-            cfVertices.Select(v => (double)v.XCoord).ToArray(),
-            cfVertices.Select(v => (double)v.YCoord).ToArray());
-        SetScatterProps(ref cfMarkers, PlotConfig.CfColor);
-
-        // centers
-        var sVertices = Instance.Facilities
-            .Where(f => Solution.OpenFacilities.Contains(f.Index)
-                && f.Index != LastInserted);
-        var sMarkers = plotter.Add.Markers(
-            sVertices.Select(v => (double)v.XCoord).ToArray(),
-            sVertices.Select(v => (double)v.YCoord).ToArray());
-        SetScatterProps(ref sMarkers, PlotConfig.SColor);
+        var plotter = GetCommonPlotter();
 
         var fiVertex = Instance.Facilities[fi];
         var fiCoords = new Coordinates(fiVertex.XCoord, fiVertex.YCoord);
@@ -185,21 +220,57 @@ public class FgdInteractive
 
         var fiMarker = plotter.Add.Markers(
             (Coordinates[])[fiCoords]);
+        fiMarker.LegendText = $"Facility to insert, i={fi}";
         SetScatterProps(ref fiMarker, PlotConfig.FiColor);
 
         var liMarker = plotter.Add.Markers(
             (Coordinates[])[liCoords]);
-        SetScatterProps(ref liMarker, PlotConfig.LiColor);
+        liMarker.LegendText = "Last inserted";
+        SetScatterProps(ref liMarker, PlotConfig.LiColor, MarkerShape.FilledTriangleDown);
 
         var ccMarker = plotter.Add.Markers(
             (Coordinates[])[ccCoords]);
-        SetScatterProps(ref ccMarker, PlotConfig.CcColor);
+        ccMarker.LegendText = "Closest center";
+        SetScatterProps(ref ccMarker, PlotConfig.CcColor, MarkerShape.FilledSquare);
 
         return plotter;
     }
 
-    private void SetScatterProps(ref Markers markers, ColorName fillColor)
+    private Plot GetCommonPlotter()
     {
+        var plotter = new Plot
+        {
+            ScaleFactor = PlotConfig.ScaleFactor
+        };
+        plotter.HideAxesAndGrid();
+        plotter.ShowLegend(Edge.Bottom);
+
+        // closed facilities
+        var cfVertices = Instance.Facilities
+            .Where(f => Solution.ClosedFacilities.Contains(f.Index));
+        var cfMarkers = plotter.Add.Markers(
+            cfVertices.Select(v => (double)v.XCoord).ToArray(),
+            cfVertices.Select(v => (double)v.YCoord).ToArray());
+        SetScatterProps(ref cfMarkers, PlotConfig.CfColor);
+
+        // centers
+        var sVertices = Instance.Facilities
+            .Where(f => Solution.OpenFacilities.Contains(f.Index)
+                && f.Index != LastInserted);
+        var sMarkers = plotter.Add.Markers(
+            sVertices.Select(v => (double)v.XCoord).ToArray(),
+            sVertices.Select(v => (double)v.YCoord).ToArray());
+        SetScatterProps(ref sMarkers, PlotConfig.SColor);
+
+        return plotter;
+    }
+
+    private void SetScatterProps(
+        ref Markers markers,
+        ColorName fillColor,
+        MarkerShape shape = MarkerShape.FilledCircle)
+    {
+        markers.MarkerStyle.Shape = shape;
         markers.MarkerStyle.OutlineWidth = PlotConfig.MarkerOutlineWidth;
         markers.MarkerStyle.OutlineColor = new(ColorName.Black);
         markers.MarkerStyle.FillColor = new(fillColor);
