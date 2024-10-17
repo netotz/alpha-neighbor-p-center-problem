@@ -8,6 +8,7 @@ public record PlotConfig
     public double ScaleFactor { get; init; } = 2;
     public float MarkerSize { get; init; } = 10;
     public float MarkerOutlineWidth { get; init; } = 0.7f;
+    public float LegendFontSize { get; init; } = 9;
     /// <summary>
     /// Color for closed facilities markers.
     /// </summary>

@@ -155,7 +155,7 @@ public class FgdInteractive
 
         var ccMarker = plotter.Add.Markers(
             (Coordinates[])[ccCoords]);
-        ccMarker.LegendText = "Closest center";
+        ccMarker.LegendText = "Nearest center";
         SetScatterProps(ref ccMarker, PlotConfig.CcColor, MarkerShape.FilledSquare);
 
         return plotter;
@@ -220,7 +220,7 @@ public class FgdInteractive
 
         var fiMarker = plotter.Add.Markers(
             (Coordinates[])[fiCoords]);
-        fiMarker.LegendText = $"Facility to insert, i={fi}";
+        fiMarker.LegendText = $"Candidate facility, i={fi}";
         SetScatterProps(ref fiMarker, PlotConfig.FiColor);
 
         var liMarker = plotter.Add.Markers(
@@ -230,7 +230,7 @@ public class FgdInteractive
 
         var ccMarker = plotter.Add.Markers(
             (Coordinates[])[ccCoords]);
-        ccMarker.LegendText = "Closest center";
+        ccMarker.LegendText = "Nearest center";
         SetScatterProps(ref ccMarker, PlotConfig.CcColor, MarkerShape.FilledSquare);
 
         return plotter;
@@ -244,6 +244,8 @@ public class FgdInteractive
         };
         plotter.HideAxesAndGrid();
         plotter.ShowLegend(Edge.Bottom);
+        plotter.Legend.Orientation = Orientation.Horizontal;
+        plotter.Legend.FontSize = PlotConfig.LegendFontSize;
 
         // closed facilities
         var cfVertices = Instance.Facilities
@@ -251,6 +253,7 @@ public class FgdInteractive
         var cfMarkers = plotter.Add.Markers(
             cfVertices.Select(v => (double)v.XCoord).ToArray(),
             cfVertices.Select(v => (double)v.YCoord).ToArray());
+        cfMarkers.LegendText = "Closed facilities";
         SetScatterProps(ref cfMarkers, PlotConfig.CfColor);
 
         // centers
@@ -260,6 +263,7 @@ public class FgdInteractive
         var sMarkers = plotter.Add.Markers(
             sVertices.Select(v => (double)v.XCoord).ToArray(),
             sVertices.Select(v => (double)v.YCoord).ToArray());
+        sMarkers.LegendText = "Other centers";
         SetScatterProps(ref sMarkers, PlotConfig.SColor);
 
         return plotter;
