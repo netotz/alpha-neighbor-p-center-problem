@@ -83,7 +83,7 @@ public class FgdInteractive
     /// Tries to do an iteration of the main `while` loop of the algorithm.
     /// </summary>
     /// <returns>`false` if |S| = p or memory isn't fully updated</returns>
-    public Plot? TryPlotMainIteration()
+    public Plot? TryPlotMainIteration(string savePath = "")
     {
         // S already has p centers
         if (Solution.OpenFacilities.Count == PSize)
@@ -115,6 +115,11 @@ public class FgdInteractive
             CurrentOfv,
             closestCenter.Distance);
         Solution.UpdateObjectiveFunctionValue(Instance.DistancesFF);
+
+        var memoryPrinted = string.Join(
+            ", ",
+            DistancesMemory.Select(p => $"{p.Key}: {p.Value.Distance}"));
+        Console.WriteLine($"{{{memoryPrinted}}}");
 
         DistancesMemory.Remove(LastInserted);
 
@@ -158,6 +163,13 @@ public class FgdInteractive
         ccMarker.LegendText = "Nearest center";
         SetScatterProps(ref ccMarker, PlotConfig.CcColor, MarkerShape.FilledSquare);
 
+        if (!string.IsNullOrEmpty(savePath))
+        {
+            plotter.ScaleFactor = 5;
+            plotter.SavePng(savePath, 2000, 1250);
+            plotter.ScaleFactor = PlotConfig.ScaleFactor;
+        }
+
         return plotter;
     }
 
@@ -165,7 +177,9 @@ public class FgdInteractive
     /// Tries to plot an iteration of the `for` loop that updates the memory.
     /// </summary>
     /// <returns>`null` if memory is completely updated.</returns>
-    public Plot? TryPlotForMemoryIteration(bool isHurrying = false)
+    public Plot? TryPlotForMemoryIteration(
+        bool isHurrying = false,
+        string savePath = "")
     {
         // if empty
         if (!ClosedFacilitiesQueue.TryDequeue(out var fi))
@@ -177,17 +191,17 @@ public class FgdInteractive
         var liDistance = Instance.DistancesFF[fi, LastInserted];
         var minDistance = Math.Min(closestCenter.Distance, liDistance);
 
+        var memoryPrinted = string.Join(
+            ", ",
+            DistancesMemory.Select(p => $"{p.Key}: {p.Value.Distance}"));
+        Console.WriteLine($"{{{memoryPrinted}}}");
+
         // only update if necessary (li < cc)
         if (minDistance == liDistance)
         {
             Console.WriteLine("min: li");
             DistancesMemory[fi] = new(minDistance, LastInserted);
         }
-
-        var memoryPrinted = string.Join(
-            ", ",
-            DistancesMemory.Select(p => $"{p.Key}: {p.Value.Distance}"));
-        Console.WriteLine($"{{{memoryPrinted}}}");
 
         if (isHurrying)
         {
@@ -232,6 +246,13 @@ public class FgdInteractive
             (Coordinates[])[ccCoords]);
         ccMarker.LegendText = "Nearest center";
         SetScatterProps(ref ccMarker, PlotConfig.CcColor, MarkerShape.FilledSquare);
+
+        if (!string.IsNullOrEmpty(savePath))
+        {
+            plotter.ScaleFactor = 5;
+            plotter.SavePng(savePath, 2000, 1250);
+            plotter.ScaleFactor = PlotConfig.ScaleFactor;
+        }
 
         return plotter;
     }
