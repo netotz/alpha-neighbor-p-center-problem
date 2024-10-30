@@ -28,12 +28,28 @@ public class TspFileIOTests
                 new(0, 1, 1),
                 new(1, 2, 2),
             }
-        ],
+        ]
     ];
 
     [Theory]
     [MemberData(nameof(Data))]
     public void ReadNodes_ReturnsListOfVertex(string filePath, List<Vertex> expectedVertices)
+    {
+        var actualVertices = TspFileIO.ReadNodes(filePath);
+
+        Assert.Equal(expectedVertices, actualVertices);
+    }
+
+    public static object[][] RepeatedData { get; } = [
+        [
+            GetAbsolutePath(@"Data\test4.anpcp.tsp"),
+            new List<Vertex> { new(0, 0, 0, VertexType.User) }
+        ]
+    ];
+
+    [Theory]
+    [MemberData(nameof(RepeatedData))]
+    public void ReadNodes_WhenRepeatedCoordinates_ReturnsUniqueListOfVertex(string filePath, List<Vertex> expectedVertices)
     {
         var actualVertices = TspFileIO.ReadNodes(filePath);
 

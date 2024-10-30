@@ -22,6 +22,7 @@ public static class TspFileIO
         // all the next lines should be node coords
 
         var vertices = new List<Vertex>();
+        var uniqueCoords = new HashSet<(int, int)>();
 
         var line = streamReader.ReadLine()?.Trim() ?? "";
 
@@ -43,8 +44,12 @@ public static class TspFileIO
                 ? (VertexType)parsedItems[3]
                 : VertexType.Both;
 
-            vertices.Add(
-                new(index, xCoord, yCoord, type));
+            var isUnique = uniqueCoords.Add((xCoord, yCoord));
+            if (isUnique)
+            {
+                vertices.Add(
+                    new(index, xCoord, yCoord, type));
+            }
 
             line = streamReader.ReadLine() ?? "";
         }
