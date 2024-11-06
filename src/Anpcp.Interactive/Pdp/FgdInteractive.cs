@@ -9,7 +9,7 @@ using ScottPlot.Plottables;
 namespace Anpcp.Interactive.Pdp;
 
 /// <summary>
-/// Interactive version of <see cref="FgdConstructive"/> to generate visualizations.
+/// Interactive version of <see cref="FastGreedyDispersion"/> to generate visualizations.
 /// </summary>
 public class FgdInteractive
     : IConstructive<InstanceSameSet, PdpSolution>

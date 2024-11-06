@@ -5,7 +5,7 @@ namespace Anpcp.Core.UnitTests.Heuristics.Constructives;
 
 /// <summary>
 /// Tests of constructive heuristics that solve the PDP:
-/// <see cref="FgdConstructive"/> and <see cref="OgdConstructive"/>.
+/// <see cref="FastGreedyDispersion"/> and <see cref="OriginalGreedyDispersion"/>.
 /// </summary>
 public class PdpConstructiveTests
 {
@@ -39,8 +39,8 @@ public class PdpConstructiveTests
         int p,
         int expectedCloseds)
     {
-        var stubOgd = new OgdConstructive(instance, p, TestSeed);
-        var stubFgd = new FgdConstructive(instance, p, TestSeed);
+        var stubOgd = new OriginalGreedyDispersion(instance, p, TestSeed);
+        var stubFgd = new FastGreedyDispersion(instance, p, TestSeed);
 
         var mockOgdSolution = stubOgd.Construct();
         mockOgdSolution.UpdateObjectiveFunctionValue(instance.DistancesFF);
