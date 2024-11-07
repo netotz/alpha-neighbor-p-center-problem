@@ -6,6 +6,12 @@ public class PdpSolution(HashSet<int> closedFacilities)
     : BaseSolution(closedFacilities)
 {
     /// <summary>
+    /// Indices pair of critical vertices whose distance
+    /// defines <see cref="ObjectiveFunctionValue"/>.
+    /// </summary>
+    public (int, int) CriticalPair { get; protected set; } = (-1, -1);
+
+    /// <summary>
     /// <inheritdoc/>
     /// Finds the minimum distance among all pairs of centers.
     /// </summary>
