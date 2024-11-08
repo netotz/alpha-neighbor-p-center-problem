@@ -1,6 +1,6 @@
 ﻿using Anpcp.Core.Heuristics.LocalSearches.Afvs.Models;
 
-namespace Anpcp.Core.Heuristics.LocalSearches.Afvs.Wrappers;
+namespace Anpcp.Core.Heuristics.LocalSearches.Afvs;
 
 /// <summary>
 /// Wraps the largest 2 gains from r(.)

@@ -1,5 +1,5 @@
-﻿using Anpcp.Core.Heuristics.LocalSearches.Afvs.Models;
-using Anpcp.Core.Heuristics.LocalSearches.Afvs.Wrappers;
+﻿using Anpcp.Core.Heuristics.LocalSearches.Afvs;
+using Anpcp.Core.Heuristics.LocalSearches.Afvs.Models;
 
 namespace Anpcp.Core.UnitTests.Heuristics.LocalSearches.Afvs;
 
