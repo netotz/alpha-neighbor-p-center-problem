@@ -32,6 +32,8 @@ public class InstanceTwoSets : BaseInstance
             .ToArray();
 
         DistancesUF = new(Users, Facilities);
+
+        InitializeSets();
     }
 
     /// <summary>
@@ -72,5 +74,7 @@ public class InstanceTwoSets : BaseInstance
             .ToArray();
 
         DistancesUF = new(Users, Facilities);
+
+        InitializeSets();
     }
 }

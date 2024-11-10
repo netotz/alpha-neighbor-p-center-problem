@@ -50,7 +50,7 @@ public class FgdInteractive
                 s => s.Key,
                 s => s.Value);
 
-        Solution = new PdpSolution(Instance.FacilitiesIndices.ToHashSet());
+        Solution = new PdpSolution(Instance.FacilityIds.ToHashSet());
 
         Start();
     }

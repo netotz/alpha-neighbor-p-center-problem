@@ -26,7 +26,7 @@ public class OriginalGreedyDispersion(InstanceSameSet instance, int p, int? seed
     public PdpSolution Construct()
     {
         // O(m)
-        var solution = new PdpSolution(Instance.FacilitiesIndices.ToHashSet());
+        var solution = new PdpSolution(Instance.FacilityIds.ToHashSet());
 
         var random = Seed is null
             ? new Random()

@@ -27,6 +27,8 @@ public class InstanceSameSet : BaseInstance
         Users = vertices;
 
         DistancesUF = new(Users, Facilities);
+
+        InitializeSets();
     }
 
     /// <summary>
@@ -61,5 +63,7 @@ public class InstanceSameSet : BaseInstance
         Users = Facilities;
 
         DistancesUF = new(Users, Facilities);
+
+        InitializeSets();
     }
 }

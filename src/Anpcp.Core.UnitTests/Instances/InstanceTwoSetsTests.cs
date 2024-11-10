@@ -14,9 +14,15 @@ public class InstanceTwoSetsTests
     public void Constructor_CreatesInstance(
         int n, int m, int? seed, int expectedN, int expectedM)
     {
-        var actual = new InstanceTwoSets(n, m, seed: seed);
+        var mockInstance = new InstanceTwoSets(n, m, seed: seed);
 
-        Assert.Equal(actual.Users.Length, expectedN);
-        Assert.Equal(actual.Facilities.Length, expectedM);
+        Assert.Equal(mockInstance.N, expectedN);
+        Assert.Equal(mockInstance.M, expectedM);
+
+        Assert.NotEmpty(mockInstance.UserIds);
+        Assert.Equal(mockInstance.UserIds.Count, mockInstance.N);
+
+        Assert.NotEmpty(mockInstance.FacilityIds);
+        Assert.Equal(mockInstance.FacilityIds.Count, mockInstance.M);
     }
 }

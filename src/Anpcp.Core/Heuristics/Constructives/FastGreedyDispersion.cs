@@ -40,7 +40,7 @@ public class FastGreedyDispersion(InstanceSameSet instance, int p, int? seed = n
                 s => s.Value);
 
         // O(m)
-        var solution = new PdpSolution(Instance.FacilitiesIndices.ToHashSet());
+        var solution = new PdpSolution(Instance.FacilityIds.ToHashSet());
 
         // current objective function value x(S)
         var currentOfv = int.MaxValue;
