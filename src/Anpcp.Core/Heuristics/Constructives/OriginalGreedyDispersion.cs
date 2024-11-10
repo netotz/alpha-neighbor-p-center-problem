@@ -21,7 +21,7 @@ public class OriginalGreedyDispersion(InstanceSameSet instance, int p, int? seed
     /// <returns>
     /// A solution without the objective function value updated,
     /// since that takes O(p**2) extra time.
-    /// To update it call <see cref="PdpSolution.UpdateObjectiveFunctionValue"/>.
+    /// To update it call <see cref="PdpSolution.UpdateCriticalAllocation"/>.
     /// </returns>
     public PdpSolution Construct()
     {

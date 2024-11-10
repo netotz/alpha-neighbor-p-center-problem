@@ -67,7 +67,7 @@ public class FgdInteractive
             Solution.Insert(f);
             DistancesMemory.Remove(LastInserted);
 
-            Solution.UpdateObjectiveFunctionValue(Instance.DistancesFF);
+            Solution.UpdateCriticalAllocation(Instance.DistancesFF);
 
             ResetClosedFacilitiesQueue();
             HurryForMemory();
@@ -106,7 +106,7 @@ public class FgdInteractive
         var closestCenter = DistancesMemory[LastInserted];
 
         var prevOfv = CurrentOfv;
-        var prevCriticalPair = Solution.CriticalPair;
+        var prevCriticalPair = Solution.CriticalAllocation;
 
         Solution.Insert(LastInserted);
 
@@ -114,7 +114,7 @@ public class FgdInteractive
         CurrentOfv = Math.Min(
             CurrentOfv,
             closestCenter.Distance);
-        Solution.UpdateObjectiveFunctionValue(Instance.DistancesFF);
+        Solution.UpdateCriticalAllocation(Instance.DistancesFF);
 
         var memoryPrinted = string.Join(
             ", ",
@@ -128,10 +128,10 @@ public class FgdInteractive
         var plotter = GetCommonPlotter();
 
         // critical pairs
-        var cp1Vertex = Instance.Facilities[prevCriticalPair.Item1];
+        var cp1Vertex = Instance.Facilities[prevCriticalPair.UserId];
         var cp1Coords = new Coordinates(cp1Vertex.XCoord, cp1Vertex.YCoord);
 
-        var cp2Vertex = Instance.Facilities[prevCriticalPair.Item2];
+        var cp2Vertex = Instance.Facilities[prevCriticalPair.CenterId];
         var cp2Coords = new Coordinates(cp2Vertex.XCoord, cp2Vertex.YCoord);
 
         var cpLine = plotter.Add.Line(cp1Coords, cp2Coords);

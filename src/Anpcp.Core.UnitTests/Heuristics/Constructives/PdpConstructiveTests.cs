@@ -43,7 +43,7 @@ public class PdpConstructiveTests
         var stubFgd = new FastGreedyDispersion(instance, p, TestSeed);
 
         var mockOgdSolution = stubOgd.Construct();
-        mockOgdSolution.UpdateObjectiveFunctionValue(instance.DistancesFF);
+        mockOgdSolution.UpdateCriticalAllocation(instance.DistancesFF);
 
         var mockFgdSolution = stubFgd.Construct();
 

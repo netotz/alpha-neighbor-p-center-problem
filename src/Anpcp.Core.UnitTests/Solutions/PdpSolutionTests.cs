@@ -1,5 +1,6 @@
 ﻿using Anpcp.Core.Instances;
 using Anpcp.Core.Solutions;
+using Anpcp.Core.Solutions.Models;
 
 namespace Anpcp.Core.UnitTests.Solutions;
 
@@ -21,26 +22,22 @@ public class PdpSolutionTests
         [
             SeededInstance_m5,
             CreateSolution_WithOpenFacilities(5, [0, 1]),
-            66,
-            (0, 1)
+            new Allocation(0, 1, 66)
         ],
         [
             SeededInstance_m5,
             CreateSolution_WithOpenFacilities(5, [0, 1, 2]),
-            12,
-            (0, 2)
+            new Allocation(0, 2, 12)
         ],
         [
             SeededInstance_m5,
             CreateSolution_WithOpenFacilities(5, [0, 1, 2, 3]),
-            12,
-            (0, 2)
+            new Allocation(0, 2, 12)
         ],
         [
             SeededInstance_m5,
             CreateSolution_WithOpenFacilities(5, [2, 3, 4]),
-            32,
-            (3, 4)
+            new Allocation(3, 4, 32)
         ],
     ];
 
@@ -49,13 +46,11 @@ public class PdpSolutionTests
     public void UpdateObjectiveFunctionValue_ReturnsMinimumDistance(
         InstanceSameSet instance,
         PdpSolution solution,
-        int expectedOfv,
-        (int, int) expectedCriticalPair)
+        Allocation expectedCriticalAllocation)
     {
-        var actual = solution.UpdateObjectiveFunctionValue(instance.DistancesFF);
+        var actual = solution.UpdateCriticalAllocation(instance.DistancesFF);
 
-        Assert.Equal(expectedOfv, actual);
-        Assert.Equal(expectedCriticalPair, solution.CriticalPair);
+        Assert.Equal(expectedCriticalAllocation, solution.CriticalAllocation);
     }
 
     private static PdpSolution CreateSolution_WithOpenFacilities(

@@ -85,7 +85,8 @@ public class FastGreedyDispersion(InstanceSameSet instance, int p, int? seed = n
             distancesMemory.Remove(lastInserted);
         }
 
-        solution.ObjectiveFunctionValue = currentOfv;
+        // TODO: add corresponding center in distances memory to get actual critical pair
+        solution.UpdateCriticalAllocation(-1, -1, currentOfv);
 
         return solution;
     }

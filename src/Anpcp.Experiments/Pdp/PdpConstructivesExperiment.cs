@@ -71,7 +71,7 @@ public class PdpConstructivesExperiment
 
                 var ofvStopwatch = Stopwatch.StartNew();
                 // O(p**2)
-                ogdSolution.UpdateObjectiveFunctionValue(instance.DistancesFF);
+                ogdSolution.UpdateCriticalAllocation(instance.DistancesFF);
                 ofvStopwatch.Stop();
 
                 OgdResults.Add(new(instance.Name, ogd, ogdSolution, stopwatch.Elapsed, ofvStopwatch.Elapsed));

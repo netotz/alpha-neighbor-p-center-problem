@@ -6,18 +6,12 @@ public class PdpSolution(HashSet<int> closedFacilities)
     : BaseSolution(closedFacilities)
 {
     /// <summary>
-    /// Indices pair of critical vertices whose distance
-    /// defines <see cref="ObjectiveFunctionValue"/>.
-    /// </summary>
-    public (int, int) CriticalPair { get; protected set; } = (-1, -1);
-
-    /// <summary>
-    /// <inheritdoc/>
-    /// Finds the minimum distance among all pairs of centers.
+    /// Finds the minimum distance among all pairs of centers,
+    /// updates <see cref="BaseSolution.CriticalAllocation"/> and returns x(S).
     /// </summary>
     /// <param name="distancesFF">Distances matrix of facilities.</param>
     /// <remarks>Time O(p**2)</remarks>
-    public override int UpdateObjectiveFunctionValue(DistancesMatrix distancesFF)
+    public int UpdateCriticalAllocation(DistancesMatrix distancesFF)
     {
         // O(p)
         var openFacilitiesArray = OpenFacilities.ToArray();
@@ -39,13 +33,24 @@ public class PdpSolution(HashSet<int> closedFacilities)
                 if (distance < minDistance)
                 {
                     minDistance = distance;
-                    CriticalPair = (center1, center2);
+                    CriticalAllocation = new(center1, center2, minDistance);
                 }
             }
         }
 
-        ObjectiveFunctionValue = minDistance;
+        return ObjectiveFunctionValue;
+    }
 
-        return minDistance;
+    /// <summary>
+    /// Updates the critical allocation by just creating a new object, without calculations.
+    /// </summary>
+    /// <returns>
+    /// <paramref name="distance"/> which is the new <see cref="BaseSolution.ObjectiveFunctionValue"/>.
+    /// </returns>
+    public int UpdateCriticalAllocation(int center1, int center2, int distance)
+    {
+        CriticalAllocation = new(center1, center2, distance);
+
+        return ObjectiveFunctionValue;
     }
 }

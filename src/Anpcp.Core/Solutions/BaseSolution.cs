@@ -1,10 +1,11 @@
-﻿using Anpcp.Core.Wrappers;
+﻿using Anpcp.Core.Solutions.Models;
 
 namespace Anpcp.Core.Solutions;
 
 public abstract class BaseSolution(HashSet<int> closedFacilities)
 {
-    public int ObjectiveFunctionValue { get; set; }
+    public Allocation CriticalAllocation { get; protected set; } = new();
+    public int ObjectiveFunctionValue => CriticalAllocation.Distance;
     public HashSet<int> OpenFacilities { get; } = [];
     public HashSet<int> ClosedFacilities { get; } = closedFacilities;
 
@@ -25,10 +26,4 @@ public abstract class BaseSolution(HashSet<int> closedFacilities)
         Insert(facilityInId);
         Remove(facilityOutId);
     }
-
-    /// <summary>
-    /// Updates property <see cref="ObjectiveFunctionValue"/>
-    /// and returns it.
-    /// </summary>
-    public abstract int UpdateObjectiveFunctionValue(DistancesMatrix distances);
 }
