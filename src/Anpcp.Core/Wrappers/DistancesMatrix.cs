@@ -70,8 +70,10 @@ public class DistancesMatrix
         }
     }
 
+    /// <remarks>Time O(m)</remarks>
     public IEnumerable<int> GetNextNearestFacility(int fromUser)
     {
+        // O(m)
         foreach (var (_, facilityId) in _sortedDistances[fromUser])
         {
             yield return facilityId;
