@@ -10,6 +10,7 @@ public class LargestTwoGains
     public GainsFacility First { get; private set; } = new(-1, -1);
     public GainsFacility Second { get; private set; } = new(-1, -1);
 
+    /// <remarks>Time O(p)</remarks>
     public LargestTwoGains(Dictionary<int, int> gainsNeighbors)
     {
         // O(p)
