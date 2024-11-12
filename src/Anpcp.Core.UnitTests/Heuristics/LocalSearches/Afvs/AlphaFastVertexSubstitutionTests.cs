@@ -29,11 +29,24 @@ public class AlphaFastVertexSubstitutionTests
 
     public static object[][] ImprovedData { get; } = [
         [
+            // p = 3, a = 2
             3, 2,
             new InstanceTwoSets(PathHelper.GetAbsolute(@"Data\fake8_4_4.anpcp.tsp")),
             new AnpcpSolution([0], [1, 2, 3], new Allocation(3, 2, 36)),
             new AnpcpSolution([2], [0, 1, 3], new Allocation(3, 1, 28))
-        ]
+        ],
+        [
+            3, 2,
+            new InstanceTwoSets(PathHelper.GetAbsolute(@"Data\fake9_4_5.anpcp.tsp")),
+            new AnpcpSolution([0, 1], [2, 3, 4], new Allocation(3, 3, 53)),
+            new AnpcpSolution([2, 3], [0, 1, 4], new Allocation(3, 1, 28))
+        ],
+        [
+            4, 3,
+            new InstanceTwoSets(PathHelper.GetAbsolute(@"Data\fake9_4_5.anpcp.tsp")),
+            new AnpcpSolution([0], [1, 2, 3, 4], new Allocation(3, 3, 53)),
+            new AnpcpSolution([3], [0, 1, 2, 4], new Allocation(3, 2, 36))
+        ],
     ];
 
     [Theory]
@@ -60,10 +73,15 @@ public class AlphaFastVertexSubstitutionTests
 
     public static object[][] LocalOptimumData { get; } = [
         [
-                3, 2,
-                new InstanceTwoSets(PathHelper.GetAbsolute(@"Data\fake8_4_4.anpcp.tsp")),
-                new AnpcpSolution([2], [0, 1, 3], new Allocation(3, 1, 28)),
-        ]
+            3, 2,
+            new InstanceTwoSets(PathHelper.GetAbsolute(@"Data\fake8_4_4.anpcp.tsp")),
+            new AnpcpSolution([2], [0, 1, 3], new Allocation(3, 1, 28)),
+        ],
+        [
+            4, 3,
+            new InstanceTwoSets(PathHelper.GetAbsolute(@"Data\fake9_4_5.anpcp.tsp")),
+            new AnpcpSolution([3], [0, 1, 2, 4], new Allocation(3, 2, 36)),
+        ],
     ];
 
     [Theory]
