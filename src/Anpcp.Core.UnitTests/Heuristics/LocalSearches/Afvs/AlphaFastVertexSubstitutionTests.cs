@@ -63,8 +63,10 @@ public class AlphaFastVertexSubstitutionTests
             fakeInstance,
             copiedMockStartingSolution);
 
-        var actualSolution = stubAfvs.Improve();
+        var didImprove = stubAfvs.TryImprove();
+        var actualSolution = stubAfvs.Solution;
 
+        Assert.True(didImprove);
         Assert.True(
             actualSolution.ObjectiveFunctionValue < mockStartingSolution.ObjectiveFunctionValue);
         Assert.Equal(expectedSolution.CriticalAllocation, actualSolution.CriticalAllocation);
@@ -97,10 +99,12 @@ public class AlphaFastVertexSubstitutionTests
             fakeInstance,
             copiedMockStartingSolution);
 
-        var actualSolution = stubAfvs.Improve();
+        var didImprove = stubAfvs.TryImprove();
+        var actualSolution = stubAfvs.Solution;
 
-        Assert.True(
-            actualSolution.ObjectiveFunctionValue == mockLocalOptimumSolution.ObjectiveFunctionValue);
+        Assert.False(didImprove);
+        Assert.False(
+            actualSolution.ObjectiveFunctionValue < mockLocalOptimumSolution.ObjectiveFunctionValue);
         Assert.Equal(mockLocalOptimumSolution.CriticalAllocation, actualSolution.CriticalAllocation);
         Assert.Equal(mockLocalOptimumSolution.Centers, actualSolution.Centers);
     }

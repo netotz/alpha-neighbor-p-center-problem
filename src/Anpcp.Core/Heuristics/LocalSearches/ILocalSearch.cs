@@ -9,5 +9,5 @@ public interface ILocalSearch<TInstance, TSolution> : IHeuristic<TInstance>
 {
     TSolution Solution { get; }
 
-    TSolution Improve();
+    bool TryImprove();
 }

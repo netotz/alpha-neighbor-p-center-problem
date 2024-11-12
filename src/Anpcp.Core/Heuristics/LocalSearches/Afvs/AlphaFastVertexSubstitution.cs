@@ -60,33 +60,33 @@ public class AlphaFastVertexSubstitution
             Solution.Centers);
     }
 
-    public AnpcpSolution Improve()
+    /// <summary>
+    /// Tries to improve <see cref="Solution"/> while counting the <see cref="TotalMoves"/>.
+    /// </summary>
+    /// <returns>Whether or not the solution got improved at least once.</returns>
+    /// <remarks>Time <c>O(nmp)*C</c>, where <c>C</c> is the amount of moves performed.</remarks>
+    public bool TryImprove()
     {
-        while (TryImprove())
+        //// O(nmp)*C
+        // O(C)
+        while (true)
         {
+            // O(nmp)
+            var bestSwap = GetBestSwap();
+
+            // if current x(S) is still less than best swap found
+            if (Solution.ObjectiveFunctionValue <= bestSwap.ObjectiveFunctionValue)
+            {
+                // no improvement
+                break;
+            }
+
+            // O(nm)
+            ApplySwap(bestSwap);
             TotalMoves++;
         }
 
-        return Solution;
-    }
-
-    /// <remarks>Time O(nmp)</remarks>
-    private bool TryImprove()
-    {
-        // O(nmp)
-        var bestSwap = GetBestSwap();
-
-        // if current x(S) is still less than best swap found
-        if (Solution.ObjectiveFunctionValue <= bestSwap.ObjectiveFunctionValue)
-        {
-            // no improvement
-            return false;
-        }
-
-        // O(nm)
-        ApplySwap(bestSwap);
-
-        return true;
+        return TotalMoves > 0;
     }
 
     /// <remarks>Time O(nmp)</remarks>
