@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-using Anpcp.Core.IO;
+﻿using Anpcp.Core.IO;
 using Anpcp.Core.Models;
 using Anpcp.Core.Models.Enums;
 
@@ -10,11 +8,11 @@ public class TspFileIOTests
 {
     public static object[][] Data { get; } = [
         [
-            GetAbsolutePath(@"Data\test1.anpcp.tsp"),
+            PathHelper.GetAbsolute(@"Data\test1.anpcp.tsp"),
             new List<Vertex> { new(0, 0, 0, VertexType.User) }
         ],
         [
-            GetAbsolutePath(@"Data\test2.anpcp.tsp"),
+            PathHelper.GetAbsolute(@"Data\test2.anpcp.tsp"),
             new List<Vertex> {
                 new(0, 1, 1, VertexType.User),
                 new(1, 2, 2, VertexType.User),
@@ -23,7 +21,7 @@ public class TspFileIOTests
             }
         ],
         [
-            GetAbsolutePath(@"Data\test3.tsp"),
+            PathHelper.GetAbsolute(@"Data\test3.tsp"),
             new List<Vertex> {
                 new(0, 1, 1),
                 new(1, 2, 2),
@@ -42,7 +40,7 @@ public class TspFileIOTests
 
     public static object[][] RepeatedData { get; } = [
         [
-            GetAbsolutePath(@"Data\test4.anpcp.tsp"),
+            PathHelper.GetAbsolute(@"Data\test4.anpcp.tsp"),
             new List<Vertex> { new(0, 0, 0, VertexType.User) }
         ]
     ];
@@ -54,12 +52,5 @@ public class TspFileIOTests
         var actualVertices = TspFileIO.ReadNodes(filePath);
 
         Assert.Equal(expectedVertices, actualVertices);
-    }
-
-    private static string GetAbsolutePath(string filePath, [CallerFilePath] string currentPath = "")
-    {
-        var currentDirectory = Path.GetDirectoryName(currentPath) ?? "";
-
-        return Path.Combine(currentDirectory, filePath);
     }
 }
