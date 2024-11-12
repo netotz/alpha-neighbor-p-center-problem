@@ -9,9 +9,6 @@ namespace Anpcp.Core.Heuristics.LocalSearches.Afvs;
 /// Alpha Fast Vertex Substitution (A-FVS) local search heuristic.
 /// Improves a solution for the ANPCP.
 /// </summary>
-/// <param name="instance"></param>
-/// <param name="p"></param>
-/// <param name="seed"></param>
 public class AlphaFastVertexSubstitution
     : ILocalSearch<InstanceTwoSets, AnpcpSolution>
 {
@@ -74,8 +71,9 @@ public class AlphaFastVertexSubstitution
             // O(nmp)
             var bestSwap = GetBestSwap();
 
-            // if current x(S) is still less than best swap found
-            if (Solution.ObjectiveFunctionValue <= bestSwap.ObjectiveFunctionValue)
+            if (bestSwap is null
+                // if current x(S) is still less or equal than best swap found
+                || Solution.ObjectiveFunctionValue <= bestSwap.ObjectiveFunctionValue)
             {
                 // no improvement
                 break;
@@ -89,14 +87,16 @@ public class AlphaFastVertexSubstitution
         return TotalMoves > 0;
     }
 
+    /// <summary>
+    /// Finds the swap that minimizes x(S) the most.
+    /// </summary>
     /// <remarks>Time O(nmp)</remarks>
-    private PotentialSwap GetBestSwap()
+    private PotentialSwap? GetBestSwap()
     {
         // best x(S) starts as current x(S)
         var bestOfv = Solution.ObjectiveFunctionValue;
-        // TODO: validate starting IDs
-        var bestFi = -1;
-        var bestFr = -1;
+        int? bestFi = null;
+        int? bestFr = null;
 
         //// O(nmp)
         // O(m)
@@ -104,6 +104,7 @@ public class AlphaFastVertexSubstitution
         {
             if (!DoesBreakCritical(facilityIn))
             {
+                // ignore candidates that wouldn't even minimize the current x(S)
                 continue;
             }
 
@@ -121,9 +122,15 @@ public class AlphaFastVertexSubstitution
             }
         }
 
-        return new(bestFi, bestFr, bestOfv);
+        return bestFi is null || bestFr is null
+            // if none of the fi broke critical allocation
+            ? null
+            : new PotentialSwap(bestFi.Value, bestFr.Value, bestOfv);
     }
 
+    /// <summary>
+    /// Finds a potential swap given the candidate <paramref name="facilityIn"/>.
+    /// </summary>
     /// <remarks>Time O(np)</remarks>
     private PotentialSwap GetPotentialSwap(int facilityIn)
     {
@@ -194,6 +201,10 @@ public class AlphaFastVertexSubstitution
         return new PotentialSwap(facilityIn, facilityOut, minimumOfv);
     }
 
+    /// <summary>
+    /// Finds the minimum x(S) among the data structures.
+    /// </summary>
+    /// <returns>A tuple of the facility to remove and the x(S) it would produce.</returns>
     /// <remarks>Time O(p)</remarks>
     private static (int FacilityOut, int MinimumOfv) GetMinimumOfv(
         int bestOfv,
@@ -223,6 +234,11 @@ public class AlphaFastVertexSubstitution
         return (minimumFacilityOut, minimumOfv);
     }
 
+    /// <summary>
+    /// Checks if <paramref name="facilityIn"/> is nearer to the critical user than
+    /// its current alpha-center, i.e., if inserting it would break the critical allocation.
+    /// </summary>
+    /// <remarks>This is merely a check and does not modify the solution.</remarks>
     private bool DoesBreakCritical(int facilityIn)
     {
         var criticalUser = Solution.CriticalAllocation.UserId;
@@ -231,6 +247,9 @@ public class AlphaFastVertexSubstitution
         return fiDistance < Solution.ObjectiveFunctionValue;
     }
 
+    /// <summary>
+    /// Modifies the solution by applying <paramref name="bestSwap"/>, updating its state.
+    /// </summary>
     /// <remarks>Time O(nm)</remarks>
     private void ApplySwap(PotentialSwap bestSwap)
     {
@@ -278,6 +297,9 @@ public class AlphaFastVertexSubstitution
             $"User {userId} is missing an allocation to its {Alpha}-th nearest center.");
     }
 
+    /// <summary>
+    /// Gets the set of alpha-neighbors of <paramref name="userId"/>.
+    /// </summary>
     /// <remarks>Time O(p)</remarks>
     private Dictionary<int, Allocation> GetAlphaNeighbors(int userId)
     {
