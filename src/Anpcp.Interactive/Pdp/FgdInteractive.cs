@@ -86,7 +86,7 @@ public class FgdInteractive
     public Plot? TryPlotMainIteration(string savePath = "")
     {
         // S already has p centers
-        if (Solution.OpenFacilities.Count == PSize)
+        if (Solution.Size == PSize)
         {
             return null;
         }
@@ -279,7 +279,7 @@ public class FgdInteractive
 
         // centers
         var sVertices = Instance.Facilities
-            .Where(f => Solution.OpenFacilities.Contains(f.Index)
+            .Where(f => Solution.Centers.Contains(f.Index)
                 && f.Index != LastInserted);
         var sMarkers = plotter.Add.Markers(
             sVertices.Select(v => (double)v.XCoord).ToArray(),

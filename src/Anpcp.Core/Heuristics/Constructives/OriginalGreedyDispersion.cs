@@ -40,7 +40,7 @@ public class OriginalGreedyDispersion(InstanceSameSet instance, int p, int? seed
 
         //// O(mp**2)
         // O(p)
-        while (solution.OpenFacilities.Count < PSize)
+        while (solution.Size < PSize)
         {
             var distancesToSolution = new Dictionary<int, int>();
 
@@ -49,7 +49,7 @@ public class OriginalGreedyDispersion(InstanceSameSet instance, int p, int? seed
             foreach (var fi in solution.ClosedFacilities)
             {
                 // O(p)
-                var distance = solution.OpenFacilities
+                var distance = solution.Centers
                     .Select(c => Instance.DistancesFF[fi, c])
                     .Min();
 

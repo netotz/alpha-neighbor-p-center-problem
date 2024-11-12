@@ -58,7 +58,7 @@ public class FastGreedyDispersion(InstanceSameSet instance, int p, int? seed = n
 
         //// O(mp)
         // O(p)
-        while (solution.OpenFacilities.Count < PSize)
+        while (solution.Size < PSize)
         {
             // update memory
             // O(m - p) ~= O(m)

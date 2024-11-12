@@ -47,7 +47,7 @@ public class PdpConstructiveTests
 
         var mockFgdSolution = stubFgd.Construct();
 
-        Assert.Equal(mockOgdSolution.OpenFacilities, mockFgdSolution.OpenFacilities);
+        Assert.Equal(mockOgdSolution.Centers, mockFgdSolution.Centers);
 
         Assert.Equal(mockOgdSolution.ObjectiveFunctionValue, mockFgdSolution.ObjectiveFunctionValue);
 

@@ -14,7 +14,7 @@ public class PdpSolution(HashSet<int> closedFacilities)
     public int UpdateCriticalAllocation(DistancesMatrix distancesFF)
     {
         // O(p)
-        var openFacilitiesArray = OpenFacilities.ToArray();
+        var openFacilitiesArray = Centers.ToArray();
 
         var minDistance = int.MaxValue;
 
