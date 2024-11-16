@@ -25,11 +25,13 @@ public class PdpConstructivesExperiment
     /// <summary>
     /// Results of Original Greedy Dispersion (OGD).
     /// </summary>
-    public List<PdpResult<OriginalGreedyDispersion>> OgdResults { get; private set; } = [];
+    public List<PdpResult<OriginalGreedyDispersion<InstanceSameSet>>> OgdResults
+    { get; private set; } = [];
     /// <summary>
     /// Results of Fast Greedy Dispersion (FGD).
     /// </summary>
-    public List<PdpResult<FastGreedyDispersion>> FgdResults { get; private set; } = [];
+    public List<PdpResult<FastGreedyDispersion<InstanceSameSet>>> FgdResults
+    { get; private set; } = [];
 
     public void Run()
     {
@@ -47,7 +49,7 @@ public class PdpConstructivesExperiment
 
                 Console.WriteLine($"\n\t\tUsing p={p}...");
 
-                var fgd = new FastGreedyDispersion(instance, p, Seed);
+                var fgd = new FastGreedyDispersion<InstanceSameSet>(instance, p, Seed);
 
                 Console.WriteLine("\t\tRunning FGD...");
 
@@ -60,7 +62,7 @@ public class PdpConstructivesExperiment
 
                 FgdResults.Add(new(instance.Name, fgd, fgdSolution, stopwatch.Elapsed));
 
-                var ogd = new OriginalGreedyDispersion(instance, p, Seed);
+                var ogd = new OriginalGreedyDispersion<InstanceSameSet>(instance, p, Seed);
 
                 Console.WriteLine("\t\tRunning OGD...");
 

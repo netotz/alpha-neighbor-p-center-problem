@@ -10,11 +10,12 @@ namespace Anpcp.Core.Heuristics.Constructives;
 /// <remarks>
 /// This algorithm reduces the time complexity from O(mp**2) to O(mp).
 /// </remarks>
-public class FastGreedyDispersion(InstanceSameSet instance, int p, int? seed = null)
-    : IConstructive<InstanceSameSet, PdpSolution>
+public class FastGreedyDispersion<TInstance>(TInstance instance, int p, int? seed = null)
+    : IConstructive<TInstance, PdpSolution>
+    where TInstance : BaseInstance
 {
     public int PSize { get; } = p;
-    public InstanceSameSet Instance { get; } = instance;
+    public TInstance Instance { get; } = instance;
     public int? Seed { get; } = seed;
 
     /// <summary>

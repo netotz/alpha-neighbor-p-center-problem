@@ -7,11 +7,12 @@ namespace Anpcp.Core.Heuristics.Constructives;
 /// Original Greedy Dispersion (OGD) constructive heuristic.
 /// Solves the p-dispersion problem (PDP).
 /// </summary>
-public class OriginalGreedyDispersion(InstanceSameSet instance, int p, int? seed = null)
-    : IConstructive<InstanceSameSet, PdpSolution>
+public class OriginalGreedyDispersion<TInstance>(TInstance instance, int p, int? seed = null)
+    : IConstructive<TInstance, PdpSolution>
+    where TInstance : BaseInstance
 {
     public int PSize { get; } = p;
-    public InstanceSameSet Instance { get; } = instance;
+    public TInstance Instance { get; } = instance;
     public int? Seed { get; } = seed;
 
     /// <summary>
