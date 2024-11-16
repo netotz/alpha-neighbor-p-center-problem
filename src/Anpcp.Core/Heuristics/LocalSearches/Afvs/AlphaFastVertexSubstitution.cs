@@ -152,44 +152,41 @@ public class AlphaFastVertexSubstitution
             var fiDistance = Instance.DistancesUF[userId, facilityIn];
 
             // O(p)
-            var alphaNeighbors = GetAlphaNeighbors(userId);
-            var alphaCenter = alphaNeighbors[Alpha];
+            var alphaNeighborhood = new AlphaNeighborhood(
+                Alpha, userId, fiDistance,
+                Solution.Centers,
+                Allocator,
+                Instance.DistancesUF);
 
-            var lossContribution = 0;
-            var gainContribution = 0;
+            var partialLoss = 0;
+            var partialGain = 0;
 
             // if user is attracted to fi
-            if (fiDistance < alphaCenter.Distance)
+            if (alphaNeighborhood.IsUserAttracted)
             {
                 // m_z
-                lossContribution = alphaCenter.Distance;
+                partialLoss = alphaNeighborhood.AlphaDistance;
                 // m_r, store the farthest distance between fi and a-1
-                gainContribution = Math.Max(
+                partialGain = Math.Max(
                     fiDistance,
-                    //! won't work when a = 1 (PCP)
-                    alphaNeighbors[Alpha - 1].Distance);
+                    //! won't work when alpha = 1 (PCP)
+                    alphaNeighborhood.AlphaMinusOneDistance);
 
-                bestOfv = Math.Max(bestOfv, gainContribution);
-
-                // alpha center is irrelevant when user is attracted to fi
-                alphaNeighbors.Remove(Alpha);
+                bestOfv = Math.Max(bestOfv, partialGain);
             }
             else
             {
-                lossContribution = Math.Min(fiDistance, alphaNeighbors[Alpha + 1].Distance);
-                gainContribution = alphaCenter.Distance;
+                partialLoss = Math.Min(
+                    fiDistance,
+                    alphaNeighborhood.AlphaPlusOneDistance);
+                partialGain = alphaNeighborhood.AlphaDistance;
             }
 
-            // remove a+1 before updating data structures
-            alphaNeighbors.Remove(Alpha + 1);
-
             // O(a) ~= O(1)
-            foreach (var alphaNeighbor in alphaNeighbors.Values)
+            foreach (var centerId in alphaNeighborhood.GetUpdatingIds())
             {
-                var centerId = alphaNeighbor.CenterId;
-
-                losses[centerId] = Math.Max(losses[centerId], lossContribution);
-                gains[centerId] = Math.Max(gains[centerId], gainContribution);
+                losses[centerId] = Math.Max(losses[centerId], partialLoss);
+                gains[centerId] = Math.Max(gains[centerId], partialGain);
             }
         }
 
