@@ -10,8 +10,8 @@ public interface IHeuristic<TInstance>
 {
     /// <summary>
     /// Problem parameter <c>p</c>, size of a solution <c>S</c>.
-    /// <c>p = |S|</c>
     /// </summary>
+    /// <remarks><c>p = |S|</c></remarks>
     int PSize { get; }
     TInstance Instance { get; }
     /// <summary>

@@ -8,7 +8,8 @@ namespace Anpcp.Core.Heuristics.Constructives;
 /// Solves the p-dispersion problem (PDP).
 /// </summary>
 /// <remarks>
-/// This algorithm reduces the time complexity from O(mp**2) to O(mp).
+/// This algorithm reduces the time complexity from O(mp**2) to O(mp)
+/// and gets the objective function value of the PDP in O(1).
 /// </remarks>
 public class FastGreedyDispersion<TInstance>(TInstance instance, int p, int? seed = null)
     : IConstructive<TInstance, PdpSolution>
@@ -23,7 +24,7 @@ public class FastGreedyDispersion<TInstance>(TInstance instance, int p, int? see
     /// </summary>
     /// <remarks>Time O(mp)</remarks>
     /// <returns>
-    /// A solution with updated objective function value in O(1).
+    /// A <see cref="PdpSolution"/> with updated objective function value in O(1).
     /// </returns>
     public PdpSolution Construct()
     {
@@ -61,20 +62,11 @@ public class FastGreedyDispersion<TInstance>(TInstance instance, int p, int? see
         // O(p)
         while (solution.Size < PSize)
         {
-            // update memory
-            // O(m - p) ~= O(m)
-            foreach (var fi in solution.ClosedFacilities)
-            {
-                distancesMemory[fi] = Math.Min(
-                    distancesMemory[fi],
-                    Instance.DistancesFF[fi, lastInserted]);
-            }
+            // O(m)
+            UpdateMemoryInPlace(distancesMemory, solution.ClosedFacilities, lastInserted);
 
-            // get farthest facility to S
-            // O(m - p) ~= O(m)
-            lastInserted = distancesMemory
-                .MaxBy(p => p.Value)
-                .Key;
+            // O(m)
+            lastInserted = GetBestFacilityToInsert(distancesMemory);
 
             solution.Insert(lastInserted);
 
@@ -90,5 +82,39 @@ public class FastGreedyDispersion<TInstance>(TInstance instance, int p, int? see
         solution.UpdateCriticalAllocation(-1, -1, currentOfv);
 
         return solution;
+    }
+
+    /// <summary>
+    /// Updates <paramref name="distancesMemory"/> in-place (by reference).
+    /// </summary>
+    /// <remarks>Time O(m)</remarks>
+    protected virtual void UpdateMemoryInPlace(
+        Dictionary<int, int> distancesMemory,
+        HashSet<int> closedFacilities,
+        int lastInserted)
+    {
+        // update memory
+        // O(m - p) ~= O(m)
+        foreach (var fi in closedFacilities)
+        {
+            distancesMemory[fi] = Math.Min(
+                distancesMemory[fi],
+                Instance.DistancesFF[fi, lastInserted]);
+        }
+    }
+
+    /// <summary>
+    /// Gets the best facility to insert by getting the argument of
+    /// the maximum value in <paramref name="distancesMemory"/>.
+    /// </summary>
+    /// <returns>ID of the best facility to insert.</returns>
+    /// <remarks>Time O(m)</remarks>
+    protected virtual int GetBestFacilityToInsert(Dictionary<int, int> distancesMemory)
+    {
+        // get farthest facility to S
+        // O(m - p) ~= O(m)
+        return distancesMemory
+            .MaxBy(p => p.Value)
+            .Key;
     }
 }
