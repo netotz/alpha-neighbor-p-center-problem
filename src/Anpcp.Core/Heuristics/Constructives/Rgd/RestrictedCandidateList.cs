@@ -5,10 +5,13 @@
 /// </summary>
 /// <param name="beta">GRASP parameter.</param>
 /// <param name="seed">Seed for random operations.</param>
-public class RestrictedCandidateList(float beta, int seed)
+public class RestrictedCandidateList(float beta, int? seed = null)
 {
     private readonly List<(int FacilityId, int Distance)> _candidates = [];
 
+    private Random Random { get; } = seed is null
+        ? new Random()
+        : new Random(seed.Value);
     private int MaxCost { get; set; } = int.MinValue;
     private int MinCost { get; set; } = int.MaxValue;
     private float? Threshold { get; set; }
@@ -34,15 +37,13 @@ public class RestrictedCandidateList(float beta, int seed)
     {
         Threshold = MaxCost - (beta * (MaxCost - MinCost));
 
-        var random = new Random(seed);
-
         // O(m)
         var thresholdedCandidateIds = _candidates
             .Where(c => c.Distance >= Threshold)
             .Select(c => c.FacilityId)
             .ToArray();
 
-        var randomIndex = random.Next(thresholdedCandidateIds.Length);
+        var randomIndex = Random.Next(thresholdedCandidateIds.Length);
 
         return thresholdedCandidateIds[randomIndex];
     }
