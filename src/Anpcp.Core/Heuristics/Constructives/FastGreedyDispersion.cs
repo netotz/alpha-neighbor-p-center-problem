@@ -11,7 +11,10 @@ namespace Anpcp.Core.Heuristics.Constructives;
 /// This algorithm reduces the time complexity from O(mp**2) to O(mp)
 /// and gets the objective function value of the PDP in O(1).
 /// </remarks>
-public class FastGreedyDispersion<TInstance>(TInstance instance, int p, int? seed = null)
+public class FastGreedyDispersion<TInstance>(
+    TInstance instance,
+    int p,
+    int? seed = null)
     : IConstructive<TInstance, PdpSolution>
     where TInstance : BaseInstance
 {
