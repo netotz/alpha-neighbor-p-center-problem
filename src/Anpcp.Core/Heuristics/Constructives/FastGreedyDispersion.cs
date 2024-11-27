@@ -91,7 +91,7 @@ public class FastGreedyDispersion<TInstance>(
     /// Updates <paramref name="distancesMemory"/> in-place (by reference).
     /// </summary>
     /// <remarks>Time O(m)</remarks>
-    protected virtual void UpdateMemoryInPlace(
+    private void UpdateMemoryInPlace(
         Dictionary<int, int> distancesMemory,
         HashSet<int> closedFacilities,
         int lastInserted)
@@ -112,7 +112,7 @@ public class FastGreedyDispersion<TInstance>(
     /// </summary>
     /// <returns>ID of the best facility to insert.</returns>
     /// <remarks>Time O(m)</remarks>
-    protected virtual int GetBestFacilityToInsert(Dictionary<int, int> distancesMemory)
+    private int GetBestFacilityToInsert(Dictionary<int, int> distancesMemory)
     {
         // get farthest facility to S
         // O(m - p) ~= O(m)
