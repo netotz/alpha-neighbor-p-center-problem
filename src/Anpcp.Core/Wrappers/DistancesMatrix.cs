@@ -60,13 +60,13 @@ public class DistancesMatrix
             var unsortedRow = new List<(int Distance, int FacilityId)>(m);
 
             var vertex1 = vertices1[i];
-            rowIdIndexDictionary[vertex1.Index] = i;
+            rowIdIndexDictionary[vertex1.Id] = i;
 
             // O(m)
             for (var j = 0; j < m; j++)
             {
                 var vertex2 = vertices2[j];
-                columnIdIndexDictionary[vertex2.Index] = j;
+                columnIdIndexDictionary[vertex2.Id] = j;
 
                 var distance = (int)vertex1.DistanceTo(vertex2);
                 _distances[i, j] = distance;
@@ -77,7 +77,7 @@ public class DistancesMatrix
                     MaxPair = (i, j);
                 }
 
-                unsortedRow.Add((distance, vertex2.Index));
+                unsortedRow.Add((distance, vertex2.Id));
             }
 
             // O(m log m)
