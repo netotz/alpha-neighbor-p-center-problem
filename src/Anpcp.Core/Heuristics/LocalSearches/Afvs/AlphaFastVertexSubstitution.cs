@@ -41,6 +41,7 @@ public class AlphaFastVertexSubstitution
         Alpha = alpha;
         Instance = instance;
         Seed = seed;
+        Solution = startingSolution;
 
         Allocator = new(alpha, instance.N, instance.M, instance.DistancesUF.IdIndexMap);
 
