@@ -15,7 +15,7 @@ internal class GraspRgdAfvs_Result(
 {
     internal GraspResult Result { get; } = new()
     {
-        FullName = constructive.Instance.Name,
+        NameWithExtension = constructive.Instance.Name,
         PValue = constructive.PSize,
         Alpha = localSearch.Alpha
     };
@@ -45,19 +45,19 @@ internal class GraspRgdAfvs_Result(
     {
         var solution = Constructive.Construct();
 
+        LocalSearch.SetSolution(solution);
+
         var rgdOfv = solution.ObjectiveFunctionValue;
         Result.BestRgdOfv = Math.Min(
             Result.BestRgdOfv,
             rgdOfv);
-
-        LocalSearch.SetSolution(solution);
 
         var didLocalSearchImprove = LocalSearch.TryImprove();
 
         var improvedSolution = LocalSearch.Solution;
 
         var afvsOfv = improvedSolution.ObjectiveFunctionValue;
-        var afvsImprovement = 100 * Math.Abs(afvsOfv - rgdOfv) / rgdOfv;
+        var afvsImprovement = 100 * Math.Abs(afvsOfv - rgdOfv) / (double)rgdOfv;
 
         Result.AfvsMinImprovement = Math.Min(Result.AfvsMinImprovement, afvsImprovement);
         Result.AfvsMaxImprovement = Math.Max(Result.AfvsMaxImprovement, afvsImprovement);
