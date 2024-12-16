@@ -33,16 +33,10 @@ public class FastGreedyDispersion<TInstance>(
     {
         // memory dictionary of minimum distances to S
         // O(m)
-        var distancesMemory = Enumerable
-            .Repeat(int.MaxValue, Instance.Facilities.Length)
-            .Select((v, i) => new
-            {
-                Key = i,
-                Value = v
-            })
+        var distancesMemory = Instance.FacilityIds
             .ToDictionary(
-                s => s.Key,
-                s => s.Value);
+                f => f,
+                _ => int.MaxValue);
 
         // O(m)
         var solution = new PdpSolution(Instance.FacilityIds.ToHashSet());
