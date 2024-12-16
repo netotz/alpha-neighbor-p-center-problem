@@ -41,9 +41,10 @@ public class AlphaFastVertexSubstitution
         Alpha = alpha;
         Instance = instance;
         Seed = seed;
-        Solution = startingSolution;
 
         Allocator = new(alpha, instance.N, instance.M, instance.DistancesUF.IdIndexMap);
+        // O(nm)
+        SetSolution(startingSolution);
     }
 
     /// <summary>
@@ -260,6 +261,12 @@ public class AlphaFastVertexSubstitution
         Solution.UpdateCriticalAllocation(Instance.UserIds, GetAlphathNearest);
     }
 
+    /// <summary>
+    /// Sets <see cref="Solution"/> state to <paramref name="solution"/>
+    /// and updates <see cref="Allocator"/>.
+    /// </summary>
+    /// <remarks>Time O(nm)</remarks>
+    /// <exception cref="ArgumentException"></exception>
     public void SetSolution(AnpcpSolution solution)
     {
         if (solution.Size != PSize)
@@ -270,6 +277,7 @@ public class AlphaFastVertexSubstitution
 
         Solution = solution;
 
+        // O(nm)
         UpdateSolution();
     }
 
