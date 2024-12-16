@@ -43,8 +43,13 @@ public class AlphaFastVertexSubstitution
         Seed = seed;
 
         Allocator = new(alpha, instance.N, instance.M, instance.DistancesUF.IdIndexMap);
-        // O(nm)
-        SetSolution(startingSolution);
+
+        // only update solution and allocator when it has `p` centers
+        if (startingSolution.Size == pSize)
+        {
+            // O(nm)
+            SetSolution(startingSolution);
+        }
     }
 
     /// <summary>
