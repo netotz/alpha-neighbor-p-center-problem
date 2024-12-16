@@ -24,7 +24,7 @@ public class AlphaFastVertexSubstitutionTests
         AnpcpSolution emptySolution)
     {
         Assert.Throws<ArgumentException>(()
-            => new AlphaFastVertexSubstitution(p, alpha, dummyInstance, emptySolution));
+            => new AlphaFastVertexSubstitution(dummyInstance, p, alpha, emptySolution));
     }
 
     public static object[][] ImprovedData { get; } = [
@@ -59,8 +59,8 @@ public class AlphaFastVertexSubstitutionTests
     {
         var copiedMockStartingSolution = new AnpcpSolution(mockStartingSolution);
         var stubAfvs = new AlphaFastVertexSubstitution(
-            p, alpha,
             fakeInstance,
+            p, alpha,
             copiedMockStartingSolution);
 
         var didImprove = stubAfvs.TryImprove();
@@ -95,8 +95,8 @@ public class AlphaFastVertexSubstitutionTests
     {
         var copiedMockStartingSolution = new AnpcpSolution(mockLocalOptimumSolution);
         var stubAfvs = new AlphaFastVertexSubstitution(
-            p, alpha,
             fakeInstance,
+            p, alpha,
             copiedMockStartingSolution);
 
         var didImprove = stubAfvs.TryImprove();

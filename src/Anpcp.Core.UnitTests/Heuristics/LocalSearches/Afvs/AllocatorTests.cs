@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 
 using Anpcp.Core.Heuristics.LocalSearches.Afvs;
+using Anpcp.Core.Wrappers;
 
 namespace Anpcp.Core.UnitTests.Heuristics.LocalSearches.Afvs;
 
@@ -57,7 +58,11 @@ public class AllocatorTests
         HashSet<int> fakeCenters,
         int[,] expectedAllocationsMatrix)
     {
-        var mockAllocator = new Allocator(alpha, n, m);
+        var stubIdIndexMap = new IdIndexMap(
+            fakeUserIds.ToDictionary(u => u, u => u),
+            fakeCenters.ToDictionary(f => f, f => f));
+
+        var mockAllocator = new Allocator(alpha, n, m, stubIdIndexMap);
 
         mockAllocator.AllocateAll(fakeUserIds, fakeNearestFacilitiesGetter, fakeCenters);
 
@@ -65,7 +70,7 @@ public class AllocatorTests
         {
             for (var j = 0; j < m; j++)
             {
-                Assert.True(expectedAllocationsMatrix[i, j] == mockAllocator[i, j]);
+                Assert.True(expectedAllocationsMatrix[i, j] == mockAllocator.ByIndex(i, j));
             }
         }
     }

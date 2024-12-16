@@ -7,12 +7,18 @@ namespace Anpcp.Core.UnitTests.Heuristics.LocalSearches.Afvs;
 
 public class AlphaNeighborhoodTests
 {
+    public static ImmutableHashSet<int> FakeUserIds { get; } = [0];
+    public static HashSet<int> FakeCenterIds { get; } = [0, 1, 2];
+    public static IdIndexMap FakeIdIndexMap { get; } = new(
+        FakeUserIds.ToDictionary(u => u, u => u),
+        FakeCenterIds.ToDictionary(c => c, c => c));
+
     public static object[][] CommonInput { get; } = [
         [
             2, 0, 1,
-            new HashSet<int> { 0, 1, 2 },
-            ImmutableHashSet.Create(0),
-            new Allocator(2, 1, 3),
+            FakeCenterIds,
+            FakeUserIds,
+            new Allocator(2, 1, 3, FakeIdIndexMap),
             new DistancesMatrix(
                 [new(0, 0, 0)],
                 [new(0, 0, 1), new(1, 0, 2), new(2, 0, 3)]),
