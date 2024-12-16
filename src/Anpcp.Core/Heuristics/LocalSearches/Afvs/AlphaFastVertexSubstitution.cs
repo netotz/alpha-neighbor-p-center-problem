@@ -16,7 +16,7 @@ public class AlphaFastVertexSubstitution
     public int Alpha { get; }
     public InstanceTwoSets Instance { get; }
     public int? Seed { get; }
-    public AnpcpSolution Solution { get; }
+    public AnpcpSolution Solution { get; private set; }
 
     /// <summary>
     /// Total number of applied moves or swaps.
@@ -26,8 +26,8 @@ public class AlphaFastVertexSubstitution
 
     /// <remarks>Time O(nm)</remarks>
     public AlphaFastVertexSubstitution(
-        int pSize, int alpha,
         InstanceTwoSets instance,
+        int pSize, int alpha,
         AnpcpSolution startingSolution,
         int? seed = null)
     {
@@ -37,24 +37,13 @@ public class AlphaFastVertexSubstitution
                 $"Parameter `alpha`={alpha} must be strictly less than `p`={pSize}.");
         }
 
-        if (startingSolution.Size != pSize)
-        {
-            throw new ArgumentException(
-                $"Starting solution must be feasible and contain exactly `p`={pSize} centers.");
-        }
-
         PSize = pSize;
         Alpha = alpha;
         Instance = instance;
         Seed = seed;
         Solution = startingSolution;
 
-        Allocator = new(alpha, instance.N, instance.M);
-        // O(nm)
-        Allocator.AllocateAll(
-            Instance.UserIds,
-            Instance.DistancesUF.GetNextNearestFacility,
-            Solution.Centers);
+        Allocator = new(alpha, instance.N, instance.M, instance.DistancesUF.IdIndexMap);
     }
 
     /// <summary>
@@ -271,6 +260,19 @@ public class AlphaFastVertexSubstitution
         Solution.UpdateCriticalAllocation(Instance.UserIds, GetAlphathNearest);
     }
 
+    public void SetSolution(AnpcpSolution solution)
+    {
+        if (solution.Size != PSize)
+        {
+            throw new ArgumentException(
+                $"Starting solution must be feasible and contain exactly `p`={PSize} centers.");
+        }
+
+        Solution = solution;
+
+        UpdateSolution();
+    }
+
     /// <summary>
     /// Gets the alpha-th nearest center of <paramref name="userId"/>.
     /// </summary>
@@ -283,7 +285,9 @@ public class AlphaFastVertexSubstitution
         // O(p)
         foreach (var centerId in Solution.Centers)
         {
-            if (Allocator[userId, centerId] == Alpha)
+            var allocatedProximity = Allocator.ById(userId, centerId);
+
+            if (allocatedProximity == Alpha)
             {
                 var distance = Instance.DistancesUF[userId, centerId];
                 return new(userId, centerId, distance);
@@ -305,7 +309,7 @@ public class AlphaFastVertexSubstitution
         // O(p)
         foreach (var centerId in Solution.Centers)
         {
-            var proximity = Allocator[userId, centerId];
+            var proximity = Allocator.ById(userId, centerId);
 
             // ignore empty allocations
             if (proximity == 0)

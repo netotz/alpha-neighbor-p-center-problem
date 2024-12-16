@@ -50,7 +50,7 @@ public class AlphaNeighborhood
         // O(p)
         foreach (var centerId in centers)
         {
-            var proximity = allocator[userId, centerId];
+            var proximity = allocator.ById(userId, centerId);
 
             // ignore empty allocations
             if (proximity == 0)
