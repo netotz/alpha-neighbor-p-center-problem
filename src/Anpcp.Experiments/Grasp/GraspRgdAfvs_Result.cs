@@ -36,7 +36,7 @@ internal class GraspRgdAfvs_Result(
         }
 
         Stopwatch.Stop();
-        Result.Stopwatch = Stopwatch;
+        Result.TotalSeconds = Stopwatch.Elapsed.TotalSeconds;
 
         return BestSolution!;
     }

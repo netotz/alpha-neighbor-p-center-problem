@@ -10,9 +10,10 @@ namespace Anpcp.Experiments.Grasp;
 internal static class GraspExperiment
 {
     private static string OutFolder => "grasp";
-    private static int VariationsAmount => 10;
+    private static int VariationsAmount => 3;
     private static string[] TspFileNames { get; } = new[]
     {
+        //"ch150_100_50",
         "pr439_293_146",
         //"rat575_384_191",
         //"rat783_522_261",
@@ -72,7 +73,7 @@ internal static class GraspExperiment
     {
         var nameColumn = DataFrameColumn.Create(
             "name",
-            Results.Select(r => r.InstanceName));
+            Results.Select(r => r.SplitName));
 
         var indexColumn = DataFrameColumn.Create(
             "index",
@@ -116,7 +117,7 @@ internal static class GraspExperiment
 
         var timeColumn = DataFrameColumn.Create(
             "time_s",
-            Results.Select(r => r.Stopwatch.Elapsed.Seconds));
+            Results.Select(r => r.TotalSeconds));
 
         var dataFrame = new DataFrame(
             nameColumn,

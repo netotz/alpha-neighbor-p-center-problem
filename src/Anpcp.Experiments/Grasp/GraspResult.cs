@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace Anpcp.Experiments.Grasp;
+﻿namespace Anpcp.Experiments.Grasp;
 
 internal class GraspResult
 {
@@ -23,5 +21,5 @@ internal class GraspResult
 
     internal int LastImprovedIteration { get; set; } = -1;
 
-    internal Stopwatch Stopwatch { get; set; } = new();
+    internal double TotalSeconds { get; set; }
 }
