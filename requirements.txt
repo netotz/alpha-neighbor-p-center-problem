@@ -1,9 +1,0 @@
-pytest==7.2.1
-matplotlib==3.7.0
-scipy==1.10.1
-# https://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy when using PyPy
-numpy==1.24.2
-tsplib95==0.7.1
-ipython==8.11.0
-pandas==1.5.3
-click==8.1.3
