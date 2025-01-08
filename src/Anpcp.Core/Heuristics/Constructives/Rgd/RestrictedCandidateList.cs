@@ -5,7 +5,7 @@
 /// </summary>
 /// <param name="beta">GRASP parameter.</param>
 /// <param name="seed">Seed for random operations.</param>
-public class RestrictedCandidateList(float beta, int? seed = null)
+public class RestrictedCandidateList(float beta, int? seed)
 {
     private readonly List<(int FacilityId, int Distance)> _candidates = [];
 

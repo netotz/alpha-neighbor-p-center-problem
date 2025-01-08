@@ -10,7 +10,7 @@ namespace Anpcp.Core.Heuristics.Constructives.Rgd;
 public class RandomizedGreedyDispersion<TInstance>(
     TInstance instance,
     int p, float beta,
-    int? seed = null)
+    int? seed)
     : IConstructive<TInstance, AnpcpSolution>
     where TInstance : BaseInstance
 {

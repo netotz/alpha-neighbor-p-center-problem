@@ -14,7 +14,7 @@ namespace Anpcp.Core.Heuristics.Constructives;
 public class FastGreedyDispersion<TInstance>(
     TInstance instance,
     int p,
-    int? seed = null)
+    int? seed)
     : IConstructive<TInstance, PdpSolution>
     where TInstance : BaseInstance
 {

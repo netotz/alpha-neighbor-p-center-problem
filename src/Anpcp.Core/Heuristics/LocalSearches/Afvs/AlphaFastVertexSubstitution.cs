@@ -29,7 +29,7 @@ public class AlphaFastVertexSubstitution
         InstanceTwoSets instance,
         int pSize, int alpha,
         AnpcpSolution startingSolution,
-        int? seed = null)
+        int? seed)
     {
         if (alpha >= pSize)
         {

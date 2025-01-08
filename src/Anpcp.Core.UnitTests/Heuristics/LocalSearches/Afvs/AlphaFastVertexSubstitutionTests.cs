@@ -7,7 +7,8 @@ namespace Anpcp.Core.UnitTests.Heuristics.LocalSearches.Afvs;
 
 public class AlphaFastVertexSubstitutionTests
 {
-    public static InstanceTwoSets DummyInstance { get; } = new(1, 1, seed: 0);
+    public static int TestSeed => 0;
+    public static InstanceTwoSets DummyInstance { get; } = new(1, 1, seed: TestSeed);
     public static AnpcpSolution EmptySolution { get; } = new([]);
     public static object[][] ExceptionData { get; } = [
         // a == p
@@ -24,7 +25,7 @@ public class AlphaFastVertexSubstitutionTests
         AnpcpSolution emptySolution)
     {
         Assert.Throws<ArgumentException>(()
-            => new AlphaFastVertexSubstitution(dummyInstance, p, alpha, emptySolution));
+            => new AlphaFastVertexSubstitution(dummyInstance, p, alpha, emptySolution, TestSeed));
     }
 
     public static object[][] ImprovedData { get; } = [
@@ -61,7 +62,8 @@ public class AlphaFastVertexSubstitutionTests
         var stubAfvs = new AlphaFastVertexSubstitution(
             fakeInstance,
             p, alpha,
-            copiedMockStartingSolution);
+            copiedMockStartingSolution,
+            TestSeed);
 
         var didImprove = stubAfvs.TryImprove();
         var actualSolution = stubAfvs.Solution;
@@ -97,7 +99,8 @@ public class AlphaFastVertexSubstitutionTests
         var stubAfvs = new AlphaFastVertexSubstitution(
             fakeInstance,
             p, alpha,
-            copiedMockStartingSolution);
+            copiedMockStartingSolution,
+            TestSeed);
 
         var didImprove = stubAfvs.TryImprove();
         var actualSolution = stubAfvs.Solution;
