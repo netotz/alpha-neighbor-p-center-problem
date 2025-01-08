@@ -1,0 +1,10 @@
+{
+    "profiles": {
+      "Anpcp.Experiments": {
+        "commandName": "Project",
+        "environmentVariables": {
+          "AnpcpRepoPath": "path\\to\\repo\\alpha-neighbor-p-center-problem"
+        }
+      }
+    }
+  }
