@@ -2,7 +2,7 @@
 
 namespace Anpcp.Core.Models;
 
-public record Vertex(int Index, int XCoord, int YCoord, VertexType Type = VertexType.Both)
+public record Vertex(int Id, int XCoord, int YCoord, VertexType Type = VertexType.Both)
 {
     /// <summary>
     /// Calculates the Euclidean distance to another vertex.

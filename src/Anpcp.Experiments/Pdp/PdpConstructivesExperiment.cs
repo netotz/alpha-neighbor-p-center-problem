@@ -35,7 +35,7 @@ public class PdpConstructivesExperiment
 
     public void Run()
     {
-        ReadTspFiles();
+        Instances = Util.ReadTspFilesSameSet(TspFileNames);
 
         Console.WriteLine("Running PDP experiment...");
 
@@ -79,17 +79,6 @@ public class PdpConstructivesExperiment
                 OgdResults.Add(new(instance.Name, ogd, ogdSolution, stopwatch.Elapsed, ofvStopwatch.Elapsed));
             }
         }
-
-        Console.WriteLine("Done." + Environment.NewLine);
-    }
-
-    private void ReadTspFiles()
-    {
-        Console.WriteLine("Reading TSPLIB files...");
-
-        Instances = TspFileNames
-            .Select(n => new InstanceSameSet(GetTspFilePath(n)))
-            .ToArray();
 
         Console.WriteLine("Done." + Environment.NewLine);
     }
@@ -148,10 +137,5 @@ public class PdpConstructivesExperiment
             results.Select(r => r.HeuristicTime.ToString("s\\.FFF")));
 
         return [ofvColumn, timeColumn];
-    }
-
-    private static string GetTspFilePath(string tspFileName)
-    {
-        return Path.Combine(AppSettings.TspLibPath, tspFileName);
     }
 }

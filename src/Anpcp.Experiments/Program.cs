@@ -1,13 +1,16 @@
 ﻿using Anpcp.Experiments;
-using Anpcp.Experiments.Pdp;
+using Anpcp.Experiments.Grasp;
 
 // get repo path from environment variable, should be set by script
 AppSettings.AnpcpRepoPath = new(
     Environment.GetEnvironmentVariable(
         nameof(AppSettings.AnpcpRepoPath)) ?? "");
 
-var pdpExperiment = new PdpConstructivesExperiment();
+//var pdpExperiment = new PdpConstructivesExperiment();
 
-pdpExperiment.Run();
+//pdpExperiment.Run();
 
-pdpExperiment.WriteCsvResults();
+//pdpExperiment.WriteCsvResults();
+
+GraspExperiment.Run();
+GraspExperiment.SaveCsvResults();

@@ -5,13 +5,15 @@
 /// </summary>
 /// <param name="beta">GRASP parameter.</param>
 /// <param name="seed">Seed for random operations.</param>
-public class RestrictedCandidateList(float beta, int? seed = null)
+public class RestrictedCandidateList(float beta, int? seed)
 {
     private readonly List<(int FacilityId, int Distance)> _candidates = [];
 
+    private float Beta { get; } = beta;
     private Random Random { get; } = seed is null
         ? new Random()
         : new Random(seed.Value);
+
     private int MaxCost { get; set; } = int.MinValue;
     private int MinCost { get; set; } = int.MaxValue;
     private float? Threshold { get; set; }
@@ -29,13 +31,14 @@ public class RestrictedCandidateList(float beta, int? seed = null)
     }
 
     /// <summary>
-    /// Gets at random a facility to insert, following the threshold formula.
+    /// Gets at random a facility to insert following the threshold formula
+    /// and then clears the list.
     /// </summary>
     /// <returns>ID of the facility to insert.</returns>
     /// <remarks>Time O(m)</remarks>
     public int GetFacilityToInsert()
     {
-        Threshold = MaxCost - (beta * (MaxCost - MinCost));
+        Threshold = MaxCost - (Beta * (MaxCost - MinCost));
 
         // O(m)
         var thresholdedCandidateIds = _candidates
@@ -45,6 +48,22 @@ public class RestrictedCandidateList(float beta, int? seed = null)
 
         var randomIndex = Random.Next(thresholdedCandidateIds.Length);
 
-        return thresholdedCandidateIds[randomIndex];
+        var randomId = thresholdedCandidateIds[randomIndex];
+
+        Clear();
+
+        return randomId;
+    }
+
+    /// <summary>
+    /// Clears the candidates list and resets the threshold values.
+    /// </summary>
+    private void Clear()
+    {
+        _candidates.Clear();
+
+        MaxCost = int.MinValue;
+        MinCost = int.MaxValue;
+        Threshold = null;
     }
 }

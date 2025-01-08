@@ -46,7 +46,7 @@ public abstract class BaseInstance
         }
 
         FacilityIds = Facilities
-            .Select(f => f.Index)
+            .Select(f => f.Id)
             .ToImmutableHashSet();
 
         if (N == 0)
@@ -56,7 +56,7 @@ public abstract class BaseInstance
         }
 
         UserIds = Users
-            .Select(u => u.Index)
+            .Select(u => u.Id)
             .ToImmutableHashSet();
     }
 }

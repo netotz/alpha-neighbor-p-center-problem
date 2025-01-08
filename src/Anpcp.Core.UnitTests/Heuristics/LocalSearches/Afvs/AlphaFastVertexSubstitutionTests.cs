@@ -7,13 +7,14 @@ namespace Anpcp.Core.UnitTests.Heuristics.LocalSearches.Afvs;
 
 public class AlphaFastVertexSubstitutionTests
 {
-    public static InstanceTwoSets DummyInstance { get; } = new(1, 1, seed: 0);
+    public static int TestSeed => 0;
+    public static InstanceTwoSets DummyInstance { get; } = new(1, 1, seed: TestSeed);
     public static AnpcpSolution EmptySolution { get; } = new([]);
     public static object[][] ExceptionData { get; } = [
         // a == p
         [2, 2, DummyInstance, EmptySolution],
-        // |S| < p
-        [3, 2, DummyInstance, EmptySolution],
+        // a > p
+        [2, 3, DummyInstance, EmptySolution],
     ];
 
     [Theory]
@@ -24,7 +25,7 @@ public class AlphaFastVertexSubstitutionTests
         AnpcpSolution emptySolution)
     {
         Assert.Throws<ArgumentException>(()
-            => new AlphaFastVertexSubstitution(p, alpha, dummyInstance, emptySolution));
+            => new AlphaFastVertexSubstitution(dummyInstance, p, alpha, emptySolution, TestSeed));
     }
 
     public static object[][] ImprovedData { get; } = [
@@ -32,20 +33,20 @@ public class AlphaFastVertexSubstitutionTests
             // p = 3, a = 2
             3, 2,
             new InstanceTwoSets(PathHelper.GetAbsolute(@"Data\fake8_4_4.anpcp.tsp")),
-            new AnpcpSolution([0], [1, 2, 3], new Allocation(3, 2, 36)),
-            new AnpcpSolution([2], [0, 1, 3], new Allocation(3, 1, 28))
+            new AnpcpSolution([5], [6, 7, 8], new Allocation(4, 7, 36)),
+            new AnpcpSolution([7], [5, 6, 8], new Allocation(4, 6, 28))
         ],
         [
             3, 2,
             new InstanceTwoSets(PathHelper.GetAbsolute(@"Data\fake9_4_5.anpcp.tsp")),
-            new AnpcpSolution([0, 1], [2, 3, 4], new Allocation(3, 3, 53)),
-            new AnpcpSolution([2, 3], [0, 1, 4], new Allocation(3, 1, 28))
+            new AnpcpSolution([5, 6], [7, 8, 9], new Allocation(4, 8, 53)),
+            new AnpcpSolution([7, 8], [5, 6, 9], new Allocation(4, 6, 28))
         ],
         [
             4, 3,
             new InstanceTwoSets(PathHelper.GetAbsolute(@"Data\fake9_4_5.anpcp.tsp")),
-            new AnpcpSolution([0], [1, 2, 3, 4], new Allocation(3, 3, 53)),
-            new AnpcpSolution([3], [0, 1, 2, 4], new Allocation(3, 2, 36))
+            new AnpcpSolution([5], [6, 7, 8, 9], new Allocation(4, 8, 53)),
+            new AnpcpSolution([8], [5, 6, 7, 9], new Allocation(4, 7, 36))
         ],
     ];
 
@@ -59,9 +60,10 @@ public class AlphaFastVertexSubstitutionTests
     {
         var copiedMockStartingSolution = new AnpcpSolution(mockStartingSolution);
         var stubAfvs = new AlphaFastVertexSubstitution(
-            p, alpha,
             fakeInstance,
-            copiedMockStartingSolution);
+            p, alpha,
+            copiedMockStartingSolution,
+            TestSeed);
 
         var didImprove = stubAfvs.TryImprove();
         var actualSolution = stubAfvs.Solution;
@@ -77,12 +79,12 @@ public class AlphaFastVertexSubstitutionTests
         [
             3, 2,
             new InstanceTwoSets(PathHelper.GetAbsolute(@"Data\fake8_4_4.anpcp.tsp")),
-            new AnpcpSolution([2], [0, 1, 3], new Allocation(3, 1, 28)),
+            new AnpcpSolution([7], [5, 6, 8], new Allocation(4, 6, 28)),
         ],
         [
             4, 3,
             new InstanceTwoSets(PathHelper.GetAbsolute(@"Data\fake9_4_5.anpcp.tsp")),
-            new AnpcpSolution([3], [0, 1, 2, 4], new Allocation(3, 2, 36)),
+            new AnpcpSolution([8], [5, 6, 7, 9], new Allocation(4, 7, 36)),
         ],
     ];
 
@@ -95,9 +97,10 @@ public class AlphaFastVertexSubstitutionTests
     {
         var copiedMockStartingSolution = new AnpcpSolution(mockLocalOptimumSolution);
         var stubAfvs = new AlphaFastVertexSubstitution(
-            p, alpha,
             fakeInstance,
-            copiedMockStartingSolution);
+            p, alpha,
+            copiedMockStartingSolution,
+            TestSeed);
 
         var didImprove = stubAfvs.TryImprove();
         var actualSolution = stubAfvs.Solution;

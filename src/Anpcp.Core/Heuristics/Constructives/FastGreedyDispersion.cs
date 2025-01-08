@@ -11,7 +11,10 @@ namespace Anpcp.Core.Heuristics.Constructives;
 /// This algorithm reduces the time complexity from O(mp**2) to O(mp)
 /// and gets the objective function value of the PDP in O(1).
 /// </remarks>
-public class FastGreedyDispersion<TInstance>(TInstance instance, int p, int? seed = null)
+public class FastGreedyDispersion<TInstance>(
+    TInstance instance,
+    int p,
+    int? seed)
     : IConstructive<TInstance, PdpSolution>
     where TInstance : BaseInstance
 {
@@ -30,16 +33,10 @@ public class FastGreedyDispersion<TInstance>(TInstance instance, int p, int? see
     {
         // memory dictionary of minimum distances to S
         // O(m)
-        var distancesMemory = Enumerable
-            .Repeat(int.MaxValue, Instance.Facilities.Length)
-            .Select((v, i) => new
-            {
-                Key = i,
-                Value = v
-            })
+        var distancesMemory = Instance.FacilityIds
             .ToDictionary(
-                s => s.Key,
-                s => s.Value);
+                f => f,
+                _ => int.MaxValue);
 
         // O(m)
         var solution = new PdpSolution(Instance.FacilityIds.ToHashSet());
@@ -88,7 +85,7 @@ public class FastGreedyDispersion<TInstance>(TInstance instance, int p, int? see
     /// Updates <paramref name="distancesMemory"/> in-place (by reference).
     /// </summary>
     /// <remarks>Time O(m)</remarks>
-    protected virtual void UpdateMemoryInPlace(
+    private void UpdateMemoryInPlace(
         Dictionary<int, int> distancesMemory,
         HashSet<int> closedFacilities,
         int lastInserted)
@@ -109,7 +106,7 @@ public class FastGreedyDispersion<TInstance>(TInstance instance, int p, int? see
     /// </summary>
     /// <returns>ID of the best facility to insert.</returns>
     /// <remarks>Time O(m)</remarks>
-    protected virtual int GetBestFacilityToInsert(Dictionary<int, int> distancesMemory)
+    private int GetBestFacilityToInsert(Dictionary<int, int> distancesMemory)
     {
         // get farthest facility to S
         // O(m - p) ~= O(m)

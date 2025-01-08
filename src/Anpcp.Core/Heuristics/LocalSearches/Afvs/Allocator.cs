@@ -1,15 +1,45 @@
 ﻿using System.Collections.Immutable;
 
+using Anpcp.Core.Wrappers;
+
 namespace Anpcp.Core.Heuristics.LocalSearches.Afvs;
 
-public class Allocator(int alpha, int n, int m)
+public class Allocator(int alpha, int n, int m, in IdIndexMap idIndexMap)
 {
     private readonly int[,] _allocations = new int[n, m];
+    private readonly IdIndexMap _idIndexMap = idIndexMap;
 
     /// <summary>
-    /// Gets a value in the allocations matrix.
+    /// Gets the allocation by IDs, mapping them to indices of the matrix.
     /// </summary>
-    public int this[int userId, int facilityId] => _allocations[userId, facilityId];
+    /// <param name="userId"></param>
+    /// <param name="facilityId"></param>
+    /// <returns></returns>
+    public int ById(int userId, int facilityId)
+    {
+        var userIndex = _idIndexMap.Users[userId];
+        var facilityIndex = _idIndexMap.Facilities[facilityId];
+
+        return _allocations[userIndex, facilityIndex];
+    }
+
+    public int ByIndex(int userIndex, int facilityIndex)
+    {
+        return _allocations[userIndex, facilityIndex];
+    }
+
+    private void SetById(int userId, int facilityId, int value)
+    {
+        var userIndex = _idIndexMap.Users[userId];
+        var facilityIndex = _idIndexMap.Facilities[facilityId];
+
+        _allocations[userIndex, facilityIndex] = value;
+    }
+
+    private void SetByIndex(int userIndex, int facilityIndex, int value)
+    {
+        _allocations[userIndex, facilityIndex] = value;
+    }
 
     /// <summary>
     /// Allocates all users to their alpha-neighbors.
@@ -46,12 +76,6 @@ public class Allocator(int alpha, int n, int m)
         // O(m)
         foreach (var facilityId in nearestFacilities)
         {
-            // no need to allocate facilities farther than (alpha+1)-th
-            if (proximity > alpha + 1)
-            {
-                break;
-            }
-
             // ignore facilities outside solution
             if (!centers.Contains(facilityId))
             {
@@ -59,7 +83,13 @@ public class Allocator(int alpha, int n, int m)
             }
 
             proximity++;
-            _allocations[userId, facilityId] = proximity;
+            // no need to allocate facilities farther than (alpha+1)-th
+            if (proximity > alpha + 1)
+            {
+                break;
+            }
+
+            SetById(userId, facilityId, proximity);
         }
     }
 
@@ -69,10 +99,12 @@ public class Allocator(int alpha, int n, int m)
     /// <remarks>Time O(m)</remarks>
     private void DeallocateUser(int userId)
     {
+        var userIndex = _idIndexMap.Users[userId];
+
         // O(m)
         for (var j = 0; j < m; j++)
         {
-            _allocations[userId, j] = 0;
+            SetByIndex(userIndex, j, 0);
         }
     }
 }

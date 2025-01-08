@@ -9,22 +9,22 @@ public class TspFileIOTests
     public static object[][] Data { get; } = [
         [
             PathHelper.GetAbsolute(@"Data\test1.anpcp.tsp"),
-            new List<Vertex> { new(0, 0, 0, VertexType.User) }
+            new List<Vertex> { new(1, 0, 0, VertexType.User) }
         ],
         [
             PathHelper.GetAbsolute(@"Data\test2.anpcp.tsp"),
             new List<Vertex> {
-                new(0, 1, 1, VertexType.User),
-                new(1, 2, 2, VertexType.User),
-                new(2, 3, 3, VertexType.Facility),
-                new(3, 4, 4, VertexType.Facility),
+                new(1, 1, 1, VertexType.User),
+                new(2, 2, 2, VertexType.User),
+                new(3, 3, 3, VertexType.Facility),
+                new(4, 4, 4, VertexType.Facility),
             }
         ],
         [
             PathHelper.GetAbsolute(@"Data\test3.tsp"),
             new List<Vertex> {
-                new(0, 1, 1),
-                new(1, 2, 2),
+                new(1, 1, 1),
+                new(2, 2, 2),
             }
         ]
     ];
@@ -41,7 +41,7 @@ public class TspFileIOTests
     public static object[][] RepeatedData { get; } = [
         [
             PathHelper.GetAbsolute(@"Data\test4.anpcp.tsp"),
-            new List<Vertex> { new(0, 0, 0, VertexType.User) }
+            new List<Vertex> { new(1, 0, 0, VertexType.User) }
         ]
     ];
 

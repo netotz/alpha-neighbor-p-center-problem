@@ -270,7 +270,7 @@ public class FgdInteractive
 
         // closed facilities
         var cfVertices = Instance.Facilities
-            .Where(f => Solution.ClosedFacilities.Contains(f.Index));
+            .Where(f => Solution.ClosedFacilities.Contains(f.Id));
         var cfMarkers = plotter.Add.Markers(
             cfVertices.Select(v => (double)v.XCoord).ToArray(),
             cfVertices.Select(v => (double)v.YCoord).ToArray());
@@ -279,8 +279,8 @@ public class FgdInteractive
 
         // centers
         var sVertices = Instance.Facilities
-            .Where(f => Solution.Centers.Contains(f.Index)
-                && f.Index != LastInserted);
+            .Where(f => Solution.Centers.Contains(f.Id)
+                && f.Id != LastInserted);
         var sMarkers = plotter.Add.Markers(
             sVertices.Select(v => (double)v.XCoord).ToArray(),
             sVertices.Select(v => (double)v.YCoord).ToArray());
