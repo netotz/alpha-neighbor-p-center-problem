@@ -35,7 +35,7 @@ Or download it directly [here](https://github.com/netotz/alpha-neighbor-p-center
 
 # Source code
 
-This C# code is a rewrite of the [original Python code](/tree/python-last).
+This C# code is a rewrite of the [original Python code (link to last commit before migrating)](https://github.com/netotz/alpha-neighbor-p-center-problem/tree/62f7e6bf663e8278b04cb82972cf1742b920bf80).
 
 The source code is not intended to be a production application ready to be used or a package to be installed, but simply a proof of the experiments and tests conducted for the research.
 
