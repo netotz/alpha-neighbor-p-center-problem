@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-using Anpcp.Core.Solutions.Models;
+﻿using Anpcp.Core.Solutions.Models;
 
 namespace Anpcp.Core.Solutions;
 
@@ -27,7 +25,7 @@ public class AnpcpSolution : BaseSolution
 
     /// <remarks>Time O(np)</remarks>
     public void UpdateCriticalAllocation(
-        ImmutableHashSet<int> userIds,
+        ISet<int> userIds,
         Func<int, Allocation> alphathNearestGetter)
     {
         //// O(np)

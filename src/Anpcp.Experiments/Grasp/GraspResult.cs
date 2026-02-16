@@ -3,7 +3,7 @@
 internal class GraspResult
 {
     internal required string NameWithExtension { get; init; }
-    private string Name => NameWithExtension.Split('.')[0];
+    internal string Name => NameWithExtension.Split('.')[0];
     internal string SplitName => Name[..^2];
     internal int Index => int.Parse(Name.Split('_')[^1]);
 

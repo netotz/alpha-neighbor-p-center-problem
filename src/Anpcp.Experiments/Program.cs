@@ -12,5 +12,10 @@ AppSettings.AnpcpRepoPath = new(
 
 //pdpExperiment.WriteCsvResults();
 
-GraspExperiment.Run();
-GraspExperiment.SaveCsvResults();
+GraspExperiment_TwoSets.Run();
+GraspExperiment_TwoSets.SaveCsvResults();
+GraspExperiment_TwoSets.SaveTxtResults();
+
+//GraspExperiment_SameSet.Run();
+//GraspExperiment_SameSet.SaveCsvResults();
+//GraspExperiment_SameSet.SaveTxtResults();

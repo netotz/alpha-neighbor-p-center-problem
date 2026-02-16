@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-using Anpcp.Core.Wrappers;
+﻿using Anpcp.Core.Wrappers;
 
 namespace Anpcp.Core.Heuristics.LocalSearches.Afvs;
 
@@ -8,6 +6,16 @@ public class Allocator(int alpha, int n, int m, in IdIndexMap idIndexMap)
 {
     private readonly int[,] _allocations = new int[n, m];
     private readonly IdIndexMap _idIndexMap = idIndexMap;
+
+    /// <summary>
+    /// Gets a new copy the allocations matrix.
+    /// </summary>
+    /// <remarks>
+    /// <b>Do not call</b> this for normal runs,
+    /// it is implemented to report experimentation results.
+    /// Time O(nm)
+    /// </remarks>
+    public int[,] CopiedAllocations => (int[,])_allocations.Clone();
 
     /// <summary>
     /// Gets the allocation by IDs, mapping them to indices of the matrix.
@@ -49,7 +57,7 @@ public class Allocator(int alpha, int n, int m, in IdIndexMap idIndexMap)
     /// </param>
     /// <remarks>Time O(nm)</remarks>
     public void AllocateAll(
-        ImmutableHashSet<int> userIds,
+        ISet<int> userIds,
         Func<int, IEnumerable<int>> nearestFacilitiesGetter,
         HashSet<int> centers)
     {

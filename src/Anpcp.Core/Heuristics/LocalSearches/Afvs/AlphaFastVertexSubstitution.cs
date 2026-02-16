@@ -195,6 +195,22 @@ public class AlphaFastVertexSubstitution
     }
 
     /// <summary>
+    /// Gets the user IDs according to the type of the generic <see cref="Instance"/>:
+    /// closed facilities if it's the same set of nodes,
+    /// or the actual users if it's two sets.
+    /// </summary>
+    /// <returns></returns>
+    private ISet<int> GetUserIds()
+    {
+        return Instance switch
+        {
+            InstanceSameSet sameSet => Solution.ClosedFacilities,
+            InstanceTwoSets twoSets => twoSets.UserIds,
+            _ => throw new NotImplementedException("Instance subtype not supported."),
+        };
+    }
+
+    /// <summary>
     /// Finds the minimum x(S) among the data structures.
     /// </summary>
     /// <returns>A tuple of the facility to remove and the x(S) it would produce.</returns>
@@ -257,14 +273,13 @@ public class AlphaFastVertexSubstitution
     /// <remarks>Time O(nm)</remarks>
     private void UpdateSolution()
     {
-        // O(nm)
         Allocator.AllocateAll(
             Instance.UserIds,
             Instance.DistancesUF.GetNextNearestFacility,
             Solution.Centers);
 
         // O(np)
-        Solution.UpdateCriticalAllocation(Instance.UserIds, GetAlphathNearest);
+        Solution.UpdateCriticalAllocation(GetUserIds(), GetAlphathNearest);
     }
 
     /// <summary>

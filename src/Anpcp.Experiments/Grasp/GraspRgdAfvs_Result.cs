@@ -6,12 +6,13 @@ using Anpcp.Core.Solutions;
 
 namespace Anpcp.Experiments.Grasp;
 
-internal class GraspRgdAfvs_Result(
+internal class GraspRgdAfvs_Result<TInstance>(
     int maxIterations,
     TimeSpan timeLimit,
-    RandomizedGreedyDispersion<InstanceTwoSets> constructive,
-    AlphaFastVertexSubstitution localSearch)
-    : GraspRgdAfvs(maxIterations, timeLimit, constructive, localSearch)
+    RandomizedGreedyDispersion<TInstance> constructive,
+    AlphaFastVertexSubstitution<TInstance> localSearch)
+    : GraspRgdAfvs<TInstance>(maxIterations, timeLimit, constructive, localSearch)
+        where TInstance : BaseInstance
 {
     internal GraspResult Result { get; } = new()
     {
